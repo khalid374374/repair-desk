@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الصيانة — برنامج محلات صيانة الموبايل</title>
+<meta name="description" content="برنامج لمحلات صيانة وبيع الموبايلات: تذاكر الصيانة، الوردية والمحافظ، المخزن والباركود، الفواتير، واتساب للعميل، وتطبيق موبايل لصاحب المحل.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #eef3fb; --card: #ffffff; --ink: #0a1a44; --mut: #55648a; --line: #d9e2f1; --ac: #2f7cf6; --ac2: #1d5fd0; --gr: #1f9d5c; --hero1: #0a1a44; --hero2: #16407f; --soft: #e6efff; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0b1222; --card: #141d33; --ink: #e7ecf7; --mut: #93a1c2; --line: #24314f; --ac: #4f8ff7; --ac2: #2f7cf6; --gr: #3ccf7f; --hero1: #071030; --hero2: #12306a; --soft: #1a2a4a; } }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Cairo', system-ui, Tahoma, sans-serif; line-height: 1.75; }
+  a { color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+  img { max-width: 100%; height: auto; display: block; }
+  .hero-in > *, .split > *, .grid > *, .req > * { min-width: 0; }   /* الصور الكبيرة ماتوسّعش العمود على الموبايل */
+  body { overflow-x: hidden; }
+
+  /* الراس */
+  .hero { background: radial-gradient(120% 90% at 85% 0%, var(--hero2), var(--hero1)); color: #fff; padding: 22px 0 72px; position: relative; overflow: hidden; }
+  .nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 22px; }
+  .brand i { font-style: normal; width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: #ffffff1f; font-size: 22px; }
+  .nav a.small { font-size: 14px; font-weight: 700; opacity: .9; text-decoration: none; }
+  .hero-in { display: grid; grid-template-columns: 1.05fr 1fr; gap: 36px; align-items: center; margin-top: 46px; }
+  .hero h1 { font-size: clamp(30px, 5vw, 48px); line-height: 1.3; margin: 0 0 14px; font-weight: 900; }
+  .hero p.lead { font-size: 18px; opacity: .9; margin: 0 0 26px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 14px; font-weight: 800; font-size: 16px; text-decoration: none; transition: transform .15s; }
+  .btn:hover { transform: translateY(-2px); }
+  .btn.pri { background: #fff; color: var(--hero1); box-shadow: 0 10px 26px #0004; }
+  .btn.wa { background: #25d366; color: #fff; }
+  .btn.out { border: 1.5px solid #ffffff66; color: #fff; }
+  .hero small.note { display: block; margin-top: 14px; opacity: .7; font-size: 13px; }
+  .shot-hero { border-radius: 16px; box-shadow: 0 30px 60px #0007; border: 1px solid #ffffff22; transform: perspective(1400px) rotateY(8deg); }
+
+  /* أقسام */
+  section { padding: 64px 0; }
+  h2 { font-size: clamp(24px, 3.4vw, 32px); margin: 0 0 8px; font-weight: 900; text-align: center; }
+  .sub { text-align: center; color: var(--mut); margin: 0 auto 34px; max-width: 640px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
+  .card .ic { font-size: 28px; }
+  .card h3 { margin: 6px 0 4px; font-size: 18px; }
+  .card p { margin: 0; color: var(--mut); font-size: 15px; }
+
+  /* صور البرنامج */
+  .tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 18px; }
+  .tabs button { font: inherit; font-weight: 700; padding: 8px 16px; border-radius: 99px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+  .tabs button.on { background: var(--ac); border-color: var(--ac); color: #fff; }
+  .stage { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 10px; }
+  .stage img { border-radius: 12px; width: 100%; }
+  .stage p { text-align: center; color: var(--mut); margin: 10px 0 2px; font-size: 15px; }
+
+  /* الموبايل */
+  .split { display: grid; grid-template-columns: 1fr 1.2fr; gap: 34px; align-items: center; }
+  .phones { display: flex; gap: 14px; justify-content: center; }
+  .phones img { width: 31%; border-radius: 22px; border: 6px solid #0a1a44; box-shadow: 0 18px 40px #0003; }
+  .phones img:nth-child(2) { transform: translateY(-18px); }
+  ul.ticks { list-style: none; padding: 0; margin: 0; }
+  ul.ticks li { padding: 8px 0 8px; border-bottom: 1px dashed var(--line); }
+  ul.ticks li b { color: var(--ac); }
+  .wide-shot { border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 14px 34px #0002; }
+
+  .band { background: var(--soft); }
+  .req { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .req .card { text-align: center; }
+  .faq details { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; margin-bottom: 10px; }
+  .faq summary { font-weight: 800; cursor: pointer; }
+  .faq p { color: var(--mut); margin: 8px 0 0; }
+
+  .cta { background: radial-gradient(120% 120% at 15% 0%, var(--hero2), var(--hero1)); color: #fff; border-radius: 24px; padding: 40px 24px; text-align: center; }
+  .cta h2 { color: #fff; } .cta p { opacity: .85; margin: 0 0 22px; }
+  .cta .btns { justify-content: center; }
+  footer { text-align: center; color: var(--mut); font-size: 14px; padding: 30px 0 40px; }
+
+  @media (max-width: 860px) {
+    .hero-in, .split { grid-template-columns: 1fr; }
+    .shot-hero { transform: none; }
+    .grid { grid-template-columns: 1fr 1fr; }
+    .req { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } .phones img { border-width: 4px; border-radius: 16px; } }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="nav">
+      <div class="brand"><i>🔧</i>الصيانة</div>
+      <a class="small" href="#features">المميزات ↓</a>
+    </div>
+    <div class="hero-in">
+      <div>
+        <h1>محلك كله في برنامج واحد:<br>الصيانة، الوردية، المحافظ، والمخزن</h1>
+        <p class="lead">بدل الدفتر: كل جهاز داخل وخارج، كل جنيه في الدرج، وكل تحويل على المحافظ. والأرقام كلها على موبايلك وانت برّه المحل.</p>
+        <div class="btns">
+          <a class="btn pri" href="https://github.com/khalid374374/repair-desk/releases/download/repair-desk/RepairDesk-Setup.exe">⬇ نزّل البرنامج</a>
+          <a class="btn wa" href="https://wa.me/201032620498" target="_blank" rel="noopener">💬 كلّمنا واتساب</a>
+        </div>
+        <small class="note">ويندوز 10 و 11 · عربي وإنجليزي · بيتحدّث لوحده</small>
+      </div>
+      <img class="shot-hero" src="img/home.jpg" alt="الصفحة الرئيسية في برنامج الصيانة" width="1400" height="744">
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <h2>كل اللي المحل محتاجه</h2>
+    <p class="sub">معمول بإيد فني صيانة، على حسابات محل حقيقي، بالمصري ومن غير تعقيد.</p>
+    <div class="grid">
+      <div class="card"><div class="ic">🛠</div><h3>تذاكر الصيانة</h3><p>استلام الجهاز بالـ IMEI والقفل والحاجات اللي معاه وحالته، والعربون والباقي، وإيصال وملصق للجهاز. وتنبيه لو الجهاز جه قبل كده أو لسه في الضمان.</p></div>
+      <div class="card"><div class="ic">💡</div><h3>سعر مقترح وجودة القطعة</h3><p>اختار جودة الشاشة (اصلي، اوليد، هاي كوبي، GX...) والبرنامج يقولك اتصلّح بكام قبل كده على نفس الجهاز.</p></div>
+      <div class="card"><div class="ic">🏪</div><h3>الوردية والدرج</h3><p>المفروض في الدرج بالظبط: السحب والملاحظات والتحويلات وعمولاتها وبيع وشراء الأجهزة، والتقفيل بيقولك عجز ولا زيادة.</p></div>
+      <div class="card"><div class="ic">📲</div><h3>مراقب المحافظ</h3><p>تطبيق على تليفون فودافون كاش وانستاباي بيقرا الرسايل، وينبّهك لو تحويل ماتسجلش، ويقارن الرصيد ويصحّح حد الخط من رسالة الشركة.</p></div>
+      <div class="card"><div class="ic">📦</div><h3>المخزن والباركود</h3><p>قطع الغيار والإكسسوار، استيكر باركود لكل صنف، والقارئ بيضيف الصنف في الفاتورة على طول. وتنبيه لما صنف يقرب يخلص.</p></div>
+      <div class="card"><div class="ic">🧾</div><h3>فاتورة الإكسسوار</h3><p>بيع وخصم ومرتجع و"على الحساب"، وطباعة على رول 80 أو 58 مم أو A4.</p></div>
+      <div class="card"><div class="ic">💬</div><h3>واتساب للعميل</h3><p>رسالة لوحدها للعميل لما الجهاز يدخل الصيانة ولما يخلص، فيها المطلوب والميعاد.</p></div>
+      <div class="card"><div class="ic">👷</div><h3>الموظفين والصلاحيات</h3><p>كل موظف بالـ PIN بتاعه، وسجل لكل عملية باسمه ومحمي من التلاعب، وطلبات توافق عليها من موبايلك قبل ما تتسجل.</p></div>
+      <div class="card"><div class="ic">💾</div><h3>نسخ احتياطي ومزامنة</h3><p>نسخة محلية لوحدها وعلى Google Drive، وجهاز الصيانة يتربط بالكاشير على شبكة المحل ويشتغلوا على نفس البيانات.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2>شوف البرنامج</h2>
+    <p class="sub">صور حقيقية من البرنامج (ببيانات تجريبية).</p>
+    <div class="tabs" id="tabs">
+      <button class="on" data-i="home">الرئيسية</button><button data-i="repair">في الصيانة</button><button data-i="shift">الوردية</button><button data-i="lines">خطوط المحافظ</button><button data-i="invoice">الفاتورة</button><button data-i="stock">المخزن</button><button data-i="reports">التقارير</button><button data-i="glass-dark">الوضع الغامق</button>
+    </div>
+    <div class="stage"><img id="shot" src="img/home.jpg" alt="" width="1400" height="744"><p id="cap">الرئيسية: صافي النهاردة والشهر، الأجهزة المتأخرة، ومواعيد التسليم.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap split">
+    <div class="phones">
+      <img src="img/m-settings.jpg" alt="إعدادات تطبيق الموبايل" loading="lazy">
+      <img src="img/m-home.jpg" alt="الرئيسية في تطبيق الموبايل" loading="lazy">
+      <img src="img/m-appr.jpg" alt="طلبات الموظفين على الموبايل" loading="lazy">
+    </div>
+    <div>
+      <h2 style="text-align:start">المحل على موبايلك</h2>
+      <p class="sub" style="text-align:start;margin-inline:0">تطبيق أندرويد لصاحب المحل، بيتربط بالكاشير بـ QR مرة واحدة.</p>
+      <ul class="ticks">
+        <li><b>لحظي:</b> الدرج والمكسب والأجهزة أول ما حاجة تتغيّر.</li>
+        <li><b>إشعارات:</b> تقفيل الوردية، تحويل ماتسجلش، صنف قرب يخلص، وطلب من موظف.</li>
+        <li><b>توافق أو ترفض</b> طلبات الموظفين (سحب، مرتجع، مسح) من مكانك.</li>
+        <li><b>استلام جهاز</b> أو نقله من الموبايل، والكاشير بيسجّله.</li>
+        <li><b>قفل بالبصمة</b>، ونفس شكل البرنامج على الكمبيوتر.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2>استيكر لكل صنف</h2>
+    <p class="sub">الاسم والسعر والباركود على استيكر 40×25 مم (أو المقاس اللي عندك).</p>
+    <img class="wide-shot" src="img/tags.jpg" alt="استيكرات الباركود" loading="lazy" width="1200" height="1286" style="width:100%;max-width:min(760px,100%);margin:0 auto">
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>محتاج إيه علشان يشتغل؟</h2>
+    <p class="sub">مفيش سيرفر في المحل ولا حاجة تتركّب غير البرنامج.</p>
+    <div class="req">
+      <div class="card"><div class="ic">💻</div><h3>ويندوز 10 أو 11</h3><p>أي كمبيوتر في المحل.</p></div>
+      <div class="card"><div class="ic">🌐</div><h3>إنترنت</h3><p>للدخول والتحديثات والموبايل.</p></div>
+      <div class="card"><div class="ic">🖨</div><h3>طابعة إيصالات</h3><p>اختياري: رول 80 أو 58 مم.</p></div>
+      <div class="card"><div class="ic">📱</div><h3>أندرويد</h3><p>اختياري: لتطبيق صاحب المحل ومراقب المحافظ.</p></div>
+    </div>
+    <div class="faq" style="max-width:760px;margin:34px auto 0">
+      <details><summary>البيانات بتتحفظ فين؟</summary><p>على كمبيوتر المحل نفسه، ونسخة احتياطية لوحدها على الجهاز وعلى Google Drive لو حبيت. الموبايل بياخد ملخص الأرقام بس، من غير تليفونات العملاء.</p></details>
+      <details><summary>الموظف يقدر يلعب في الحسابات؟</summary><p>كل عملية متسجلة باسم اللي عملها في سجل محمي، والموظف مايقدرش يمسح ولا يقفل الوردية، والسحب أو المرتجع فوق الحد اللي تحدده بيستنى موافقتك.</p></details>
+      <details><summary>عندي جهاز للصيانة وجهاز للكاشير؟</summary><p>بيتربطوا على شبكة المحل بكود، وكل جهاز بيشوف التعديلات اللي على التاني على طول.</p></details>
+      <details><summary>البرنامج بيتحدّث إزاي؟</summary><p>لوحده: أول ما نسخة جديدة تنزل بيتحدّث وانت فاتحه.</p></details>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="cta">
+      <h2>جرّبه في محلك</h2>
+      <p>كلّمنا نشرحلك البرنامج ونساعدك في أول تشغيل.</p>
+      <div class="btns">
+        <a class="btn wa" href="https://wa.me/201032620498" target="_blank" rel="noopener">💬 واتساب</a>
+        <a class="btn out" href="https://github.com/khalid374374/repair-desk/releases/download/repair-desk/RepairDesk-Setup.exe">⬇ نزّل البرنامج</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>الصيانة — برنامج محلات صيانة الموبايل · © 2026</footer>
+
+<script>
+  const CAP = { home: 'الرئيسية: صافي النهاردة والشهر، الأجهزة المتأخرة، ومواعيد التسليم.', repair: 'الأجهزة اللي في الصيانة: السعر والقطع والصافي، ومين الفني.', shift: 'الوردية: المفروض في الدرج لحظة بلحظة، والتحويلات بعمولتها.', lines: 'خطوط المحافظ: الحد الشهري لكل خط، ورصيده من رسايل التليفون.', invoice: 'فاتورة الإكسسوار بالأصناف والباركود.', stock: 'المخزن: قطع الغيار والإكسسوار وتنبيه النقص.', reports: 'التقارير: صافي الصيانة والإكسسوار بالشهر.', 'glass-dark': 'نفس البرنامج بالوضع الغامق و Liquid Glass.' };
+  document.getElementById('tabs').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+    document.getElementById('shot').src = 'img/' + b.dataset.i + '.jpg';
+    document.getElementById('cap').textContent = CAP[b.dataset.i] || '';
+  });
+</script>
+</body>
+</html>
