@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سياسة الخصوصية — الصيانة</title>
+<meta name="description" content="سياسة الخصوصية لبرنامج الصيانة وتطبيق صاحب المحل ومراقب المحافظ: بنجمع إيه، وبيتحفظ فين، وإزاي تمسحه.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #eef3fb; --card: #ffffff; --ink: #0a1a44; --mut: #55648a; --line: #d9e2f1; --ac: #2f7cf6; --hero1: #0a1a44; --hero2: #16407f; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0b1222; --card: #141d33; --ink: #e7ecf7; --mut: #93a1c2; --line: #24314f; --ac: #4f8ff7; --hero1: #071030; --hero2: #12306a; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Cairo', system-ui, Tahoma, sans-serif; line-height: 1.85; overflow-x: hidden; }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 16px; }
+  header { background: radial-gradient(120% 90% at 85% 0%, var(--hero2), var(--hero1)); color: #fff; padding: 22px 0 46px; }
+  header a { color: #fff; text-decoration: none; font-weight: 800; }
+  header h1 { margin: 26px 0 4px; font-size: clamp(26px, 5vw, 38px); font-weight: 900; }
+  header p { margin: 0; opacity: .85; color: #fff !important; }
+  main { padding: 30px 0 50px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px 20px; margin-bottom: 14px; }
+  h2 { margin: 0 0 6px; font-size: 20px; font-weight: 900; }
+  p, li { color: var(--mut); font-size: 15.5px; }
+  p { margin: 6px 0; } ul { margin: 6px 0; padding-inline-start: 22px; }
+  b { color: var(--ink); }
+  a { color: var(--ac); }
+  footer { text-align: center; color: var(--mut); font-size: 14px; padding: 0 0 40px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a href="./">← الصيانة</a>
+    <h1>سياسة الخصوصية</h1>
+    <p>برنامج الصيانة للكمبيوتر، وتطبيق "الصيانة" لصاحب المحل، وتطبيق مراقب المحافظ. آخر تحديث: 31 أكتوبر 2026.</p>
+  </div>
+</header>
+<main class="wrap">
+  <div class="card">
+    <h2>باختصار</h2>
+    <ul>
+      <li>بيانات محلك (التذاكر، الوردية، المخزن، العملاء) <b>محفوظة على كمبيوتر المحل نفسه</b>.</li>
+      <li>السيرفر بتاعنا بيشيل حسابك، وملخص لموبايلك، والطلبات اللي بين الموبايل والكاشير.</li>
+      <li><b>مابنبيعش ولا بنشارك</b> بياناتك مع حد علشان إعلانات أو أي غرض تاني.</li>
+      <li>تقدر تطلب مسح حسابك وكل بياناته من السيرفر في أي وقت.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>1. برنامج الكمبيوتر</h2>
+    <p>كل اللي بتسجّله في البرنامج بيتحفظ في فولدر على كمبيوتر المحل (افتراضي <bdi dir="ltr">C:\RepairLog</bdi>): التذاكر وبيانات العملاء والأجهزة وصورها، والوردية، والمخزن، والفواتير، وسجل العمليات. مابيتبعتش للسيرفر.</p>
+    <p>النسخ الاحتياطي على Google Drive <b>اختياري</b>، وبيتحفظ على حساب Google بتاعك انت، ومش بنقدر نشوفه.</p>
+    <p>واتساب للعميل <b>اختياري</b>: بيتبعت من رقم المحل بعد ما تربطه، وبيانات الربط على كمبيوتر المحل بس.</p>
+  </div>
+
+  <div class="card">
+    <h2>2. اللي بيروح السيرفر</h2>
+    <p>السيرفر على خدمة Supabase، وبيشيل:</p>
+    <ul>
+      <li><b>الحساب:</b> اسم المستخدم والإيميل والباسورد (متشفّر)، ومعرّف الجهاز علشان الترخيص يبقى على جهاز واحد، وعنوان الإنترنت (IP) علشان نحمي الدخول من التخمين.</li>
+      <li><b>الأخطاء التقنية:</b> رسالة الخطأ ونسخة البرنامج علشان نصلّحها، من غير بيانات العملاء.</li>
+      <li><b>ملخص لتطبيق صاحب المحل</b> (لو ربطته): أرقام الدرج والوردية والمكسب، والأجهزة المفتوحة (الجهاز والعميل وتليفونه علشان تقدر تعدّل من الموبايل)، والمخزن، وأسماء العملاء المتسجلين في الوردية (علشان الفاتورة "على الحساب"). أكواد قفل الأجهزة <b>مابتتبعتش</b> أبدًا.</li>
+      <li><b>الطلبات</b> اللي بتعملها من الموبايل (استلام، فاتورة، مخزن...) لحد ما الكاشير يسجّلها، وبتتمسح بعد أسبوع.</li>
+      <li><b>عنوان الإشعارات</b> (Firebase) علشان يوصلك إشعار على الموبايل.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>3. تطبيق مراقب المحافظ</h2>
+    <p>التطبيق ده بيتسطّب على تليفون المحافظ بتاع المحل بس، وبيطلب إذن قراية الرسايل والإشعارات علشان يقارن التحويلات بالوردية.</p>
+    <ul>
+      <li>بياخد <b>رسايل وإشعارات الفلوس بس</b> (من المحافظ والبنوك وأسماء الشركات، فيها مبلغ). الرسايل الشخصية ورسايل الأرقام العادية <b>مابيقراهاش</b>.</li>
+      <li>نص الرسالة بيتبعت لكاشير المحل عن طريق السيرفر، وبيتمسح من السيرفر بعد أسبوع.</li>
+      <li>تقدر تقفل أي محفظة أو شريحة من التطبيق، ووقتها رسايلها مابتتبعتش خالص.</li>
+      <li>بيبعت كمان نسبة البطارية ونسخة التطبيق علشان الكاشير يعرف لو التليفون فصل.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>4. تطبيق صاحب المحل</h2>
+    <ul>
+      <li>بيعرض الملخص اللي فوق، وبيبعت طلباتك للكاشير.</li>
+      <li><b>الكاميرا</b> لقراية كود الربط والباركود بس، ومفيش صور بتتحفظ ولا بتتبعت.</li>
+      <li><b>البصمة</b> بتتأكد على الموبايل نفسه، ومش بنشوفها.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>5. المسح والتواصل</h2>
+    <p>تقدر تفصل أي موبايل من الكاشير أو من الموبايل نفسه، والملخص بتاعه بيتقفل على طول. ولو عايز تمسح حسابك وكل بياناته من السيرفر، كلّمنا وهنمسحها في خلال 7 أيام:</p>
+    <ul>
+      <li>واتساب: <a href="https://wa.me/201032620498" target="_blank" rel="noopener"><bdi dir="ltr">+20 103 262 0498</bdi></a></li>
+      <li>إيميل: <a href="mailto:repairdesk.app@gmail.com"><bdi dir="ltr">repairdesk.app@gmail.com</bdi></a></li>
+    </ul>
+    <p>البيانات اللي على كمبيوتر محلك ملكك، وبتتمسح من البرنامج أو من الفولدر نفسه.</p>
+    <p>البرنامج والتطبيقات معمولين لأصحاب المحلات، ومش موجّهين للأطفال. لو غيّرنا السياسة دي، هنحدّث التاريخ اللي فوق.</p>
+  </div>
+</main>
+<footer><a href="./">الصيانة — برنامج محلات صيانة الموبايل</a></footer>
+</body>
+</html>
