@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>حالة جهازك</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* صفحة حالة الجهاز (خالد 2026-11-06): العميل بيمسح الـ QR اللي على الإيصال. الكود بعد # فمابيروحش لأي سيرفر غير gateway.
+     بتعرض اسم المحل والجهاز والحالة والمواعيد بس (من غير اسم العميل ولا تليفونه ولا فلوس). */
+  :root { --bg: #eef3fb; --card: #ffffff; --ink: #0a1a44; --mut: #55648a; --line: #d9e2f1; --ac: #2f7cf6; --gr: #1f9d5c; --or: #d98a12; --pu: #7a55d8; --rd: #d6455f; --hero1: #0a1a44; --hero2: #16407f; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0b1222; --card: #141d33; --ink: #e7ecf7; --mut: #93a1c2; --line: #24314f; --ac: #4f8ff7; --gr: #3ccf7f; --or: #f0a63a; --pu: #a68bff; --rd: #ff6b81; --hero1: #071030; --hero2: #12306b; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Cairo', system-ui, Tahoma, sans-serif; line-height: 1.7; min-height: 100vh; }
+  .top { background: radial-gradient(120% 90% at 85% 0%, var(--hero2), var(--hero1)); color: #fff; padding: 26px 16px 64px; text-align: center; }
+  .top i { font-style: normal; display: inline-grid; place-items: center; width: 54px; height: 54px; border-radius: 16px; background: #ffffff1f; font-size: 28px; }
+  .top h1 { margin: 10px 0 0; font-size: 22px; font-weight: 900; overflow-wrap: anywhere; }
+  .top p { margin: 2px 0 0; opacity: .8; font-size: 14px; }
+  .card { max-width: 520px; margin: -40px auto 24px; background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 22px 18px; box-shadow: 0 18px 40px #0a1a4422; margin-inline: 16px; }
+  @media (min-width: 552px) { .card { margin-inline: auto; } }
+  .dev { text-align: center; } .dev b { display: block; font-size: 24px; font-weight: 900; overflow-wrap: anywhere; } .dev span { color: var(--mut); font-size: 14px; }
+  .now { margin: 18px 0 6px; text-align: center; padding: 14px 12px; border-radius: 16px; font-weight: 900; font-size: 20px; color: #fff; background: var(--c, var(--ac)); }
+  .now small { display: block; font-weight: 600; font-size: 14px; opacity: .92; }
+  ol { list-style: none; margin: 18px 0 0; padding: 0; }
+  li { display: flex; align-items: center; gap: 12px; padding: 9px 0; color: var(--mut); font-weight: 700; position: relative; }
+  li .d { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--line); background: var(--card); font-size: 14px; z-index: 1; }
+  li:not(:last-child)::after { content: ''; position: absolute; inset-inline-start: 14px; top: 39px; height: calc(100% - 30px); width: 2px; background: var(--line); }
+  li.ok { color: var(--ink); } li.ok .d { background: var(--gr); border-color: var(--gr); color: #fff; } li.ok:not(:last-child)::after { background: var(--gr); }
+  li.cur { color: var(--ink); font-weight: 900; } li.cur .d { background: var(--c, var(--ac)); border-color: var(--c, var(--ac)); color: #fff; box-shadow: 0 0 0 5px color-mix(in srgb, var(--c, var(--ac)) 22%, transparent); }
+  .info { margin-top: 16px; border-top: 1px dashed var(--line); padding-top: 12px; font-size: 15px; } .info div { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; } .info span { color: var(--mut); }
+  .msg { text-align: center; color: var(--mut); padding: 18px 6px; font-weight: 700; }
+  .foot { text-align: center; color: var(--mut); font-size: 12.5px; margin: 0 16px 24px; }
+  .sk { height: 18px; border-radius: 9px; background: linear-gradient(90deg, var(--line), color-mix(in srgb, var(--line) 40%, var(--card)), var(--line)); background-size: 200% 100%; animation: sh 1.2s infinite linear; margin: 10px auto; }
+  @keyframes sh { to { background-position: -200% 0; } }
+  @media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+</style>
+</head>
+<body>
+<div class="top"><i>🔧</i><h1 id="shop">حالة جهازك</h1><p id="sub">من الإيصال</p></div>
+<div class="card" id="card"><div class="sk" style="width:60%"></div><div class="sk" style="width:40%"></div><div class="sk" style="height:56px"></div><div class="sk"></div><div class="sk"></div></div>
+<p class="foot" id="foot"></p>
+<script>
+(function () {
+  var GW = 'https://sgqscttmkhmiqyjsuvio.supabase.co/functions/v1/gateway';
+  var KEY = 'sb_publishable_y11CnpnNLb6qIx00LVUHJQ_BzzQNXim';   // مفتاح عام (نفس اللي في البرنامج والتطبيق)
+  var STEPS = [['waiting', 'استلمنا جهازك', '#6a7a99'], ['processing', 'في الصيانة', '#2f7cf6'], ['parts', 'مستني قطعة', '#7a55d8'], ['ready', 'جاهز للاستلام', '#1f9d5c'], ['picked', 'اتسلّم', '#1f9d5c']];
+  var NOW = { waiting: ['📥 استلمنا جهازك', 'وهيدخل الصيانة قريب'], processing: ['⚙️ جهازك في الصيانة', 'شغالين عليه دلوقتي'], parts: ['📦 جهازك مستني قطعة', 'هنكمّل أول ما القطعة توصل'],
+    ready: ['✅ جهازك جاهز', 'تقدر تعدّي تستلمه في أي وقت، وهات الإيصال معاك'], picked: ['👍 اتسلّم', 'شكرًا لثقتك'], rejected: ['ماتصلّحش', 'تقدر تعدّي تستلمه في أي وقت'] };
+  var $ = function (id) { return document.getElementById(id); };
+  var h = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+  var disp = function (iso) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || '')); return m ? m[3] + '-' + m[2] + '-' + m[1] : ''; };
+  window.addEventListener('hashchange', function () { location.reload(); });   // كود تاني والصفحة مفتوحة
+  var k = (location.hash || '').replace(/^#/, '').trim();
+  function fail(t) { $('card').innerHTML = '<div class="msg">' + h(t) + '</div>'; }
+  if (!/^[A-Za-z0-9]{16}$/.test(k)) return fail('الرابط ناقص. امسح الـ QR اللي على الإيصال تاني.');
+  fetch(GW, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: KEY }, body: JSON.stringify({ action: 'track-get', k: k }) })
+    .then(function (r) { return r.json().catch(function () { return {}; }); })
+    .then(function (j) {
+      if (!j || !j.ok || !j.data) return fail((j && j.error) || 'مش قادرين نجيب حالة الجهاز دلوقتي. جرّب كمان شوية.');
+      var d = j.data, st = d.st || 'waiting', step = STEPS.map(function (x) { return x[0]; }), color = '#2f7cf6';
+      STEPS.forEach(function (x) { if (x[0] === st) color = x[2]; }); if (st === 'rejected') color = '#d6455f';
+      if (d.s) { $('shop').textContent = d.s; document.title = 'حالة جهازك — ' + d.s; }
+      $('sub').textContent = d.no ? 'إيصال رقم #' + d.no : 'من الإيصال';
+      var path = st === 'parts' ? ['waiting', 'processing', 'parts', 'ready', 'picked'] : ['waiting', 'processing', 'ready', 'picked'];
+      var at = path.indexOf(st);
+      var list = st === 'rejected' ? '' : '<ol>' + path.map(function (p, i) {
+        var name = STEPS[step.indexOf(p)][1], cls = i < at ? 'ok' : i === at ? 'cur' : '';
+        return '<li class="' + cls + '"><span class="d">' + (i < at ? '✓' : i + 1) + '</span>' + h(name) + '</li>'; }).join('') + '</ol>';
+      var info = [];
+      if (st === 'parts' && d.pd) info.push(['القطعة هتوصل', disp(d.pd)]);
+      if ((st === 'processing' || st === 'waiting' || st === 'parts') && d.ed) info.push(['الميعاد المتوقع', disp(d.ed)]);
+      var n = NOW[st] || NOW.waiting;
+      $('card').style.setProperty('--c', color);
+      $('card').innerHTML = '<div class="dev"><b>' + h(d.dev || 'جهازك') + '</b></div>'
+        + '<div class="now">' + h(n[0]) + '<small>' + h(n[1]) + '</small></div>' + list
+        + (info.length ? '<div class="info">' + info.map(function (x) { return '<div><span>' + h(x[0]) + '</span><b>' + h(x[1]) + '</b></div>'; }).join('') + '</div>' : '');
+      if (j.at) { var t = new Date(j.at); if (!isNaN(t)) $('foot').textContent = 'آخر تحديث: ' + t.toLocaleString('ar-EG', { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }); }
+    })
+    .catch(function () { fail('مفيش نت، أو السيرفر مش متاح. جرّب تاني.'); });
+})();
+</script>
+</body>
+</html>
