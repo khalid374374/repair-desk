@@ -35,11 +35,30 @@
   .sk { height: 18px; border-radius: 9px; background: linear-gradient(90deg, var(--line), color-mix(in srgb, var(--line) 40%, var(--card)), var(--line)); background-size: 200% 100%; animation: sh 1.2s infinite linear; margin: 10px auto; }
   @keyframes sh { to { background-position: -200% 0; } }
   @media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+  /* الإيصال على الموبايل + توقيع العميل (2026-11-07): بيظهر بس لو المحل فاتح "الإيصال على موبايل العميل" */
+  .rc, .sg { margin-top: 0 !important; } .rc h2 { margin: 0 0 10px; font-size: 18px; font-weight: 900; display: flex; align-items: center; gap: 8px; }
+  .rc .rw { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 15px; } .rc .rw:last-of-type { border-bottom: 0; }
+  .rc .rw span { color: var(--mut); } .rc .rw b { text-align: end; overflow-wrap: anywhere; } .rc .rw.tot b { font-size: 17px; } .rc .rw.due b { color: var(--rd); font-size: 18px; }
+  .rc .rw b .num { direction: ltr; unicode-bidi: isolate; color: inherit; font-weight: inherit; }
+  .rc .tm { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--line) 45%, var(--card)); font-size: 13.5px; color: var(--ink); white-space: pre-line; line-height: 1.8; }
+  .rc .ph { margin-top: 10px; text-align: center; color: var(--mut); font-size: 13.5px; } .rc .ph a { color: var(--ac); font-weight: 800; text-decoration: none; }
+  .sg h2 { margin: 0 0 4px; font-size: 18px; font-weight: 900; } .sg p { margin: 0 0 10px; color: var(--mut); font-size: 14px; }
+  .pad { position: relative; border: 2px dashed var(--line); border-radius: 16px; background: #fff; touch-action: none; overflow: hidden; }
+  .pad canvas { display: block; width: 100%; height: 170px; cursor: crosshair; }
+  .pad em { position: absolute; inset: 0; display: grid; place-items: center; color: #9aa6c0; font-style: normal; font-weight: 700; pointer-events: none; }
+  .pad.on em { display: none; }
+  .ok-row { display: flex; gap: 10px; align-items: flex-start; margin: 12px 0; font-size: 14.5px; font-weight: 700; cursor: pointer; } .ok-row input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--gr); flex: none; }
+  .btns { display: flex; gap: 10px; } .btns button { flex: 1; font: inherit; font-weight: 800; font-size: 16px; padding: 12px; border-radius: 14px; border: 0; cursor: pointer; }
+  .b-go { background: var(--gr); color: #fff; } .b-go:disabled { opacity: .45; cursor: not-allowed; } .b-clr { background: color-mix(in srgb, var(--line) 70%, var(--card)); color: var(--ink); flex: 0 0 auto !important; padding-inline: 18px !important; }
+  .sg-err { color: var(--rd); font-weight: 700; font-size: 14px; min-height: 20px; margin-top: 8px; text-align: center; }
+  .sg-done { text-align: center; padding: 6px 0; } .sg-done b { display: block; font-size: 19px; color: var(--gr); font-weight: 900; } .sg-done span { color: var(--mut); font-size: 14px; }
 </style>
 </head>
 <body>
 <div class="top"><i>🔧</i><h1 id="shop">حالة جهازك</h1><p id="sub">من الإيصال</p></div>
 <div class="card" id="card"><div class="sk" style="width:60%"></div><div class="sk" style="width:40%"></div><div class="sk" style="height:56px"></div><div class="sk"></div><div class="sk"></div></div>
+<div class="card rc" id="rc" hidden></div>
+<div class="card sg" id="sg" hidden></div>
 <p class="foot" id="foot"></p>
 <script>
 (function () {
@@ -77,8 +96,59 @@
         + '<div class="now">' + h(n[0]) + '<small>' + h(n[1]) + '</small></div>' + list
         + (info.length ? '<div class="info">' + info.map(function (x) { return '<div><span>' + h(x[0]) + '</span><b>' + h(x[1]) + '</b></div>'; }).join('') + '</div>' : '');
       if (j.at) { var t = new Date(j.at); if (!isNaN(t)) $('foot').textContent = 'آخر تحديث: ' + t.toLocaleString('ar-EG', { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }); }
+      if (d.rc && typeof d.rc === 'object') receipt(d, j.signed);
     })
     .catch(function () { fail('مفيش نت، أو السيرفر مش متاح. جرّب تاني.'); });
+
+  // ===== الإيصال كامل زي الورق =====
+  function money(v, cur) { var n = Number(v) || 0; return '<span class="num">' + h(n.toLocaleString('en-US', { maximumFractionDigits: 2 })) + '</span>' + (cur ? ' ' + h(cur) : ''); }
+  function whenAr(at) { var t = new Date(at); return isNaN(t) ? '' : t.toLocaleString('ar-EG', { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }); }
+  function receipt(d, signed) {
+    var r = d.rc, c = r.cur || '', rows = [];
+    if (r.cn) rows.push(['اسم العميل', h(r.cn)]);
+    if (r.din) rows.push(['تاريخ الاستلام', '<span class="num">' + h(disp(r.din)) + '</span>']);
+    (Array.isArray(r.it) ? r.it : []).forEach(function (i) { rows.push([(r.it.length > 1 ? '▫ ' : 'الصيانة: ') + h(i.t || '—'), i.p > 0 ? money(i.p, c) : '—']); });
+    var html = '<h2>🧾 الإيصال' + (d.no ? ' <small style="color:var(--mut);font-weight:700">#' + h(d.no) + '</small>' : '') + '</h2>'
+      + rows.map(function (x) { return '<div class="rw"><span>' + x[0] + '</span><b>' + x[1] + '</b></div>'; }).join('')
+      + '<div class="rw tot"><span>قيمة التصليح</span><b>' + money(r.pr, c) + '</b></div>'
+      + '<div class="rw"><span>المدفوع</span><b>' + money(r.pd, c) + '</b></div>'
+      + (r.wv > 0 ? '<div class="rw"><span>خصم</span><b>' + money(r.wv, c) + '</b></div>' : '')
+      + '<div class="rw ' + (r.rem > 0 ? 'due' : '') + '"><span>' + (r.rem > 0 ? 'الباقي' : 'الحساب') + '</span><b>' + (r.rem > 0 ? money(r.rem, c) : 'خالص ✓') + '</b></div>'
+      + (r.war > 0 ? '<div class="rw"><span>الضمان</span><b>' + h(r.war) + ' يوم</b></div>' : '')
+      + (r.acc && r.acc.length ? '<div class="rw"><span>استلمنا معاه</span><b>' + h(r.acc.join('، ')) + '</b></div>' : '')
+      + (r.cd && r.cd.length ? '<div class="rw"><span>حالة الجهاز</span><b>' + h(r.cd.join('، ')) + '</b></div>' : '')
+      + (r.tm ? '<div class="tm">📜 ' + h(r.tm) + '</div>' : '')
+      + (r.ph || r.ad ? '<div class="ph">' + (r.ad ? h(r.ad) : '') + (r.ph && r.ad ? '<br>' : '') + (r.ph ? '📞 <a dir="ltr" href="tel:' + h(String(r.ph).replace(/[^\d+]/g, '')) + '">' + h(r.ph) + '</a>' : '') + '</div>' : '');
+    $('rc').innerHTML = html; $('rc').hidden = false;
+    if (d.sg === 1) signBox(signed);
+  }
+  // ===== التوقيع: مرة واحدة، والسيرفر مابيقبلش توقيع تاني =====
+  function signBox(signed) {
+    var box = $('sg'); box.hidden = false;
+    if (signed) { box.innerHTML = '<div class="sg-done"><b>✍️ وقّعت على الإيصال</b><span>' + h(whenAr(signed)) + '</span></div>'; return; }
+    box.innerHTML = '<h2>✍️ وقّع على الإيصال</h2><p>بصباعك جوه المربع. توقيعك بيوصل المحل على طول، ومش هتقدر تغيّره بعد كده.</p>'
+      + '<div class="pad" id="pad"><canvas id="cv" width="600" height="200"></canvas><em>وقّع هنا</em></div>'
+      + '<label class="ok-row"><input type="checkbox" id="agree"><span>قريت الإيصال' + ($('rc').querySelector('.tm') ? ' والشروط' : '') + ' وموافق عليهم</span></label>'
+      + '<div class="btns"><button class="b-clr" id="clr" type="button">امسح</button><button class="b-go" id="go" type="button" disabled>✓ وقّع</button></div><div class="sg-err" id="err"></div>';
+    var cv = $('cv'), cx = cv.getContext('2d'), drawn = 0, last = null, pad = $('pad');
+    cx.lineWidth = 3.2; cx.lineCap = 'round'; cx.lineJoin = 'round'; cx.strokeStyle = '#0a1a44';
+    function pt(e) { var b = cv.getBoundingClientRect(); return { x: (e.clientX - b.left) * cv.width / b.width, y: (e.clientY - b.top) * cv.height / b.height }; }
+    function upd() { $('go').disabled = !(drawn > 12 && $('agree').checked); }
+    cv.addEventListener('pointerdown', function (e) { e.preventDefault(); cv.setPointerCapture(e.pointerId); last = pt(e); cx.beginPath(); cx.arc(last.x, last.y, 1.4, 0, 7); cx.fillStyle = '#0a1a44'; cx.fill(); pad.classList.add('on'); });
+    cv.addEventListener('pointermove', function (e) { if (!last) return; var p = pt(e); cx.beginPath(); cx.moveTo(last.x, last.y); cx.lineTo(p.x, p.y); cx.stroke(); drawn++; last = p; upd(); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { cv.addEventListener(n, function () { last = null; }); });
+    $('agree').onchange = upd;
+    $('clr').onclick = function () { cx.clearRect(0, 0, cv.width, cv.height); drawn = 0; pad.classList.remove('on'); upd(); };
+    $('go').onclick = function () {
+      var b = $('go'); b.disabled = true; $('err').textContent = '';
+      var url = cv.toDataURL('image/png');
+      if (url.length > 78000) { var s = document.createElement('canvas'); s.width = 360; s.height = 120; s.getContext('2d').drawImage(cv, 0, 0, 360, 120); url = s.toDataURL('image/png'); }
+      fetch(GW, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: KEY }, body: JSON.stringify({ action: 'track-sign', k: k, sig: url }) })
+        .then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function (j) { if (j && (j.ok || j.signed)) return signBox(j.signed || new Date().toISOString()); $('err').textContent = (j && j.error) || 'ماعرفناش نبعت التوقيع. جرّب تاني.'; upd(); })
+        .catch(function () { $('err').textContent = 'مفيش نت. جرّب تاني.'; upd(); });
+    };
+  }
 })();
 </script>
 </body>
