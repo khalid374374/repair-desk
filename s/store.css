@@ -193,3 +193,6 @@ input:checked + .ck, .ck.on { background: var(--ac); border-color: var(--ac); co
 .leaflet-container { font-family: inherit !important; }
 .bdg[hidden] { display: none; } .bdg { font-style: normal; }
 #toast { opacity: 0; pointer-events: none; } #toast.on { opacity: 1; pointer-events: auto; }
+/* السجل التجاري والبطاقة الضريبية */
+.foot .legal { display: inline-block; margin-bottom: 4px; opacity: .85; }
+.legal-rows { display: grid; gap: 8px; } .legal-rows div { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; } .legal-rows span { color: var(--mut); font-weight: 700; } .legal-rows b { font-weight: 900; }

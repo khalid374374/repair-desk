@@ -1,6 +1,6 @@
 /* متجر المحل: الصفحة تفتح بسرعة ومن غير نت (ملفات الصفحة + آخر كتالوج + الصور اللي اتشافت).
    الطلبات والتتبّع (gateway) مابتتخزنش أبدًا. غيّر V مع كل تعديل في ملفات الصفحة. */
-var V = 'rds-1', SHELL = ['./', './index.html', './store.css', './store.js'];
+var V = 'rds-2', SHELL = ['./', './index.html', './store.css', './store.js'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(V).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); })); });
 self.addEventListener('activate', function (e) { e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k !== V && k.indexOf('rds-') === 0; }).map(function (k) { return caches.delete(k); })); }).then(function () { return self.clients.claim(); })); });
 self.addEventListener('fetch', function (e) {

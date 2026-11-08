@@ -133,10 +133,12 @@
     if (s.repair && s.repair.on !== false) c.push(['#/repair?ask=1', '#1f5fae', '💬', 'استشارة فنية', 'اسأل الفني ببلاش']);
     return c.length ? '<div class="sec"><b>🛠 خدمات المحل</b></div><div class="svc">' + c.map(function (x) { return '<button data-go="' + x[0] + '"><span class="si" style="--c:' + x[1] + '">' + x[2] + '</span><span><b>' + x[3] + '</b><small>' + x[4] + '</small></span></button>'; }).join('') + '</div>' : '';
   }
+  // السجل التجاري والبطاقة الضريبية (لو المحل كتبهم في الإعدادات)
+  function legalTxt() { var s = C.shop || {}; var a = []; if (s.cr) a.push('سجل تجاري <span class="num">' + esc(s.cr) + '</span>'); if (s.tax) a.push('بطاقة ضريبية <span class="num">' + esc(s.tax) + '</span>'); return a.length ? '<span class="legal">' + a.join(' · ') + '</span><br>' : ''; }
   function footHTML() {
     var s = C.shop;
     return '<div class="foot">' + (s.addr ? '📍 ' + esc(s.addr) + '<br>' : '') + (s.phone ? '📞 <a href="tel:' + esc(s.phone) + '" class="num">' + esc(s.phone) + '</a>' + (hoursTxt() ? ' · 🕘 ' + esc(hoursTxt()) : '') + '<br>' : '')
-      + '<a href="#/info">الشروط والاسترجاع والضمان</a><br><span style="opacity:.7">متجر بيشتغل بـ Repair Desk</span></div>';
+      + legalTxt() + '<a href="#/info">الشروط والاسترجاع والضمان</a><br><span style="opacity:.7">متجر بيشتغل بـ Repair Desk</span></div>';
   }
   function cats() {
     var list = (C.cats || []).filter(function (c) { return visible().some(function (p) { return p.c === c.id; }); });
@@ -409,10 +411,11 @@
     var t = app.querySelector('[data-tel]'); if (t) t.onclick = function () { location.href = 'tel:' + C.shop.phone; };
     var m = app.querySelector('[data-map]'); if (m) m.onclick = function () { var c = C.del && C.del.center; open(C.shop.map || ('https://www.google.com/maps?q=' + c.lat + ',' + c.lng), '_blank'); };
   }
+  function legalBox() { var s = C.shop || {}; if (!s.cr && !s.tax) return ''; return '<div class="box"><h4>🏢 بيانات المحل</h4><div class="legal-rows">' + (s.name ? '<div><span>الاسم</span><b>' + esc(s.name) + '</b></div>' : '') + (s.cr ? '<div><span>رقم السجل التجاري</span><b class="num">' + esc(s.cr) + '</b></div>' : '') + (s.tax ? '<div><span>رقم البطاقة الضريبية</span><b class="num">' + esc(s.tax) + '</b></div>' : '') + '</div></div>'; }
   function infoPage() {
     var t = C.terms || {};
     var blk = function (h, x) { return x ? '<div class="box"><h4>' + h + '</h4><div class="terms">' + esc(x) + '</div></div>' : ''; };
-    shell(barHTML('📜 الشروط') + blk('↩ الاسترجاع والاستبدال', t.ret) + blk('🛡 الضمان', t.war) + blk('🚚 التوصيل', t.del) + blk('🔒 بياناتك', t.priv || 'بنستخدم اسمك وتليفونك وعنوانك ومكانك علشان طلبك بس، ومابنديهمش لحد.') + footHTML(), '#/svc');
+    shell(barHTML('📜 الشروط') + blk('↩ الاسترجاع والاستبدال', t.ret) + blk('🛡 الضمان', t.war) + blk('🚚 التوصيل', t.del) + blk('🔒 بياناتك', t.priv || 'بنستخدم اسمك وتليفونك وعنوانك ومكانك علشان طلبك بس، ومابنديهمش لحد.') + legalBox() + footHTML(), '#/svc');
   }
 
   /* ---------- طلباتي والتتبّع ---------- */
