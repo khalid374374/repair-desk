@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a1a44">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>المتجر</title>
+<!-- متجر المحل (خالد 2026-11-08، docs/store-plan.md): صفحة واحدة لكل المحلات. المحل من ?s=<اسم اللينك> أو من الدومين الخاص.
+     المنتجات من ملف عام (Storage) والطلب من gateway، وبتتثبّت كتطبيق باسم المحل ولوجوه (manifest من Storage + sw.js). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://sgqscttmkhmiqyjsuvio.supabase.co" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="store.css">
+<link rel="manifest" id="mf">
+<link rel="apple-touch-icon" id="ati">
+</head>
+<body>
+<div id="app" class="boot">
+  <div class="splash"><div class="sp-logo">🛍</div><div class="sp-bar"><i></i></div></div>
+</div>
+<div id="toast"></div>
+<script src="store.js"></script>
+</body>
+</html>

@@ -56,6 +56,15 @@
   .stage p { text-align: center; color: var(--mut); margin: 10px 0 2px; font-size: 15px; }
 
   /* الموبايل */
+
+  .navl { display: flex; gap: 14px; flex-wrap: wrap; }
+  .dls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 18px 0 10px; }
+  .dlc { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 20px 14px; border-radius: 20px; background: var(--card, #fff); border: 1px solid var(--line); text-decoration: none; color: inherit; text-align: center; box-shadow: 0 10px 26px #0a1a4412; transition: transform .2s, box-shadow .2s; }
+  .dlc:hover { transform: translateY(-3px); box-shadow: 0 16px 34px #0a1a4422; }
+  .dlc i { font-style: normal; font-size: 40px; } .dlc b { font-size: 17px; } .dlc small { color: var(--mut, #5b6a88); font-size: 13px; }
+  .dlc span { margin-top: 8px; padding: 9px 18px; border-radius: 12px; background: linear-gradient(135deg, #2b7be0, #1f5fae); color: #fff; font-weight: 800; }
+  .cap2 { text-align: center; color: var(--mut, #5b6a88); font-size: 14px; margin-top: 10px; }
+  @media (max-width: 760px) { .dls { grid-template-columns: 1fr; } .navl { gap: 10px; } }
   .split { display: grid; grid-template-columns: 1fr 1.2fr; gap: 34px; align-items: center; }
   .phones { display: flex; gap: 14px; justify-content: center; }
   .phones img { width: 31%; border-radius: 22px; border: 6px solid #0a1a44; box-shadow: 0 18px 40px #0003; }
@@ -208,11 +217,11 @@
   <div class="wrap">
     <div class="nav">
       <div class="brand"><i>🔧</i>الصيانة</div>
-      <a class="small" href="#features">المميزات ↓</a>
+      <span class="navl"><a class="small" href="#store">🛒 المتجر</a><a class="small" href="#downloads">⬇ التحميلات</a><a class="small" href="#features">المميزات ↓</a></span>
     </div>
     <div class="hero-in">
       <div>
-        <h1 class="up">محلك كله في برنامج واحد:<br><span class="hl">الصيانة، الوردية، المحافظ، والمخزن</span></h1>
+        <h1 class="up">محلك كله في برنامج واحد:<br><span class="hl">الصيانة، الوردية، المحافظ، المخزن، ومتجر أونلاين</span></h1>
         <p class="lead up" style="--d:.12s">بدل الدفتر: كل جهاز داخل وخارج، كل جنيه في الدرج، وكل تحويل على المحافظ. والأرقام كلها على موبايلك وانت برّه المحل.</p>
         <div class="btns up" style="--d:.24s">
           <a class="btn pri" href="https://github.com/khalid374374/repair-desk/releases/download/repair-desk/RepairDesk-Setup.exe">⬇ نزّل البرنامج</a>
@@ -233,7 +242,7 @@
 
 <div class="wrap"><div class="facts rv">
   <div><b>12+</b><span>جزء في برنامج واحد</span></div>
-  <div><b>2</b><span>تطبيق أندرويد للموبايل</span></div>
+  <div><b>2</b><span>تطبيق أندرويد + متجر لعملاك</span></div>
   <div><b>0</b><span>سيرفر تركّبه في المحل</span></div>
   <div><b>100%</b><span>بالمصري وعربي/إنجليزي</span></div>
 </div></div>
@@ -254,6 +263,7 @@
       <div class="card rv" style="--d:0.16s"><div class="ic">💾</div><h3>نسخ احتياطي ومزامنة</h3><p>نسخة محلية لوحدها وعلى Google Drive، وجهاز الصيانة يتربط بالكاشير على شبكة المحل ويشتغلوا على نفس البيانات.</p></div>
       <div class="card rv" style="--d:0.00s"><div class="ic">🧩</div><h3>أكتر من إصلاح في الجهاز</h3><p>شاشة وبطارية وسوكت في تذكرة واحدة، كل إصلاح بسعره وتمن قطعته. ولو الجهاز رجع: اتعمله إيه، اتفقنا بكام، واتسلّم بكام.</p></div>
       <div class="card rv" style="--d:0.08s"><div class="ic">📋</div><h3>الجرد</h3><p>عِد الرف من الكمبيوتر أو من الموبايل بالكاميرا، والناقص بيتسجل بقيمته ويوصلك إشعار. أو جرد سريع لـ 10 أصناف عشوائي.</p></div>
+      <div class="card rv" style="--d:0.00s"><div class="ic">🛒</div><h3>متجر أونلاين لمحلك</h3><p>لينك باسم محلك: منتجاتك وعروضك بعدّاد، والعميل يطلب ويحدد مكانه على الخريطة، والطلب يوصلك على الكاشير ويتسجل في الوردية والمخزن لوحده.</p></div>
       <div class="card rv" style="--d:0.16s"><div class="ic">🤝</div><h3>درج الصيانة والشريك</h3><p>دخل الصيانة وقطعها ومصاريفها، والصافي بيتقسم بينك وبين الفني الشريك بالنسبة، حتى لو انت مش موجود وقت التقفيل.</p></div>
     </div>
   </div>
@@ -286,11 +296,46 @@
         <li><b>تقارير واضحة:</b> الصيانة لوحدها والإكسسوار لوحده، والمكسب الحقيقي للشهر.</li>
         <li><b>تحويل ماتسجلش؟</b> إشعار بصوت، وتسجّله أو تتجاهله من مكانك.</li>
         <li><b>توافق أو ترفض</b> طلبات الموظفين (سحب، مرتجع، مسح) من مكانك.</li>
+        <li><b>طلبات المتجر:</b> أكّد وسلّم للمندوب وسجّل اللي اتحصّل من موبايلك.</li>
         <li><b>استلام جهاز</b> أو نقله من الموبايل، والكاشير بيسجّله.</li>
         <li><b>قفل بالبصمة</b>، ونفس شكل البرنامج على الكمبيوتر.</li>
       </ul>
       <a class="btn dl rv" style="--d:.2s" href="https://github.com/khalid374374/repair-desk/releases/download/repair-desk/RepairDesk-Owner.apk">⬇ نزّل تطبيق صاحب المحل</a>
     </div>
+  </div>
+</section>
+
+
+<section class="band" id="store">
+  <div class="wrap split rev">
+    <div>
+      <h2 class="rv" style="text-align:start">🛒 متجر أونلاين باسم محلك</h2>
+      <p class="sub rv" style="text-align:start;margin-inline:0">لينك وQR لمحلك، العميل يفتحه من موبايله ويطلب — من غير حساب ومن غير برنامج تاني. بتتحكم في كل حاجة من الكاشير.</p>
+      <ul class="ticks rv" style="--d:.1s">
+        <li><b>منتجاتك من المخزن:</b> موبايلات وجرابات واسكرينات بالموديل وإكسسوار، بالصور والضمان والتبديل، و"اسأل على السعر" لو حابب.</li>
+        <li><b>عروض:</b> خصم بسعر مشطوب وعدّاد، عرض اليوم، كوبونات، و"ضيف معاه" (اسكرينة، جراب، تركيب).</li>
+        <li><b>التوصيل بالمناطق:</b> العميل يحدد مكانه على الخريطة، والتوصيل ببلاش لحد كذا كيلو وبعدها رسوم بسيطة، أو يستلم من المحل.</li>
+        <li><b>الدفع:</b> كاش عند الاستلام أو انستا باي، والفيزا جاهزة أول ما يبقى عندك حساب Paymob.</li>
+        <li><b>خدمات:</b> ادفع فاتورتك (نت، كهربا، مية...) بالعمولة، صيانة من البيت أو استشارة، و"مش لاقي اللي عايزه؟" علشان تعرف الناس عايزة إيه.</li>
+        <li><b>الطلبات على الكاشير:</b> جديد ← بيتجهز ← مع المندوب ← اتحصّل، والفاتورة والمخزن والفلوس اللي مع المندوب بتتسجل في الوردية لوحدها، وزرار رجوع لو حد داس غلط.</li>
+        <li><b>يتثبّت كتطبيق</b> على موبايل العميل باسم محلك ولوجوه، والعميل يتابع طلبه لحظة بلحظة.</li>
+      </ul>
+    </div>
+    <div class="phones rv"><img src="img/s-home.jpg" alt="المتجر: الرئيسية" loading="lazy" width="490" height="1020"><img src="img/s-checkout.jpg" alt="المتجر: إتمام الطلب وتحديد المكان" loading="lazy" width="490" height="1020"><img src="img/s-track.jpg" alt="المتجر: تتبّع الطلب" loading="lazy" width="490" height="1020"></div>
+  </div>
+  <div class="wrap"><div class="stage rv" style="margin-top:26px"><img src="img/s-orders.jpg" alt="طلبات المتجر على الكاشير" loading="lazy" width="1400" height="793"><p class="cap2">طلبات المتجر على الكاشير: كل طلب في عموده، وزرار للخطوة الجاية.</p></div></div>
+</section>
+
+<section id="downloads">
+  <div class="wrap">
+    <h2 class="rv">⬇ التحميلات</h2>
+    <p class="sub rv">كله مجاني للتحميل، وكل واحد بيتحدّث لوحده.</p>
+    <div class="dls rv">
+      <a class="dlc" href="https://github.com/khalid374374/repair-desk/releases/download/repair-desk/RepairDesk-Setup.exe"><i>🖥</i><b>البرنامج (الكاشير)</b><small>ويندوز 10 و 11</small><span>⬇ نزّل</span></a>
+      <a class="dlc" href="https://github.com/khalid374374/repair-desk/releases/download/repair-desk/RepairDesk-Owner.apk"><i>📱</i><b>تطبيق صاحب المحل</b><small>أندرويد · بيتربط بالكاشير بـ QR</small><span>⬇ نزّل</span></a>
+      <a class="dlc" href="https://github.com/khalid374374/repair-desk/releases/download/repair-desk/RepairDesk-Watcher.apk"><i>📲</i><b>مراقب المحافظ</b><small>أندرويد · على تليفون فودافون كاش وانستاباي</small><span>⬇ نزّل</span></a>
+    </div>
+    <p class="sub rv" style="font-size:13px">تطبيقات الأندرويد مش على Google Play: لما تفتح الملف الموبايل هيطلب "السماح بالتثبيت من المصدر ده" — وافق مرة واحدة.</p>
   </div>
 </section>
 
