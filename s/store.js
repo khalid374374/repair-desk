@@ -6,7 +6,7 @@
   var SB = 'https://sgqscttmkhmiqyjsuvio.supabase.co', GW = SB + '/functions/v1/gateway', ST = SB + '/storage/v1/object/public/store/';
   var KEY = 'sb_publishable_y11CnpnNLb6qIx00LVUHJQ_BzzQNXim';   // مفتاح عام (نفس اللي في t.html)
   var app = document.getElementById('app');
-  var slug = '', C = null, P = {}, deferredInstall = null, timers = [], pollT = 0;
+  var slug = '', C = null, P = {}, deferredInstall = null, timers = [], pollT = 0, trackLoad = null;
 
   /* ---------- أدوات ---------- */
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
@@ -38,7 +38,7 @@
       var p2 = function (n) { return String(n).padStart(2, '0'); };
       if (el.classList.contains('cd')) el.innerHTML = (d ? '<span class="num">' + d + '<em>يوم</em></span>' : '') + '<span class="num">' + p2(h) + '<em>ساعة</em></span><span class="num">' + p2(m) + '<em>دقيقة</em></span><span class="num">' + p2(s) + '<em>ثانية</em></span>';
       else el.innerHTML = (d ? d + ' يوم و ' : '') + '<bdi dir="ltr">' + p2(h) + ':' + p2(m) + ':' + p2(s) + '</bdi>';
-      if (!left && !el.dataset.done) { el.dataset.done = 1; setTimeout(render, 400); }
+      if (!left && !el.dataset.done) { el.dataset.done = 1; setTimeout(refresh, 400); }
     });
   }
   setInterval(tickTimers, 1000);
@@ -77,7 +77,13 @@
   }
   function barHTML(t, sub, back) { return '<div class="bar"><button class="bk" data-back="' + esc(back || '') + '" aria-label="رجوع">→</button><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; }
   function logoHTML() { return C.shop.logo ? '<img src="' + esc(img(C.shop.logo)) + '" alt="">' : esc(C.shop.ic || '🔧'); }
-  function shell(html, on, noNav) { clearTimers(); app.className = ''; app.innerHTML = '<div class="page">' + html + '</div>' + (noNav ? '' : navHTML(on)); badge(); tickTimers(); installMaybe(); }
+  /* QUIET (خالد 2026-11-09: "الموقع بيفضل يعمل ريفرش"): الرسم اللي جاي من تحديث في الخلفية (الكتالوج اتغيّر، حالة الطلب اتغيّرت، عرض خلص) بيتعمل
+     من غير حركة الدخول ومن غير ما الصفحة ترجع لفوق. الحركة للتنقّل اللي العميل عمله بس */
+  var QUIET = false;
+  function shell(html, on, noNav) { clearTimers(); app.className = noNav ? '' : 'has-nav'; app.innerHTML = '<div class="page' + (QUIET ? ' still' : '') + '">' + html + '</div>' + (noNav ? '' : navHTML(on)); badge(); tickTimers(); installMaybe(); }
+  // صفحات فيها خانات العميل بيكتب فيها: ماتترسمش من تاني من ورا ضهره (كان بيمسح اللي كتبه)
+  function onForm() { return /^#\/(checkout|bill|repair|wish|trade)/.test(location.hash) || !!(document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)); }
+  function refresh() { if (!C || onForm() || document.querySelector('.sheet')) return; var y = window.scrollY; QUIET = true; try { render(); } finally { QUIET = false; } window.scrollTo({ top: y, behavior: 'instant' }); }
   function clearTimers() { clearTimeout(pollT); timers.forEach(clearTimeout); timers = []; }
 
   /* ---------- الكروت ---------- */
@@ -315,7 +321,7 @@
       + '<div class="hint" id="modeh"></div></div>' + custBox() + locBox()
       + '<div class="box"><label class="f" style="margin:0"><span>ملاحظات للمحل (اختياري)</span><input class="in" id="cnote" placeholder="مثلًا: كلّمني قبل ما توصل"></label></div>'
       + payBox() + '<div class="box"><h4>🏷 كوبون خصم <small>اختياري</small></h4><input class="in" id="cpn" placeholder="اكتب الكود" style="text-transform:uppercase"></div>'
-      + '<div class="box sum" id="sum"></div><div class="cta"><button class="btn bg" id="go">✓ أكّد الطلب</button></div>';
+      + '<div class="box sum" id="sum"></div><div class="cta flow"><button class="btn bg" id="go">✓ أكّد الطلب</button></div>';
     shell(html, '', true);
     var paint = function () {
       document.getElementById('addrw').hidden = pickup; document.getElementById('locw').hidden = pickup;
@@ -343,7 +349,7 @@
       + '<div class="box"><label class="f"><span id="bl">رقم الخط / العداد</span><input class="in num" id="ba" inputmode="numeric" dir="ltr" style="text-align:right" placeholder="رقم الحساب"></label><label class="f"><span>المبلغ (لو عارفه)</span><input class="in num" id="bm" inputmode="decimal" dir="ltr" style="text-align:right" placeholder="هنستعلم ونبعتلك المبلغ"></label>'
       + '<div class="hint" id="bh"></div></div>' + custBox({ noAddr: true }) + payBox({ noCard: true, billCash: true, cashSub: pick ? 'في المحل، أو المندوب ياخدها +' + fm(pick) : 'في المحل' })
       + '<div class="box" id="bpick" hidden><label class="f" style="margin:0"><span>العنوان (علشان المندوب ياخد الفلوس)</span><input class="in" id="ca" value="' + esc(me().addr || '') + '" placeholder="العنوان بالتفصيل"></label><label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-weight:800;font-size:13px"><input type="checkbox" id="bhome" style="width:18px;height:18px">المندوب ييجي ياخد الفلوس (+<span class="num">' + fm(pick) + '</span>)</label></div>'
-      + '<div class="cta"><button class="btn b1" id="go">ابعت الطلب</button></div>';
+      + '<div class="cta flow"><button class="btn b1" id="go">ابعت الطلب</button></div>';
     shell(html, '#/svc', true);
     var hint = function () { var a = +String(document.getElementById('bm').value).replace(/[^\d.]/g, '') || 0, fee = !a ? null : a <= (+f.upto || 0) || !(+f.pct) ? +f.fix || 0 : Math.max(+f.fix || 0, a * f.pct / 100); document.getElementById('bh').innerHTML = 'ℹ️ هنستعلم عن الفاتورة ونبعتلك المبلغ بالظبط على واتساب قبل ما ندفع.<br>العمولة: ' + (f.upto ? '<b class="num">' + fm(f.fix || 0) + '</b> لحد ' + fm(f.upto) + (f.pct ? '، وبعدها ' + f.pct + '%' : '') : f.pct ? f.pct + '%' : '<b class="num">' + fm(f.fix || 0) + '</b>') + (fee != null ? '<br>المطلوب تقريبًا: <b class="num">' + fm(a + fee) + '</b>' : ''); };
     hint(); document.getElementById('bm').oninput = hint;
@@ -364,7 +370,7 @@
       + '<div class="box"><h4>الجهاز والمشكلة</h4><label class="f"><span>الجهاز</span><input class="in" id="rd" placeholder="مثلًا iPhone 12 أو Samsung A54"></label><div class="opts" id="rp" style="margin-bottom:8px">' + P2.map(function (x) { return '<button type="button" class="opt" data-pr="' + x[1] + '"><em>' + x[0] + '</em>' + x[1] + '</button>'; }).join('') + '</div>'
       + '<textarea class="in" id="rx" placeholder="اوصف المشكلة (اختياري)"></textarea></div>'
       + '<div class="box" id="rw"><h4>⏰ نيجي ناخده إمتى</h4><div class="opts" id="rt"><button type="button" class="opt on" data-t="النهارده">النهارده</button><button type="button" class="opt" data-t="بكرة الصبح">بكرة الصبح</button><button type="button" class="opt" data-t="بكرة بالليل">بكرة بالليل</button></div></div>'
-      + custBox() + locBox() + '<div class="cta"><button class="btn b1" id="go">ابعت الطلب</button></div>';
+      + custBox() + locBox() + '<div class="cta flow"><button class="btn b1" id="go">ابعت الطلب</button></div>';
     shell(html, '#/svc', true);
     var paint = function () {
       var home = mode === 'home'; ['rw', 'addrw', 'locw'].forEach(function (id) { var e = document.getElementById(id); if (e) e.hidden = !home; });
@@ -390,7 +396,7 @@
       + (trade ? '<div class="box"><h4>موبايلك القديم</h4><label class="f"><span>الموبايل</span><input class="in" id="wt" placeholder="مثلًا iPhone 11 128GB"></label><div class="opts" id="tc"><button type="button" class="opt on" data-c="زي الجديد"><em>✨</em>زي الجديد</button><button type="button" class="opt" data-c="خدوش خفيفة"><em>👌</em>خدوش خفيفة</button><button type="button" class="opt" data-c="فيه عيوب"><em>🩹</em>فيه عيوب</button></div><label class="f" style="margin-top:8px"><span>عايز تبدّله بإيه؟ (اختياري)</span><input class="in" id="tw" placeholder="الموبايل اللي عايزه"></label><div class="hint">💡 هنبعتلك تقييم مبدئي على واتساب، والسعر النهائي بعد ما نشوفه.</div></div>'
         : p ? '<div class="box" style="display:flex;gap:12px;align-items:center"><div class="ci" style="border:0;padding:0;flex:1"><div class="im">' + pic(p) + '</div><div class="t"><b>' + esc(p.n) + '</b><small>هنبعتلك على واتساب أول ما يرجع</small></div></div></div><input type="hidden" id="wt" value="' + esc('بلّغني لما يتوفر: ' + p.n) + '">'
           : '<div class="box"><h4>بتدوّر على إيه؟</h4><label class="f"><span>اكتبه</span><input class="in" id="wt" placeholder="مثلًا جراب Spigen لـ S24 Ultra"></label><div class="opts" id="wk">' + kinds.map(function (x) { return '<button type="button" class="opt' + (x[2] === k ? ' on' : '') + '" data-k="' + x[2] + '"><em>' + x[0] + '</em>' + x[1] + '</button>'; }).join('') + '</div><label class="f" style="margin-top:8px"><span>ميزانيتك تقريبًا (اختياري)</span><input class="in num" id="wb" inputmode="numeric" dir="ltr" style="text-align:right"></label></div>')
-      + custBox({ noAddr: true }) + '<div class="cta"><button class="btn b1" id="go">' + (p ? '🔔 بلّغني' : 'ابعت') + '</button></div>';
+      + custBox({ noAddr: true }) + '<div class="cta flow"><button class="btn b1" id="go">' + (p ? '🔔 بلّغني' : 'ابعت') + '</button></div>';
     shell(html, '#/svc', true);
     var cond = 'زي الجديد';
     app.querySelectorAll('#wk [data-k]').forEach(function (b) { b.onclick = function () { k = b.dataset.k; app.querySelectorAll('#wk [data-k]').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
@@ -433,9 +439,14 @@
   }
   function trackPage(trk, isNew) {
     shell(barHTML('📦 الطلب') + '<div class="box"><div class="sk" style="height:110px"></div></div><div class="box"><div class="sk" style="height:200px"></div></div>', '#/orders', true);
+    var sig = null;
     var load = function () {
+      clearTimeout(pollT);
       gw({ action: 'store-track', trk: trk }).then(function (r) {
         if (location.hash.indexOf('#/o/' + trk) !== 0) return;
+        var ns = JSON.stringify(r), first = sig === null;
+        if (ns === sig) { var o0 = r.order || {}, s0 = o0.status === 'paid' ? 'done' : o0.status; if (r.ok && s0 !== 'done' && s0 !== 'cancel' && s0 !== 'ret' && !document.hidden) pollT = setTimeout(load, 45000); return; }   // مفيش جديد: الصفحة زي ما هي
+        sig = ns; var y = window.scrollY; QUIET = !first;
         if (!r.ok) return shell(barHTML('📦 الطلب') + '<div class="empty"><div class="e">😕</div><b>' + esc(r.error || 'الطلب مش موجود') + '</b><p></p><button class="btn b1" data-go="#/orders">طلباتي</button></div>', '#/orders');
         var o = r.order, flow = FLOW[o.kind === 'order' && o.pickup ? 'pick' : o.kind] || FLOW.order, s = o.status === 'paid' ? 'done' : o.status, idx = flow.indexOf(s), bad = s === 'cancel' || s === 'ret';
         var at = {}; (o.hist || []).forEach(function (h) { at[h.s === 'paid' ? 'done' : h.s] = h; });
@@ -465,14 +476,14 @@
             + (t.total ? '<div class="tot"><span>' + (o.pay === 'cash' && !o.pickup && o.kind === 'order' ? 'هتدفع للمندوب' : 'الإجمالي') + '</span><span>' + money(t.total) + '</span></div>' : '') + '</div>';
         }
         html += '<div class="cta">' + (waLink() ? '<a class="btn bw" target="_blank" rel="noopener" href="' + esc(waLink('بخصوص طلب W-' + o.no)) + '">💬 كلّم المحل</a>' : '') + (s === 'new' ? '<button class="btn bs" id="cancel">✕ الغي الطلب</button>' : s === 'done' && o.kind === 'order' && waLink() ? '<a class="btn bs" target="_blank" rel="noopener" href="' + esc(waLink('عايز أرجّع حاجة من طلب W-' + o.no + '. السبب: ')) + '">↩ عايز أرجّع حاجة</a>' : '') + '</div>';
-        shell(html, '#/orders', true);
+        shell(html, '#/orders', true); if (QUIET) { QUIET = false; window.scrollTo({ top: y, behavior: 'instant' }); }
         var cp = app.querySelector('[data-copy]'); if (cp) cp.onclick = function () { copy(cp.dataset.copy); toast('اتنسخ ✓', 'ok'); };
         var pn = document.getElementById('paynow'); if (pn) pn.onclick = function () { pn.disabled = true; gw({ action: 'store-pay', trk: trk, back: location.href.split('#')[0] + '#/o/' + trk }).then(function (pr) { pn.disabled = false; if (pr.url) location.href = pr.url; else if (pr.paid) load(); else toast(pr.error || 'الدفع مش متاح', 'bad'); }); };
         var cn = document.getElementById('cancel'); if (cn) cn.onclick = function () { if (!confirm('متأكد إنك عايز تلغي الطلب؟')) return; gw({ action: 'store-track', trk: trk, cancel: true }).then(function (x) { if (!x.ok) return toast(x.error, 'bad'); toast('اتلغى', 'ok'); load(); }); };
         if (!bad && s !== 'done' && !document.hidden) pollT = setTimeout(load, 45000);   // متابعة كل 45 ثانية وهي مفتوحة
       });
     };
-    load(); isNew = isNew && true;
+    trackLoad = load; load();
   }
 
   /* ---------- التثبيت كتطبيق ---------- */
@@ -480,7 +491,9 @@
   function isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream; }
   function standalone() { return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone; }
   function installMaybe() {
-    if (!C || standalone() || document.querySelector('.install') || location.hash.indexOf('#/checkout') === 0) return;
+    var onShop = /^(#\/?|#\/cats.*|#\/c\/.*)?$/.test(location.hash), old = document.querySelector('.install');
+    if (!onShop) { if (old) old.remove(); return; }   // كان بيطلع فوق صفحة الطلب وزرار التأكيد (خالد 2026-11-09)
+    if (!C || standalone() || old) return;
     var seen = +(ls('inst') || 0); if (Date.now() - seen < 7 * 864e5) return;
     var visits = +(ls('visits') || 0); if (visits < 2 && !(ls('orders') || []).length) return;
     if (!deferredInstall && !isIOS()) return;
@@ -501,7 +514,8 @@
   function render() {
     if (!C) return;
     var h = location.hash || '#/', path = h.split('?')[0], q = new URLSearchParams(h.split('?')[1] || ''), seg = path.slice(2).split('/');
-    window.scrollTo(0, 0);
+    if (!QUIET) { var tt = document.getElementById('toast'); if (tt && /bad/.test(tt.className)) { clearTimeout(toast.t); tt.className = ''; } }   // رسالة خطأ من الصفحة اللي فاتت ماتفضلش فوق الصفحة الجديدة
+    if (!QUIET) window.scrollTo({ top: 0, behavior: 'instant' });   // من غير الانزلاق الناعم (html: scroll-behavior smooth) علشان الصفحة الجديدة تبدأ من فوق على طول
     if (C.open === false && seg[0] !== 'o' && seg[0] !== 'orders') return shell('<div class="closed"><div class="logo" style="width:84px;height:84px;margin:0 auto;font-size:40px;border-radius:26px">' + logoHTML() + '</div><b>' + esc(C.shop.name) + '</b><div class="e">🌙</div><b>المتجر مقفول مؤقتًا</b><p>' + (waLink() ? 'تقدر تكلّمنا على واتساب.' : '') + '</p>' + (waLink() ? '<a class="btn bw" style="margin-top:12px" href="' + esc(waLink('السلام عليكم')) + '" target="_blank" rel="noopener">💬 كلّمنا</a>' : '') + '</div>', '', true);
     switch (seg[0]) {
       case '': return home();
@@ -529,7 +543,7 @@
     var p = e.target.closest('[data-p]'); if (p && !e.target.closest('a')) return go('#/p/' + encodeURIComponent(p.dataset.p));
     var b = e.target.closest('[data-back]'); if (b) { if (history.length > 1 && !b.dataset.back) history.back(); else go(b.dataset.back || '#/'); }
   });
-  document.addEventListener('visibilitychange', function () { if (!document.hidden && /^#\/o\//.test(location.hash)) render(); if (!document.hidden && C && Date.now() - (loadCat.at || 0) > 120000) loadCat(true); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && /^#\/o\//.test(location.hash) && trackLoad) trackLoad(); if (!document.hidden && C && Date.now() - (loadCat.at || 0) > 120000) loadCat(true); });
 
   /* ---------- التحميل ---------- */
   function theme() {
@@ -542,7 +556,7 @@
   function loadCat(quiet) {
     loadCat.at = Date.now();
     return fetch(ST + encodeURIComponent(slug) + '/catalog.json?t=' + Math.floor(Date.now() / 30000), { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw r.status; return r.json(); })
-      .then(function (j) { set(j); try { localStorage.setItem('rds_cat_' + slug, JSON.stringify(j)); } catch (e) {} if (quiet) render(); })
+      .then(function (j) { var txt = JSON.stringify(j), same = txt === loadCat.sig; loadCat.sig = txt; set(j); try { localStorage.setItem('rds_cat_' + slug, txt); } catch (e) {} if (quiet && !same) refresh(); })
       .catch(function (st) { if (C) return; var old = null; try { old = JSON.parse(localStorage.getItem('rds_cat_' + slug)); } catch (e) {} if (old) { set(old); render(); toast('مفيش نت — بتشوف آخر نسخة', 'bad'); } else fail(st === 400 || st === 404 ? 'المتجر ده مش موجود' : 'مفيش نت. جرّب تاني.'); });
   }
   function set(j) { C = j; C.shop = C.shop || {}; P = {}; (C.p || []).forEach(function (p) { P[p.id] = p; }); theme(); }
@@ -559,10 +573,10 @@
       try { localStorage.setItem('rds_last', slug); } catch (e) {}
       ls('visits', (+(ls('visits') || 0)) + 1);
       var cached = null; try { cached = JSON.parse(localStorage.getItem('rds_cat_' + slug)); } catch (e) {}
-      if (cached) { set(cached); render(); loadCat(true); } else loadCat().then(function () { if (C) render(); });
+      if (cached) { loadCat.sig = JSON.stringify(cached); set(cached); render(); loadCat(true); } else loadCat().then(function () { if (C) render(); });
     });
     if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(function () {});
   }
-  window.__store = { render: render, go: go, state: function () { return { slug: slug, C: C, cart: cart() }; } };   // للاختبار
+  window.__store = { render: render, go: go, state: function () { return { slug: slug, C: C, cart: cart() }; }, reload: function () { return loadCat(true); }, poll: function () { if (trackLoad) trackLoad(); } };   // للاختبار
   boot();
 })();

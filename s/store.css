@@ -10,13 +10,16 @@
   --okbg: #17904f26; --okc: #6fe0a0; --badbg: #d6455f2b; --badc: #ff9eae; --warnbg: #f59e0b22; --warnc: #ffc96b; --sh: none;
 } }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }   /* .f و .box و .btn بيحطوا display، فالخانة المخفية (العنوان/الخريطة في "استلام من المحل") كانت بتفضل ظاهرة */
 html { scroll-behavior: smooth; }
-body { font-family: 'Cairo', system-ui, Tahoma, sans-serif; background: var(--bg); color: var(--ink); font-size: 14.5px; line-height: 1.55; min-height: 100vh; overscroll-behavior-y: none; }
+body { font-family: 'Cairo', system-ui, Tahoma, sans-serif; background: var(--bg); color: var(--ink); font-size: 14.5px; line-height: 1.55; min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: none; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; border: 0; background: none; }
 img { display: block; max-width: 100%; }
 .num { direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; }
-#app { max-width: 560px; margin: 0 auto; min-height: 100vh; position: relative; padding-bottom: calc(86px + var(--safe-b)); }
+#app { max-width: 560px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; position: relative; display: flex; flex-direction: column; }
+#app > .page { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+#app.has-nav { padding-bottom: calc(86px + var(--safe-b)); }   /* القايمة اللي تحت ثابتة: الصفحات اللي فيها بس بتسيب مكانها */
 @media (min-width: 900px) { body { background: radial-gradient(1200px 600px at 100% 0%, #1f5fae22, transparent 60%), var(--bg); } #app { box-shadow: 0 0 0 1px var(--line), 0 30px 80px #0a1a4422; background: var(--bg); } }
 
 /* البداية */
@@ -30,6 +33,7 @@ img { display: block; max-width: 100%; }
 @keyframes shim { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @keyframes bump { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.35); } }
 .page { animation: up .32s cubic-bezier(.2, .8, .2, 1) both; }
+.page.still, .page.still .pc { animation: none; }   /* تحديث في الخلفية: من غير حركة */
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
 /* الراس */
@@ -109,7 +113,7 @@ img { display: block; max-width: 100%; }
 .gal .dots { position: absolute; bottom: 30px; left: 0; right: 0; display: flex; gap: 5px; justify-content: center; } .gal .dots i { width: 7px; height: 7px; border-radius: 4px; background: #9fb0d0; transition: width .2s; } .gal .dots i.on { width: 20px; background: var(--ac); }
 .gal .fl { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: 12px; left: 12px; display: flex; justify-content: space-between; }
 .gal .fl button { width: 40px; height: 40px; border-radius: 13px; background: color-mix(in srgb, var(--card) 85%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); display: grid; place-items: center; font-size: 17px; box-shadow: 0 4px 12px #0002; font-weight: 900; }
-.pb { background: var(--card); border-radius: 26px 26px 0 0; margin-top: -22px; position: relative; padding: 20px 16px 120px; min-height: 50vh; }
+.pb { background: var(--card); border-radius: 26px 26px 0 0; margin-top: -22px; position: relative; padding: 20px 16px 24px; flex: 1; }
 .pb h1 { font-size: 20px; font-weight: 900; line-height: 1.35; } .pb .sub { color: var(--mut); font-size: 12.5px; font-weight: 600; margin: 4px 0 10px; }
 .bigpr { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .bigpr strong { font-size: 27px; font-weight: 900; } .bigpr s { color: #9aa6c0; font-weight: 800; }
 .save { background: var(--badbg); color: var(--badc); font-weight: 900; font-size: 12px; padding: 3px 9px; border-radius: 9px; }
@@ -122,8 +126,13 @@ img { display: block; max-width: 100%; }
 input:checked + .ck, .ck.on { background: var(--ac); border-color: var(--ac); color: #fff; }
 .addon input { display: none; }
 .qty { display: inline-flex; align-items: center; gap: 4px; background: var(--soft); border-radius: 13px; padding: 4px; } .qty button { width: 32px; height: 32px; border-radius: 10px; background: var(--card); font-weight: 900; font-size: 17px; box-shadow: var(--sh); } .qty b { min-width: 26px; text-align: center; font-weight: 900; }
-.cta { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 560px; background: color-mix(in srgb, var(--card) 94%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-top: 1px solid var(--line); padding: 12px 14px calc(14px + var(--safe-b)); display: flex; gap: 10px; z-index: 31; }
+/* زرار الصفحة (خالد 2026-11-09: "زرار إتمام الطلب في نص الشاشة ومخبّي حاجات وراه"): بقى جزء من الصفحة نفسها مش طاير فوقها.
+   sticky = لازق تحت وانت بتنزل، ولما توصل آخر الصفحة بيقعد بعد آخر حاجة (مفيش حاجة وراه). في الفورمات (.flow) زرار عادي في آخر الفورم،
+   علشان الكيبورد لما يفتح مايرفعوش فوق الخانات */
+.cta { position: sticky; bottom: 0; margin-top: auto; background: color-mix(in srgb, var(--card) 94%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-top: 1px solid var(--line); padding: 12px 14px calc(14px + var(--safe-b)); display: flex; gap: 10px; z-index: 31; }
+.cta.flow { position: static; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; border-top: 0; padding: 6px 14px calc(22px + var(--safe-b)); }
 .btn { flex: 1; padding: 13px 16px; border-radius: 16px; text-align: center; font-weight: 900; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .12s, filter .15s; }
+a.btn, a.btn:visited, .cta a, .box a.btn { text-decoration: none; }   /* لينكات واتساب على شكل زرار: من غير خط تحت الكلام */
 .btn:active { transform: scale(.97); } .btn[disabled] { opacity: .55; pointer-events: none; }
 .b1 { background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #fff; box-shadow: 0 8px 18px color-mix(in srgb, var(--ac) 35%, transparent); }
 .bg { background: linear-gradient(135deg, #17904f, #22b36a); color: #fff; box-shadow: 0 8px 18px #17904f44; }
@@ -172,11 +181,12 @@ input:checked + .ck, .ck.on { background: var(--ac); border-color: var(--ac); co
 .copy { display: flex; align-items: center; gap: 8px; background: var(--soft); border-radius: 13px; padding: 9px 12px; font-weight: 900; } .copy span { flex: 1; direction: ltr; text-align: left; overflow: hidden; text-overflow: ellipsis; } .copy button { color: var(--ac); font-weight: 900; font-size: 12.5px; }
 
 /* تثبيت كتطبيق */
-.install { position: fixed; bottom: calc(82px + var(--safe-b)); left: 50%; transform: translateX(-50%); width: calc(100% - 24px); max-width: 536px; border-radius: 22px; padding: 14px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 18px 40px #0a1a4433; display: flex; gap: 12px; align-items: center; z-index: 40; animation: up .4s both; }
+/* من غير transform للتوسيط: حركة الدخول (up) بتخلّص على transform: none، فكان الكارت بيتزق نص عرضه برّه الشاشة (خالد 2026-11-09: "نصها مستخبي") */
+.install { position: fixed; bottom: calc(84px + var(--safe-b)); left: 12px; right: 12px; margin-inline: auto; max-width: 536px; border-radius: 22px; padding: 14px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 18px 40px #0a1a4433; display: flex; gap: 12px; align-items: center; z-index: 40; animation: up .4s both; }
 .install .logo { width: 52px; height: 52px; } .install b { font-size: 14.5px; font-weight: 900; display: block; } .install small { color: var(--mut); font-weight: 600; font-size: 12px; display: block; line-height: 1.5; }
 .install .x { position: absolute; top: 6px; left: 10px; color: var(--mut); font-size: 15px; }
 .sheet-bg { position: fixed; inset: 0; background: #0a1a4466; z-index: 60; animation: fade .2s both; } @keyframes fade { from { opacity: 0; } }
-.sheet { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 560px; background: var(--card); border-radius: 26px 26px 0 0; padding: 10px 16px calc(18px + var(--safe-b)); z-index: 61; animation: sheetUp .32s cubic-bezier(.2, .9, .2, 1) both; max-height: 86vh; overflow: auto; }
+.sheet { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 560px; background: var(--card); border-radius: 26px 26px 0 0; padding: 10px 16px calc(18px + var(--safe-b)); z-index: 61; animation: sheetUp .32s cubic-bezier(.2, .9, .2, 1) both; max-height: 86vh; max-height: 86dvh; overflow: auto; }   /* dvh: شريط المتصفح تحت كان بيخبّي نص الشيت */
 .sheet::before { content: ""; display: block; width: 44px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 12px; }
 @keyframes sheetUp { from { transform: translate(-50%, 100%); } to { transform: translate(-50%, 0); } }
 .models { display: flex; gap: 7px; padding: 10px 14px 2px; overflow-x: auto; scrollbar-width: none; } .models::-webkit-scrollbar { display: none; }
