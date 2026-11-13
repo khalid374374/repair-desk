@@ -645,7 +645,7 @@
   var fitC = function (c, to, bgs, need) { for (var t = 0; t <= 1.0001; t += 0.04) { var x = mixC(c, to, t); if (bgs.every(function (b) { return crC(x, b) >= need; })) return x; } return to; };
   function accentVars(hex) {
     var ac = hexRgb(hex), W = [255, 255, 255], INK = [11, 31, 77], DK = [11, 20, 48], CARD_D = [19, 28, 48], BG_D = [10, 17, 32];
-    var onWhite = crC(W, ac) >= crC([16, 24, 40], ac);
+    var onWhite = crC(W, ac) >= 2.5;   // أبيض على لون المحل إلا لو اللون فاتح أوي (أصفر)؛ الدرجة بعدين بتتغمّق لحد 4.6 (كانت + سودة على الأزرق)
     var on = onWhite ? W : [16, 24, 40];
     var fill = fitC(ac, onWhite ? DK : W, [on], 4.6);
     var txL = fitC(ac, INK, [W, [247, 248, 251], mixC(W, ac, 0.13)], 4.6);
