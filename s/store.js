@@ -146,7 +146,7 @@
   function footHTML() {
     var s = C.shop;
     return '<div class="foot">' + (s.addr ? '📍 ' + esc(s.addr) + '<br>' : '') + (s.phone ? '📞 <a href="tel:' + esc(s.phone) + '" class="num">' + esc(s.phone) + '</a>' + (hoursTxt() ? ' · 🕘 ' + esc(hoursTxt()) : '') + '<br>' : '')
-      + legalTxt() + '<a href="#/info">الشروط والاسترجاع والضمان</a><br><span style="opacity:.7">متجر بيشتغل بـ Repair Desk</span></div>';
+      + legalTxt() + '<a href="#/info">الشروط والاسترجاع والضمان</a><br><span class="made">متجر بيشتغل بـ Repair Desk</span></div>';
   }
   function cats() {
     var list = (C.cats || []).filter(function (c) { return visible().some(function (p) { return p.c === c.id; }); });
@@ -299,9 +299,10 @@
   }
   function payBox(opts) {
     var p = C.pay || {}, h = '<div class="box pay"><h4>💳 هتدفع إزاي</h4>', first = true;
-    var row = function (v, ic, t, sm, dis) { var r = '<input type="radio" name="pay" id="pay-' + v + '" value="' + v + '"' + (first && !dis ? ' checked' : '') + (dis ? ' disabled' : '') + '><label for="pay-' + v + '"' + (dis ? ' style="opacity:.5"' : '') + '><span class="rad"></span><em>' + ic + '</em>' + t + (sm ? '<small>' + sm + '</small>' : '') + '</label>'; if (!dis) first = false; return r; };
+    var row = function (v, ic, t, sm, dis) { var r = '<input type="radio" name="pay" id="pay-' + v + '" value="' + v + '"' + (first && !dis ? ' checked' : '') + (dis ? ' disabled' : '') + '><label for="pay-' + v + '"' + (dis ? ' class="dis"' : '') + '><span class="rad"></span><em>' + ic + '</em>' + t + (sm ? '<small>' + sm + '</small>' : '') + '</label>'; if (!dis) first = false; return r; };
     if (p.cash !== false) h += row('cash', '💵', opts && opts.billCash ? 'كاش' : 'كاش عند الاستلام', opts && opts.cashSub);
     if (p.insta && p.insta.on) h += row('insta', '⚡', 'انستا باي', 'حوّل وإحنا نأكد');
+    if (p.voda && p.voda.on) h += row('voda', '📱', 'فودافون كاش', 'حوّل وإحنا نأكد');   // خالد 2026-11-13: مع انستا في أي دفع
     if (!(opts && opts.noCard)) h += row('card', '💳', 'فيزا / ميزة أونلاين', p.card && p.card.on ? 'دفع آمن' : 'قريبًا', !(p.card && p.card.on));
     return h + '</div>';
   }
@@ -360,7 +361,7 @@
     var sel = items[0] || {}, co = '', pack = '';
     var payH = '<div class="box pay"><h4>💳 هتدفع إزاي</h4>';
     if (newCat) {
-      var first = true, prow = function (v, ic, t, sm, dis) { var r = '<input type="radio" name="pay" id="pay-' + v + '" value="' + v + '"' + (first && !dis ? ' checked' : '') + (dis ? ' disabled' : '') + '><label for="pay-' + v + '"' + (dis ? ' style="opacity:.5"' : '') + '><span class="rad"></span><em>' + ic + '</em>' + t + (sm ? '<small>' + sm + '</small>' : '') + '</label>'; if (!dis) first = false; return r; };
+      var first = true, prow = function (v, ic, t, sm, dis) { var r = '<input type="radio" name="pay" id="pay-' + v + '" value="' + v + '"' + (first && !dis ? ' checked' : '') + (dis ? ' disabled' : '') + '><label for="pay-' + v + '"' + (dis ? ' class="dis"' : '') + '><span class="rad"></span><em>' + ic + '</em>' + t + (sm ? '<small>' + sm + '</small>' : '') + '</label>'; if (!dis) first = false; return r; };
       if (P0.voda && P0.voda.on) payH += prow('voda', '📱', 'فودافون كاش', 'حوّل وإحنا نأكد');
       if (P0.insta && P0.insta.on) payH += prow('insta', '⚡', 'انستا باي', 'حوّل وإحنا نأكد');
       payH += prow('card', '💳', 'فيزا / ميزة', 'قريبًا', true) + '<div class="hint" style="margin-top:4px">مش هتدفع دلوقتي: هنبعتلك المبلغ الأول، وبعد ما توافق تحوّل.</div></div>';
@@ -487,6 +488,22 @@
     list.slice(0, 5).forEach(function (o) { gw({ action: 'store-track', trk: o.trk }).then(function (r) { var el = app.querySelector('[data-st="' + o.trk + '"]'); if (!el) return; if (!r.ok) { el.textContent = '—'; return; } var s = r.order.status; el.textContent = lab(r.order.kind, r.order.pickup, s); el.className = 'pill ' + (s === 'cancel' || s === 'ret' ? 'bad' : s === 'done' || s === 'paid' ? 'ok' : 'wait'); }); });
     list.slice(5).forEach(function (o) { var el = app.querySelector('[data-st="' + o.trk + '"]'); if (el) el.textContent = 'افتح'; });
   }
+  function xferBox(o, total) {
+    var v = o.pay === 'voda', addr = v ? ((C.pay && C.pay.voda && C.pay.voda.num) || '') : ((C.pay && C.pay.insta && C.pay.insta.addr) || ''), n = ((o.info || {}).proofs || []).length;
+    return '<div class="box xfer"><h4>' + (v ? '📱 ادفع بفودافون كاش' : '⚡ ادفع بانستا باي') + '</h4><div class="hint" style="margin-bottom:8px">حوّل <b>' + money(total) + '</b> على ' + (v ? 'الرقم ده' : 'العنوان ده') + '، وارفع صورة التحويل هنا. المحل هيأكد أول ما الفلوس توصل' + (o.kind === 'bill' ? ' ويدفعلك الفاتورة' : '') + '.</div>'
+      + (addr ? '<div class="copy"><span>' + esc(addr) + '</span><button data-copy="' + esc(addr) + '">انسخ</button></div>' : '')
+      + (n ? '<div class="pf-ok">✓ صورة التحويل وصلت المحل' + (n > 1 ? ' (' + n + ')' : '') + ' — مستنيين يأكدوا</div>' : '')
+      + (n < 3 ? '<label class="btn ' + (n ? 'bs' : 'b1') + ' pf-up"><input type="file" accept="image/*" id="pf" hidden>📸 ' + (n ? 'ارفع صورة تانية' : 'ارفع صورة التحويل') + '</label>' : '')
+      + (waLink() ? '<a class="btn bw" style="width:100%;margin-top:8px" target="_blank" rel="noopener" href="' + esc(waLink('حوّلت ' + fm(total) + (v ? ' فودافون كاش' : ' على انستا') + ' لطلب W-' + o.no)) + '">💬 أو ابعتها واتساب</a>' : '') + '</div>';
+  }
+  // صورة التحويل: أصغر (1400px وجودة لحد ما تبقى أقل من ~300KB)
+  function shrinkImg(file) {
+    return new Promise(function (res, rej) {
+      var fr = new FileReader(); fr.onerror = rej;
+      fr.onload = function () { var im = new Image(); im.onerror = rej; im.onload = function () { var k = Math.min(1, 1400 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); var q = 0.82, u = c.toDataURL('image/jpeg', q); while (u.length > 400000 && q > 0.35) { q -= 0.1; u = c.toDataURL('image/jpeg', q); } res(u); }; im.src = fr.result; };
+      fr.readAsDataURL(file);
+    });
+  }
   function trackPage(trk, isNew) {
     shell(barHTML('📦 الطلب') + '<div class="box"><div class="sk" style="height:110px"></div></div><div class="box"><div class="sk" style="height:200px"></div></div>', '#/orders', true);
     var sig = null;
@@ -504,7 +521,7 @@
         var billNow = o.kind !== 'bill' || o.pay_state === 'paid' ? '' : bw ? (bi.agreed === 'no' ? 'المحل بيراجع المبلغ' : 'مستني موافقتك على المبلغ') : bt.total && !(bi.approx && bi.agreed === undefined) ? 'مستني التحويل' : '';
         var at = {}; (o.hist || []).forEach(function (h) { at[h.s === 'paid' ? 'done' : h.s] = h; });
         var tm = function (h) { return h ? new Date(h.at).toLocaleString('ar-EG-u-nu-latn', { hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short' }) + (h.n ? ' · ' + esc(h.n) : '') : '—'; };
-        var col = bad ? ['#a2283f', '#d6455f'] : s === 'done' ? ['#0d6b3a', '#17904f'] : s === 'out' ? ['#b45309', '#f59e0b'] : ['#16407f', '#2b7be0'];
+        var col = bad ? ['#8f1f35', '#b8304a'] : s === 'done' ? ['#0b5c32', '#137a43'] : s === 'out' ? ['#8a3c06', '#b45309'] : ['#16407f', '#1f5fae'];   // أغمق: الكلام الأبيض الصغير عليها واضح (WCAG)
         var html = barHTML('📦 طلب <span class="num">W-' + esc(o.no) + '</span>', '', '#/orders')
           + (isNew ? '<div class="banner info" style="background:var(--okbg);color:var(--okc)">🎉 طلبك وصل للمحل! هنكلمك على واتساب.</div>' : '')
           + '<div class="oh" style="--c1:' + col[0] + ';--c2:' + col[1] + '"><small>الحالة دلوقتي</small><b>' + esc((ST_ORDER[s] || [''])[0]) + ' ' + esc(lab(o.kind, o.pickup, s, ask, reply, billNow)) + '</b><small>' + esc(o.name) + ' · ' + new Date(o.at).toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'long' }) + '</small></div>';
@@ -518,18 +535,8 @@
           else if (oi.approx) html += '<div class="box"><div class="hint">⏳ السعر تقريبي (' + money(ot.total) + '). المحل هيأكده ويبعتلك توافق قبل ما تدفع.</div></div>';
         }
         var canPayNow = !wait && !(o.kind === 'bill' && oi.approx && oi.agreed === undefined);
-        // فودافون كاش: رقم المحل والمبلغ
-        if (o.pay === 'voda' && o.pay_state !== 'paid' && !bad && ot.total && canPayNow) {
-          var vn = (C.pay && C.pay.voda && C.pay.voda.num) || '';
-          html += '<div class="box"><h4>📱 ادفع بفودافون كاش</h4><div class="hint" style="margin-bottom:8px">حوّل <b>' + money(ot.total) + '</b> على الرقم ده، والمحل هيأكد أول ما توصل ويدفعلك الفاتورة.</div>' + (vn ? '<div class="copy"><span>' + esc(vn) + '</span><button data-copy="' + esc(vn) + '">انسخ</button></div>' : '')
-            + (waLink() ? '<a class="btn bw" style="width:100%;margin-top:8px" target="_blank" rel="noopener" href="' + esc(waLink('حوّلت ' + fm(ot.total) + ' فودافون كاش لطلب W-' + o.no)) + '">💬 ابعت صورة التحويل</a>' : '') + '</div>';
-        }
-        // انستا: عنوان الدفع والمبلغ
-        if (o.pay === 'insta' && o.pay_state !== 'paid' && !bad && o.totals && o.totals.total && canPayNow) {
-          var ad = (C.pay && C.pay.insta && C.pay.insta.addr) || '';
-          html += '<div class="box"><h4>⚡ ادفع بانستا باي</h4><div class="hint" style="margin-bottom:8px">حوّل <b>' + money(o.totals.total) + '</b> على العنوان ده، والمحل هيأكد أول ما توصل.</div>' + (ad ? '<div class="copy"><span>' + esc(ad) + '</span><button data-copy="' + esc(ad) + '">انسخ</button></div>' : '')
-            + (waLink() ? '<a class="btn bw" style="width:100%;margin-top:8px" target="_blank" rel="noopener" href="' + esc(waLink('حوّلت ' + fm(o.totals.total) + ' على انستا لطلب W-' + o.no)) + '">💬 ابعت صورة التحويل</a>' : '') + '</div>';
-        }
+        // فودافون كاش / انستا: الرقم أو العنوان والمبلغ، وصورة التحويل ترتفع هنا لحد ما الكاشير يأكد (خالد 2026-11-13)
+        if ((o.pay === 'voda' || o.pay === 'insta') && o.pay_state !== 'paid' && !bad && ot.total && canPayNow) html += xferBox(o, ot.total);
         // رد المحل على الاستشارة / "بدوّر على" (خالد 2026-11-09): أول حاجة تحت الحالة
         if (reply) html += '<div class="box reply"><h4>💬 رد المحل' + (o.info.replyAt ? ' <small>' + new Date(o.info.replyAt).toLocaleString('ar-EG-u-nu-latn', { hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short' }) + '</small>' : '') + '</h4><div class="rtx">' + esc(reply) + '</div></div>';
         if (o.pay === 'card' && o.pay_state !== 'paid' && !bad) html += '<div class="box"><h4>💳 الدفع بالفيزا ' + (o.pay_state === 'fail' ? '<small style="color:var(--rd)">الدفع ماتمّش</small>' : '') + '</h4><button class="btn b1" id="paynow" style="width:100%">ادفع دلوقتي · <span class="num">' + fm(o.totals.total) + '</span></button></div>';
@@ -549,6 +556,11 @@
         html += '<div class="cta">' + (waLink() ? '<a class="btn bw" target="_blank" rel="noopener" href="' + esc(waLink('بخصوص طلب W-' + o.no)) + '">💬 كلّم المحل</a>' : '') + (s === 'new' ? '<button class="btn bs" id="cancel">✕ الغي الطلب</button>' : s === 'done' && o.kind === 'order' && waLink() ? '<a class="btn bs" target="_blank" rel="noopener" href="' + esc(waLink('عايز أرجّع حاجة من طلب W-' + o.no + '. السبب: ')) + '">↩ عايز أرجّع حاجة</a>' : '') + '</div>';
         shell(html, '#/orders', true); if (QUIET) { QUIET = false; window.scrollTo({ top: y, behavior: 'instant' }); }
         var cp = app.querySelector('[data-copy]'); if (cp) cp.onclick = function () { copy(cp.dataset.copy); toast('اتنسخ ✓', 'ok'); };
+        var pf = document.getElementById('pf'); if (pf) pf.onchange = function () {
+          var f = pf.files && pf.files[0]; if (!f) return; var lb = pf.parentNode; lb.classList.add('busy'); lb.lastChild.nodeValue = ' بنرفع الصورة...';
+          shrinkImg(f).then(function (u) { return gw({ action: 'store-proof', trk: trk, img: u }); }).then(function (x) { if (!x.ok) { toast(x.error || 'الصورة ماترفعتش', 'bad'); load(); return; } toast('✓ الصورة وصلت المحل', 'ok'); load(); })
+            .catch(function () { toast('الصورة دي مش راضية تتقري', 'bad'); load(); });
+        };
         var pn = document.getElementById('paynow'); if (pn) pn.onclick = function () { pn.disabled = true; gw({ action: 'store-pay', trk: trk, back: location.href.split('#')[0] + '#/o/' + trk }).then(function (pr) { pn.disabled = false; if (pr.url) location.href = pr.url; else if (pr.paid) load(); else toast(pr.error || 'الدفع مش متاح', 'bad'); }); };
         var ag = function (yes) { return function () { var b1 = document.getElementById('agy'), b2 = document.getElementById('agn'); if (b1) b1.disabled = true; if (b2) b2.disabled = true; gw({ action: 'store-track', trk: trk, agree: yes }).then(function (x) { if (!x.ok) { toast(x.error || 'حصل خطأ', 'bad'); if (b1) b1.disabled = false; if (b2) b2.disabled = false; return; } toast(yes ? 'تمام ✓ حوّل المبلغ وهندفعلك' : 'وصل للمحل، هيراجع المبلغ', yes ? 'ok' : ''); sig = null; load(); }); }; };
         var ay = document.getElementById('agy'); if (ay) ay.onclick = ag(true);
@@ -620,9 +632,30 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden && /^#\/o\//.test(location.hash) && trackLoad) trackLoad(); if (!document.hidden && C && Date.now() - (loadCat.at || 0) > 120000) loadCat(true); });
 
   /* ---------- التحميل ---------- */
+  /* لون المحل (خالد 2026-11-13: "الالوان اللي في اعدادات المتجر مش بتغير في الوان الموقع" / "الالوان مش مبينه الكلام"):
+     من اللون اللي المحل اختاره بنحسب درجات مقروءة (WCAG 4.5): --ac-tx كلام بلون المحل على الفاتح (أغمق شوية) وعلى الغامق (أفتح شوية)،
+     --ac-fill / --on-ac زرار بلون المحل والكلام عليه أبيض أو أسود حسب اللون (أصفر = كلام أسود)، --ac-dk خلفية غامقة بلون المحل لكلام أبيض.
+     كده أي لون يختاره بيبان في الموقع من غير ما الكلام يضيع */
+  var hexRgb = function (h) { h = h.replace('#', ''); return [0, 2, 4].map(function (i) { return parseInt(h.substr(i, 2), 16); }); };
+  var rgbHex = function (c) { return '#' + c.map(function (v) { return ('0' + Math.max(0, Math.min(255, Math.round(v))).toString(16)).slice(-2); }).join(''); };
+  var mixC = function (a, b, t) { return a.map(function (v, i) { return v + (b[i] - v) * t; }); };   // t = قد إيه من b
+  var lumC = function (c) { return c.reduce(function (s, v, i) { v /= 255; v = v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); return s + v * [0.2126, 0.7152, 0.0722][i]; }, 0); };
+  var crC = function (a, b) { var x = lumC(a), y = lumC(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  // بنقرّب اللون من "to" خطوة خطوة لحد ما يبقى مقروء على كل الخلفيات اللي بيظهر عليها
+  var fitC = function (c, to, bgs, need) { for (var t = 0; t <= 1.0001; t += 0.04) { var x = mixC(c, to, t); if (bgs.every(function (b) { return crC(x, b) >= need; })) return x; } return to; };
+  function accentVars(hex) {
+    var ac = hexRgb(hex), W = [255, 255, 255], INK = [11, 31, 77], DK = [11, 20, 48], CARD_D = [19, 28, 48], BG_D = [10, 17, 32];
+    var onWhite = crC(W, ac) >= crC([16, 24, 40], ac);
+    var on = onWhite ? W : [16, 24, 40];
+    var fill = fitC(ac, onWhite ? DK : W, [on], 4.6);
+    var txL = fitC(ac, INK, [W, [247, 248, 251], mixC(W, ac, 0.13)], 4.6);
+    var txD = fitC(ac, W, [CARD_D, BG_D, mixC(CARD_D, ac, 0.15)], 4.6);
+    var dk = fitC(ac, DK, [W], 7);
+    return { '--ac': hex, '--ac-fill': rgbHex(fill), '--ac2': rgbHex(mixC(fill, onWhite ? DK : W, 0.18)), '--on-ac': rgbHex(on), '--ac-tx-l': rgbHex(txL), '--ac-tx-d': rgbHex(txD), '--ac-dk': rgbHex(dk) };
+  }
   function theme() {
-    var ac = C.shop && /^#[0-9a-f]{6}$/i.test(C.shop.ac || '') ? C.shop.ac : '';
-    if (ac) { document.documentElement.style.setProperty('--ac', ac); document.documentElement.style.setProperty('--ac2', 'color-mix(in srgb, ' + ac + ' 70%, #000)'); }
+    var ac = C.shop && /^#[0-9a-f]{6}$/i.test(C.shop.ac || '') ? C.shop.ac : '#2b7be0';
+    var v = accentVars(ac); for (var k in v) document.documentElement.style.setProperty(k, v[k]);
     document.title = C.shop.name || 'المتجر';
     document.getElementById('mf').href = ST + slug + '/manifest.json';
     if (C.shop.logo) document.getElementById('ati').href = img(C.shop.logo);
