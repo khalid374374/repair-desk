@@ -351,3 +351,26 @@ a.btn, a.btn:visited, .cta a, .box a.btn { text-decoration: none; }   /* لين�
 .pc > .add { grid-row: auto !important; position: absolute !important; bottom: 10px; left: 10px; margin: 0 !important; width: 40px; height: 40px; background: var(--ac-fill) !important; color: var(--on-ac) !important; }
 @media (prefers-color-scheme: dark) { .pc { box-shadow: none !important; } }
 .pc:not(:has(> .add)) .pr { padding-inline-end: 0 !important; } .pc .ask { white-space: nowrap; }
+
+/* تأكيد رقم العميل بواتساب (خالد 2026-11-13، فكرة 2: نافذة من تحت) */
+.vf-dim { position: fixed; inset: 0; z-index: 90; background: #0a142873; opacity: 0; transition: opacity .25s; }
+.vf-dim.on { opacity: 1; }
+.vf-sheet { position: fixed; z-index: 91; left: 0; right: 0; bottom: 0; margin: 0 auto; max-width: 560px; background: var(--card); color: var(--ink); border-radius: 26px 26px 0 0; box-shadow: 0 -10px 40px #0a1a4440; padding: 14px 18px calc(22px + var(--safe-b)); text-align: center; transform: translateY(105%); transition: transform .3s cubic-bezier(.2,.9,.3,1); }
+.vf-sheet.on { transform: none; }
+.vf-gr { width: 44px; height: 5px; border-radius: 9px; background: var(--line); margin: 0 auto 12px; }
+.vf-x { position: absolute; top: 12px; inset-inline-end: 14px; width: 34px; height: 34px; border-radius: 50%; background: var(--soft); color: var(--mut); font-size: 15px; }
+.vf-b h3 { font-size: 18px; margin: 2px 0 4px; }
+.vf-sub { font-size: 13px; color: var(--mut); margin-bottom: 14px; }
+.vf-steps { list-style: none; text-align: start; display: grid; gap: 9px; margin: 0 0 16px; }
+.vf-steps li { display: flex; gap: 10px; align-items: center; font-size: 13.5px; }
+.vf-steps i { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 800; background: var(--soft); color: var(--ac-tx); }
+.vf-sheet .btn { width: 100%; }
+.btn.vf-wa { background: #17793f; color: #fff; }   /* أخضر واتساب، أغمق شوية علشان الكلام الأبيض يتقري */
+.vf-code { font-size: 32px; letter-spacing: 10px; font-weight: 900; margin: 2px 0 14px; color: var(--ink); }
+.vf-note { font-size: 12px; color: var(--mut); margin-top: 8px; }
+.vf-wait { display: flex; align-items: center; justify-content: center; gap: 9px; margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--ac-tx); }
+.vf-sp { width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid var(--line); border-top-color: var(--ac-tx); animation: vf-sp 1s linear infinite; }
+@keyframes vf-sp { to { transform: rotate(360deg); } }
+.vf-skip { display: block; width: 100%; margin-top: 14px; font-size: 12.5px; color: var(--mut); text-decoration: underline; }
+.vf-ok { width: 64px; height: 64px; margin: 6px auto 10px; border-radius: 50%; display: grid; place-items: center; font-size: 32px; font-weight: 900; background: var(--okbg); color: var(--okc); }
+@media (prefers-reduced-motion: reduce) { .vf-sheet, .vf-dim { transition: none; } .vf-sp { animation: none; } }

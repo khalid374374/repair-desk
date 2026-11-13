@@ -307,7 +307,66 @@
     return h + '</div>';
   }
   function payVal() { var r = app.querySelector('input[name=pay]:checked'); return r ? r.value : 'cash'; }
+  /* تأكيد رقم العميل بواتساب (خالد 2026-11-13، فكرة 2: نافذة من تحت، memory phone-verify).
+     بس لو المحل مشغّله (C.vf = رقم واتساب المحل المربوط بالكاشير)، وبس للطلب اللي الوهمي فيه بيكلّف: منتجات كاش، وصيانة من البيت.
+     العميل بيبعت الكود من واتساب لرقم المحل، والكاشير بيأكد، والموبايل ده بياخد علامة 90 يوم. من غير تأكيد الطلب بيدخل عادي بعلامة "مش متأكد" */
+  var digits10 = function (p) { return String(p || '').replace(/[٠-٩]/g, function (c) { return String(c.charCodeAt(0) - 0x660); }).replace(/\D/g, '').slice(-10); };
+  function needVf(body) { return !!C.vf && ((body.kind === 'order' && body.pay === 'cash') || (body.kind === 'repair' && body.repair && body.repair.mode === 'home')); }
+  function vfSaved(phone) { var v = ls('vf'); return v && v.tok && digits10(v.phone) === digits10(phone) && Date.parse(v.until) > Date.now() ? v.tok : ''; }
+  function verifyPhone(phone) {
+    return new Promise(function (done) {
+      var finished = false, id = '', code = '', pollT = null, skipT = null, sheet = null, dim = null;
+      var end = function (tok) { if (finished) return; finished = true; clearInterval(pollT); clearTimeout(skipT); document.removeEventListener('visibilitychange', onVis); if (sheet) { sheet.classList.remove('on'); dim.classList.remove('on'); setTimeout(function () { sheet.remove(); dim.remove(); }, 260); } done(tok === null ? null : (tok || '')); };
+      var waUrl = function () { return 'https://wa.me/' + C.vf + '?text=' + encodeURIComponent('كود تأكيد طلبي من ' + (C.shop.name || 'المحل') + ': ' + code); };
+      var poll = function () {
+        if (!id || finished) return;
+        gw({ action: 'store-vcheck', id: id }).then(function (r) {
+          if (finished || !r || !r.ok) return;
+          if (r.state === 'ok' && r.tok) { ls('vf', { phone: r.phone || phone, tok: r.tok, until: r.until }); paint('ok'); setTimeout(function () { end(r.tok); }, 900); }
+          else if (r.state === 'gone') paint('gone');
+        });
+      };
+      var onVis = function () { if (!document.hidden) poll(); };   // رجع من واتساب: نسأل على طول
+      var paint = function (st) {
+        var b = sheet.querySelector('.vf-b');
+        if (st === 'ok') { b.innerHTML = '<div class="vf-ok">✓</div><h3>رقمك اتأكد</h3><div class="vf-sub">مش هتحتاجها تاني من الموبايل ده</div>'; return; }
+        if (st === 'gone') { b.innerHTML = '<h3>⏱ الكود خلص</h3><div class="vf-sub">ابدأ تاني، أو كمّل والمحل هيكلمك يأكد</div><button class="btn bg" id="vf-again">🔄 كود جديد</button><button class="vf-skip" id="vf-skip">كمّل من غير تأكيد</button>';
+          b.querySelector('#vf-again').onclick = start; b.querySelector('#vf-skip').onclick = function () { end(''); }; return; }
+        var wait = st === 'wait';
+        b.innerHTML = '<h3>' + (wait ? '⏳ مستنيين رسالتك' : '📲 خطوة أخيرة: أكّد رقمك') + '</h3><div class="vf-sub">' + (wait ? 'لو بعتّها، الطلب هيتأكد في ثواني' : 'مرة واحدة بس من الموبايل ده · <span class="num">' + esc(phone) + '</span>') + '</div>'
+          + (wait ? '<div class="vf-code num">' + esc(code) + '</div>' : '<ol class="vf-steps"><li><i>1</i>دوس الزرار الأخضر، واتساب هيفتح لوحده</li><li><i>2</i>الرسالة جاهزة فيها الكود، دوس إرسال</li><li><i>3</i>ارجع هنا، الطلب هيتأكد لوحده</li></ol>')
+          + '<a class="btn ' + (wait ? 'bs' : 'vf-wa') + '" id="vf-go" href="' + esc(waUrl()) + '" target="_blank" rel="noopener">💬 ' + (wait ? 'افتح واتساب تاني' : 'افتح واتساب وابعت الكود') + '</a>'
+          + (wait ? '<div class="vf-wait"><span class="vf-sp"></span>بنستنى الرسالة توصل المحل...</div>' : '<div class="vf-note">الكود: <b class="num">' + esc(code) + '</b></div>')
+          + '<button class="vf-skip" id="vf-skip"' + (wait && skipT === -1 ? '' : ' hidden') + '>مش عندك واتساب على الرقم ده؟ كمّل والمحل هيكلمك يأكد</button>';
+        b.querySelector('#vf-go').onclick = function () { if (!wait) setTimeout(function () { paint('wait'); }, 400); if (skipT !== -1 && !skipT) skipT = setTimeout(function () { skipT = -1; var s = sheet.querySelector('#vf-skip'); if (s) s.hidden = false; }, window.__vfSkipMs || 25000); };
+        b.querySelector('#vf-skip').onclick = function () { end(''); };
+      };
+      var start = function () {
+        sheet.querySelector('.vf-b').innerHTML = '<div class="vf-wait"><span class="vf-sp"></span>لحظة...</div>';
+        gw({ action: 'store-vstart', slug: slug, phone: phone }).then(function (r) {
+          if (finished) return;
+          if (!r.ok) { if (r.field === 'phone') { toast(r.error, 'bad'); return end(null); } return end(''); }   // التأكيد مش متاح (السيرفر/حد المحاولات): الطلب يدخل بعلامة "مش متأكد"، مانوقفش العميل
+          id = r.id; code = r.code; skipT = 0; paint('start');
+          clearInterval(pollT); pollT = setInterval(poll, 3000);
+        });
+      };
+      dim = document.createElement('div'); dim.className = 'vf-dim'; dim.onclick = function () { end(null); };
+      sheet = document.createElement('div'); sheet.className = 'vf-sheet'; sheet.setAttribute('role', 'dialog');
+      sheet.innerHTML = '<div class="vf-gr"></div><button class="vf-x" aria-label="اقفل">✕</button><div class="vf-b"></div>';
+      sheet.querySelector('.vf-x').onclick = function () { end(null); };
+      document.body.appendChild(dim); document.body.appendChild(sheet);
+      requestAnimationFrame(function () { dim.classList.add('on'); sheet.classList.add('on'); });
+      document.addEventListener('visibilitychange', onVis);
+      start();
+    });
+  }
   function submitOrder(body, btn) {
+    if (needVf(body) && !body.vtok) {
+      var saved = vfSaved(body.cust && body.cust.phone);
+      if (saved) body.vtok = saved;
+      else return verifyPhone(body.cust.phone).then(function (tok) { if (tok === null) return null; body.vtok = tok || undefined; return submitOrder(Object.assign(body, { vtok: tok || '-' }), btn); });   // null = قفل النافذة (مايبعتش)، '' = كمّل من غير تأكيد
+    }
+    if (body.vtok === '-') delete body.vtok;
     btn.disabled = true; var old = btn.innerHTML; btn.innerHTML = '⏳ بنبعت الطلب...';
     return gw(Object.assign({ action: 'store-order', slug: slug }, body)).then(function (r) {
       btn.disabled = false; btn.innerHTML = old;
