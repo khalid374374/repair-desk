@@ -332,3 +332,13 @@ a.btn, a.btn:visited, .cta a, .box a.btn { text-decoration: none; }   /* لين�
 /* صورة التحويل (2026-11-13) */
 .pf-up { width: 100%; margin-top: 8px; cursor: pointer; } .pf-up.busy { opacity: .7; pointer-events: none; }
 .pf-ok { margin-top: 8px; padding: 9px 12px; border-radius: 12px; background: var(--okbg); color: var(--okc); font-weight: 800; font-size: 13px; }
+/* ===== ألوان زي الأول (خالد 2026-11-13 اختار "أ": "الالوان بقت باهته"، tests/ui/shots/store-colors.jpg) =====
+   الراس كحلي، أيقونات الأقسام مربعات ملوّنة، وعرض اليوم أحمر/برتقالي — على نفس شكل البريميم */
+.hd { background: radial-gradient(130% 120% at 100% 0%, #1f5fae, transparent 60%), linear-gradient(160deg, #0a1a44, #10275e) !important; color: #fff !important; border-radius: 0 0 28px 28px !important; padding-bottom: 18px !important; }
+.hd .nm b { color: #fff; } .hd .nm small { color: #c8d6f2 !important; } .hd .ic button { background: #ffffff1f !important; color: #fff !important; box-shadow: none !important; } .bdg { border-color: #0a1a44 !important; }
+.srch { box-shadow: 0 8px 20px #0004 !important; }
+.chip span { background: linear-gradient(135deg, var(--c1), var(--c2)) !important; box-shadow: 0 8px 16px color-mix(in srgb, var(--c1) 35%, transparent), inset 0 1px 0 #ffffff55 !important; }
+.deal { background: linear-gradient(120deg, #b52c45, #c9521f) !important; box-shadow: 0 14px 30px #d6455f44 !important; }
+.deal small { color: #fff !important; } .deal .di { background: #ffffff2b !important; }
+@media (min-width: 1100px) { .hd { border-radius: 28px !important; margin-top: 10px; padding: 22px !important; } }
+.deal .cd span { background: #0000002e !important; } .deal s { opacity: 1 !important; }
