@@ -6,6 +6,7 @@
   var SB = 'https://sgqscttmkhmiqyjsuvio.supabase.co', GW = SB + '/functions/v1/gateway', ST = SB + '/storage/v1/object/public/store/';
   var KEY = 'sb_publishable_y11CnpnNLb6qIx00LVUHJQ_BzzQNXim';   // مفتاح عام (نفس اللي في t.html)
   var app = document.getElementById('app');
+  var activeDealId = '', dealCampaign = null;
   var slug = '', C = null, P = {}, deferredInstall = null, timers = [], pollT = 0, trackLoad = null;
 
   /* ---------- أدوات ---------- */
@@ -99,6 +100,21 @@
   }
   function isFresh(p) { return !!(p.fresh || p.new); }   // p.new = كاشير قديم (قبل 2.39)
   function gridHTML(list) { return list.length ? '<div class="grid">' + list.map(cardHTML).join('') + '</div>' : '<div class="empty"><div class="e">🔍</div><b>مفيش حاجة هنا</b><p>جرّب قسم تاني، أو قولّنا انت عايز إيه وهنجيبهولك.</p><button class="btn b1" data-go="#/wish">🤔 قولّنا عايز إيه</button></div>'; }
+  function dealContent(p) {
+    var e = eff(p);
+    return '<div class="di">' + pic(p, true) + '</div><div class="deal-copy"><small>⚡ ' + (C.dealT ? esc(C.dealT) : 'عرض لفترة محدودة') + '</small><b>' + esc(p.n) + '</b>'
+      + '<div class="deal-money"><span class="pr">' + money(e.pr) + '</span>' + (e.was ? '<s class="num">' + fm(e.was) + '</s>' : '') + '</div>'
+      + '<div class="deal-timer">' + (e.end ? cdHTML(e.end) : '') + '</div></div>';
+  }
+  function dealSlideHTML(p, index, total) {
+    return '<button type="button" class="deal" data-p="' + esc(p.id) + '" data-deal-banner aria-live="polite" aria-label="العرض ' + (index + 1) + ' من ' + total + ': ' + esc(p.n) + '">' + dealContent(p) + '</button>';
+  }
+  function dealDotsHTML(total) {
+    if (total < 2) return '';
+    return '<div class="deal-dots" role="group" aria-label="اختيار العرض من ' + total + ' عروض">' + Array.from({ length: total }, function (_, i) {
+      return '<button type="button" class="deal-dot' + (i === 0 ? ' on' : '') + '" data-deal-index="' + i + '" aria-label="العرض ' + (i + 1) + ' من ' + total + '" aria-pressed="' + (i === 0 ? 'true' : 'false') + '"></button>';
+    }).join('') + '</div>';
+  }
   var visible = function () { return (C.p || []).filter(function (p) { return !p.hide; }); };
   function sortList(list, how) {
     var l = list.slice();
@@ -112,7 +128,10 @@
   function home() {
     var cats = (C.cats || []).filter(function (c) { return visible().some(function (p) { return p.c === c.id; }); });
     var offs = sortList(visible(), 'off').filter(function (p) { return avail(p) > 0; });
-    var deal = (C.deal && P[C.deal] && eff(P[C.deal]).pct ? P[C.deal] : null) || offs.filter(function (p) { return eff(p).end; })[0];
+    if (dealCampaign !== (C.deal || '')) { dealCampaign = C.deal || ''; activeDealId = ''; }
+    var dealSlides = offs.slice(), preferredDeal = activeDealId || C.deal;
+    var preferredIndex = dealSlides.findIndex(function (p) { return p.id === preferredDeal; });
+    if (preferredIndex > 0) dealSlides.unshift(dealSlides.splice(preferredIndex, 1)[0]);
     var newOnes = visible().filter(function (p) { return isFresh(p) && avail(p) > 0; }).slice(0, 6);
     var s = C.svc || {}, opn = openNow();
     var html = '<header class="hd"><div class="r1"><div class="logo">' + logoHTML() + '</div><div class="nm"><b>' + esc(C.shop.name) + '</b><small><span class="dot' + (opn ? '' : ' off') + '"></span>' + (C.shop.area ? esc(C.shop.area) + ' · ' : '') + (opn ? 'مفتوح' + (hoursTxt() ? ' لحد ' + esc(hoursTxt().split('–')[1].trim()) : '') : 'مقفول دلوقتي') + '</small></div>'
@@ -123,14 +142,52 @@
     html += '<div class="chips">' + cats.map(function (c) { return '<button class="chip" data-go="#/c/' + esc(c.id) + '"><span style="--c1:' + esc(c.c1 || '#2f7cf6') + ';--c2:' + esc(c.c2 || '#5aa0ff') + '">' + esc(c.ic || '📦') + '</span>' + esc(c.n) + '</button>'; }).join('')
       + (offs.length ? '<button class="chip" data-go="#/c/_off"><span style="--c1:#d6455f;--c2:#f0753b">🔥</span>العروض</button>' : '')
       + '<button class="chip" data-go="#/svc"><span style="--c1:#e48b07;--c2:#ffc35c">🛠</span>الخدمات</button></div>';
-    if (deal) { var e = eff(deal); html += '<button class="deal" data-p="' + esc(deal.id) + '"><div class="di">' + pic(deal) + '</div><div><small>⚡ ' + (C.dealT ? esc(C.dealT) : 'عرض لفترة محدودة') + '</small><b>' + esc(deal.n) + '</b><span class="pr">' + money(e.pr) + '</span>' + (e.was ? '<s class="num">' + fm(e.was) + '</s>' : '') + (e.end ? cdHTML(e.end) : '') + '</div></button>'; }
-    if (offs.length) html += '<div class="sec"><b>🔥 عروض لفترة محدودة</b><button data-go="#/c/_off">الكل ←</button></div>' + gridHTML(offs.slice(0, 4));
+    if (dealSlides.length) {
+      html += '<div class="sec"><b>🔥 عروض لفترة محدودة</b><button data-go="#/c/_off">الكل ←</button></div>';
+      html += '<div class="deal-carousel">' + dealSlideHTML(dealSlides[0], 0, dealSlides.length) + dealDotsHTML(dealSlides.length) + '</div>';
+    }
     if (newOnes.length) html += '<div class="sec"><b>✨ لسه واصل</b></div>' + gridHTML(newOnes);
     cats.slice(0, 4).forEach(function (c) { var l = sortList(visible().filter(function (p) { return p.c === c.id; })).slice(0, 4); html += '<div class="sec"><b>' + esc(c.ic || '') + ' ' + esc(c.n) + '</b><button data-go="#/c/' + esc(c.id) + '">الكل ←</button></div>' + gridHTML(l); });
     html += svcCards(s);
     html += '<div class="box" style="text-align:center;background:color-mix(in srgb,#f59e0b 9%,var(--card));border-color:color-mix(in srgb,#f59e0b 35%,var(--line))"><b style="font-size:14px;font-weight:900">🤔 مش لاقي اللي عايزه؟</b><div style="color:var(--mut);font-size:12.5px;font-weight:600;margin:4px 0 10px">اكتبلنا وهنجيبهولك ونكلمك على واتساب</div><button class="btn b1" data-go="#/wish" style="width:100%">قولّنا عايز إيه</button></div>';
     html += footHTML();
     shell(html, '#/');
+    var dealBanner = app.querySelector('[data-deal-banner]');
+    var dealDots = [].slice.call(app.querySelectorAll('[data-deal-index]'));
+    if (dealBanner && dealSlides.length) {
+      var dealIndex = 0, swipeX = null, swallowClick = false;
+      var showDeal = function (index) {
+        dealIndex = (index + dealSlides.length) % dealSlides.length;
+        var p = dealSlides[dealIndex];
+        activeDealId = p.id;
+        dealBanner.dataset.p = p.id;
+        dealBanner.setAttribute('aria-label', 'العرض ' + (dealIndex + 1) + ' من ' + dealSlides.length + ': ' + p.n);
+        dealBanner.innerHTML = dealContent(p);
+        dealDots.forEach(function (b, i) { b.classList.toggle('on', i === dealIndex); b.setAttribute('aria-pressed', String(i === dealIndex)); });
+        tickTimers();
+      };
+      dealDots.forEach(function (b) { b.onclick = function () { showDeal(+b.dataset.dealIndex); }; });
+      if (dealSlides.length > 1) {
+        dealBanner.addEventListener('pointerdown', function (e) {
+          if (e.isPrimary === false || (e.button != null && e.button !== 0)) return;
+          swipeX = e.clientX;
+          if (dealBanner.setPointerCapture && e.pointerId != null) try { dealBanner.setPointerCapture(e.pointerId); } catch (_) {}
+        });
+        dealBanner.addEventListener('pointerup', function (e) {
+          if (swipeX === null) return;
+          var dx = e.clientX - swipeX; swipeX = null;
+          if (Math.abs(dx) < 45) return;
+          e.preventDefault(); swallowClick = true;
+          showDeal(dealIndex + (dx > 0 ? 1 : -1));
+          setTimeout(function () { swallowClick = false; }, 0);
+        });
+        dealBanner.addEventListener('pointercancel', function () { swipeX = null; });
+        dealBanner.addEventListener('click', function (e) {
+          if (!swallowClick) return;
+          e.preventDefault(); e.stopImmediatePropagation(); swallowClick = false;
+        }, true);
+      }
+    }
     document.getElementById('sf').onsubmit = function (ev) { ev.preventDefault(); var v = document.getElementById('sq').value.trim(); if (v) go('#/q/' + encodeURIComponent(v)); };
   }
   function svcCards(s) {

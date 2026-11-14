@@ -67,11 +67,20 @@ img { display: block; max-width: 100%; }
 .sec { padding: 14px 14px 6px; display: flex; justify-content: space-between; align-items: center; gap: 10px; } .sec b { font-size: 16px; font-weight: 900; } .sec button { color: var(--ac-tx); font-weight: 800; font-size: 12.5px; }
 
 /* عرض اليوم */
-.deal { margin: 8px 14px; border-radius: 22px; padding: 15px 16px; color: #fff; background: linear-gradient(120deg, #d6455f, #f0753b); position: relative; overflow: hidden; box-shadow: 0 12px 26px #d6455f44; display: flex; gap: 12px; align-items: center; width: calc(100% - 28px); text-align: start; }
+.deal-carousel { margin: 8px 14px 4px; width: calc(100% - 28px); min-width: 0; }
+.deal { margin: 0; border-radius: 22px; padding: 15px 16px; color: #fff; background: linear-gradient(120deg, #d6455f, #f0753b); position: relative; overflow: hidden; box-shadow: 0 12px 26px #d6455f44; display: flex; gap: 12px; align-items: center; width: 100%; min-width: 0; min-height: 162px; text-align: start; touch-action: pan-y; user-select: none; }
 .deal::after { content: "⚡"; position: absolute; left: 8px; bottom: -18px; font-size: 96px; opacity: .16; pointer-events: none; }
 .deal .di { width: 76px; height: 76px; border-radius: 16px; background: #ffffff26; flex: none; display: grid; place-items: center; font-size: 34px; overflow: hidden; } .deal .di img { width: 100%; height: 100%; object-fit: cover; }
-.deal small { font-weight: 800; opacity: .92; font-size: 12px; } .deal b { display: block; font-size: 16.5px; font-weight: 900; margin: 1px 0 4px; line-height: 1.35; }
-.deal .pr { font-weight: 900; font-size: 15px; } .deal s { opacity: .75; font-size: 12px; margin-inline-start: 6px; }
+.deal-copy { flex: 1; min-width: 0; text-align: start; }
+.deal small { font-weight: 800; opacity: .92; font-size: 12px; } .deal b { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; min-height: 2.7em; font-size: 16.5px; font-weight: 900; margin: 1px 0 4px; line-height: 1.35; }
+.deal-money { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; min-height: 1.6em; }
+.deal .pr { font-weight: 900; font-size: 15px; } .deal s { opacity: .75; font-size: 12px; margin-inline-start: 0; }
+.deal-timer { min-height: 36px; margin-top: 4px; }
+.deal .cd { margin-top: 0; }
+.deal-dots { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0; width: min(100%, 560px); margin: 0 auto; padding: 2px 0 0; }
+.deal-dot { flex: 0 0 44px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; }
+.deal-dot::before { content: ''; display: block; width: 8px; height: 8px; border-radius: 99px; background: var(--mut); opacity: .7; transition: width .18s, opacity .18s, background-color .18s; }
+.deal-dot.on::before { width: 18px; background: #f0753b; opacity: 1; }
 .cd { display: flex; gap: 5px; margin-top: 6px; } .cd span { background: #ffffff2b; border-radius: 9px; padding: 2px 7px; font-weight: 900; font-size: 13px; text-align: center; min-width: 36px; } .cd em { font-style: normal; font-size: 9.5px; display: block; opacity: .85; margin-top: -3px; }
 
 /* المنتجات */
@@ -244,7 +253,8 @@ a.btn, a.btn:visited, .cta a, .box a.btn { text-decoration: none; }   /* لين�
 .chip span { width: 52px; height: 52px; border-radius: 16px; background: color-mix(in srgb, var(--c1) 14%, var(--card)); box-shadow: none; font-size: 27px; }
 
 /* عرض اليوم: بانر كبير */
-.deal { margin: 14px 18px 6px; width: calc(100% - 36px); border-radius: 30px; padding: 22px 20px; min-height: 200px; flex-direction: row-reverse; justify-content: space-between;
+.deal-carousel { margin: 14px 18px 6px; width: calc(100% - 36px); }
+.deal { border-radius: 30px; padding: 22px 20px; min-height: 200px; flex-direction: row-reverse; justify-content: space-between;
   background: radial-gradient(120% 140% at 0% 100%, var(--ac-dk), transparent 65%), linear-gradient(135deg, #0b1430, #1b2550); box-shadow: 0 20px 40px #0b143033; }
 .deal::after { content: none; }
 .deal .di { width: 150px; height: 150px; border-radius: 26px; background: #ffffff12; }
@@ -280,7 +290,7 @@ a.btn, a.btn:visited, .cta a, .box a.btn { text-decoration: none; }   /* لين�
 /* التابلت */
 @media (min-width: 700px) {
   #app { max-width: none; } .nav { max-width: 560px; bottom: 14px; border-radius: 26px; }
-  .hd, .chips, .sec, .grid, .svc { padding-inline: 28px; } .deal { margin-inline: 28px; width: calc(100% - 56px); min-height: 240px; } .deal .di { width: 190px; height: 190px; } .deal b { font-size: 26px; }
+  .hd, .chips, .sec, .grid, .svc { padding-inline: 28px; } .deal-carousel { margin-inline: 28px; width: auto; } .deal { min-height: 240px; } .deal .di { width: 190px; height: 190px; } .deal b { font-size: 26px; }
   .hd .srch { max-width: 640px; }
   .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
   .pc .img { aspect-ratio: 1; } .pc:has(.add) .pr { padding-inline-end: 0; }
@@ -305,7 +315,10 @@ a.btn, a.btn:visited, .cta a, .box a.btn { text-decoration: none; }   /* لين�
   .wa { left: 26px; bottom: 26px; }
   .hd { display: flex; flex-direction: column-reverse; align-items: center; gap: 8px; padding: 22px 0 6px; } .hd .r1 .logo, .hd .ic, .hd .nm b { display: none; } .hd .srch { width: 100%; max-width: 640px; margin: 0; padding-block: 3px; }
   .chips { padding-inline: 0; justify-content: center; gap: 14px; } .chip { width: 128px; }
-  .deal { margin-inline: 0; width: 100%; min-height: 340px; padding: 38px 54px; border-radius: 36px; } .deal .di { width: 270px; height: 270px; border-radius: 34px; } .deal b { font-size: 36px; } .deal .pr { font-size: 32px; } .deal small { font-size: 15px; }
+  .deal-carousel { margin-inline: 0; width: 100%; } .deal { min-height: 340px; padding: 38px 54px; border-radius: 36px; } .deal .di { width: 270px; height: 270px; border-radius: 34px; } .deal b { font-size: 36px; } .deal .pr { font-size: 32px; } .deal small { font-size: 15px; }
+  .deal .deal-timer { min-height: 62px; margin-top: 10px; } .deal .cd { gap: 10px; }
+  .deal .cd span { min-width: 76px; padding: 9px 12px 7px; border: 1px solid #ffffff45; border-radius: 14px; font-size: 24px; line-height: 1.05; box-shadow: 0 8px 20px #0003, inset 0 1px 0 #ffffff2c; }
+  .deal .cd em { margin-top: 2px; font-size: 12px; }
   .sec, .grid, .svc { padding-inline: 0; } .sec { padding-top: 34px; } .sec b { font-size: 26px; }
   .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px 22px; }
   .pc .img { transition: transform .3s; } .pc:hover .img { transform: translateY(-4px); }
