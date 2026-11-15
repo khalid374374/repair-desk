@@ -67,8 +67,18 @@ img { display: block; max-width: 100%; }
 .sec { padding: 14px 14px 6px; display: flex; justify-content: space-between; align-items: center; gap: 10px; } .sec b { font-size: 16px; font-weight: 900; } .sec button { color: var(--ac-tx); font-weight: 800; font-size: 12.5px; }
 
 /* عرض اليوم */
-.deal-carousel { margin: 8px 14px 4px; width: calc(100% - 28px); min-width: 0; }
+.deal-carousel { margin: 8px 14px 4px; width: calc(100% - 28px); min-width: 0; display: flow-root; }
+.deal-stage { position: relative; isolation: isolate; overflow: hidden; border-radius: 36px; margin: -14px; padding: 14px; }
 .deal { margin: 0; border-radius: 22px; padding: 15px 16px; color: #fff; background: linear-gradient(120deg, #d6455f, #f0753b); position: relative; overflow: hidden; box-shadow: 0 12px 26px #d6455f44; display: flex; gap: 12px; align-items: center; width: 100%; min-width: 0; min-height: 162px; text-align: start; touch-action: pan-y; user-select: none; }
+.deal.deal-leaving { position: absolute; inset: 14px; width: auto; z-index: 2; pointer-events: none; }
+.deal.deal-leave-left { animation: deal-card-out-left .36s cubic-bezier(.22,.72,.28,1) both; }
+.deal.deal-leave-right { animation: deal-card-out-right .36s cubic-bezier(.22,.72,.28,1) both; }
+.deal.deal-enter-right { animation: deal-card-in-right .38s cubic-bezier(.22,.72,.28,1) both; }
+.deal.deal-enter-left { animation: deal-card-in-left .38s cubic-bezier(.22,.72,.28,1) both; }
+@keyframes deal-card-out-left { to { transform: translateX(-105%); opacity: .35; } }
+@keyframes deal-card-out-right { to { transform: translateX(105%); opacity: .35; } }
+@keyframes deal-card-in-right { from { transform: translateX(105%); opacity: .35; } to { transform: translateX(0); opacity: 1; } }
+@keyframes deal-card-in-left { from { transform: translateX(-105%); opacity: .35; } to { transform: translateX(0); opacity: 1; } }
 .deal::after { content: "⚡"; position: absolute; left: 8px; bottom: -18px; font-size: 96px; opacity: .16; pointer-events: none; }
 .deal .di { width: 76px; height: 76px; border-radius: 16px; background: #ffffff26; flex: none; display: grid; place-items: center; font-size: 34px; overflow: hidden; } .deal .di img { width: 100%; height: 100%; object-fit: cover; }
 .deal-copy { flex: 1; min-width: 0; text-align: start; }

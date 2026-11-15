@@ -144,7 +144,7 @@
       + '<button class="chip" data-go="#/svc"><span style="--c1:#e48b07;--c2:#ffc35c">🛠</span>الخدمات</button></div>';
     if (dealSlides.length) {
       html += '<div class="sec"><b>🔥 عروض لفترة محدودة</b><button data-go="#/c/_off">الكل ←</button></div>';
-      html += '<div class="deal-carousel">' + dealSlideHTML(dealSlides[0], 0, dealSlides.length) + dealDotsHTML(dealSlides.length) + '</div>';
+      html += '<div class="deal-carousel"><div class="deal-stage">' + dealSlideHTML(dealSlides[0], 0, dealSlides.length) + '</div>' + dealDotsHTML(dealSlides.length) + '</div>';
     }
     if (newOnes.length) html += '<div class="sec"><b>✨ لسه واصل</b></div>' + gridHTML(newOnes);
     cats.slice(0, 4).forEach(function (c) { var l = sortList(visible().filter(function (p) { return p.c === c.id; })).slice(0, 4); html += '<div class="sec"><b>' + esc(c.ic || '') + ' ' + esc(c.n) + '</b><button data-go="#/c/' + esc(c.id) + '">الكل ←</button></div>' + gridHTML(l); });
@@ -155,18 +155,42 @@
     var dealBanner = app.querySelector('[data-deal-banner]');
     var dealDots = [].slice.call(app.querySelectorAll('[data-deal-index]'));
     if (dealBanner && dealSlides.length) {
-      var dealIndex = 0, swipeX = null, swallowClick = false;
-      var showDeal = function (index) {
-        dealIndex = (index + dealSlides.length) % dealSlides.length;
+      var dealIndex = 0, swipeX = null, swallowClick = false, dealMotionTimer = 0;
+      var dealStage = dealBanner.parentElement;
+      var clearDealMotion = function () {
+        if (dealMotionTimer) { clearTimeout(dealMotionTimer); dealMotionTimer = 0; }
+        dealStage.querySelectorAll('.deal-leaving').forEach(function (el) { el.remove(); });
+        dealBanner.classList.remove('deal-enter-right', 'deal-enter-left');
+      };
+      var showDeal = function (index, direction) {
+        var nextIndex = (index + dealSlides.length) % dealSlides.length;
+        if (nextIndex === dealIndex) { tickTimers(); return; }
+        var movingForward = direction == null ? nextIndex > dealIndex : direction > 0;
+        var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        clearDealMotion();
+        if (!reduced) {
+          var leaving = dealBanner.cloneNode(true);
+          leaving.removeAttribute('data-deal-banner');
+          leaving.setAttribute('aria-hidden', 'true');
+          leaving.tabIndex = -1;
+          leaving.disabled = true;
+          leaving.classList.add(movingForward ? 'deal-leave-left' : 'deal-leave-right', 'deal-leaving');
+          dealStage.appendChild(leaving);
+        }
+        dealIndex = nextIndex;
         var p = dealSlides[dealIndex];
         activeDealId = p.id;
         dealBanner.dataset.p = p.id;
         dealBanner.setAttribute('aria-label', 'العرض ' + (dealIndex + 1) + ' من ' + dealSlides.length + ': ' + p.n);
         dealBanner.innerHTML = dealContent(p);
+        if (!reduced) {
+          dealBanner.classList.add(movingForward ? 'deal-enter-right' : 'deal-enter-left');
+          dealMotionTimer = setTimeout(clearDealMotion, 430);
+        }
         dealDots.forEach(function (b, i) { b.classList.toggle('on', i === dealIndex); b.setAttribute('aria-pressed', String(i === dealIndex)); });
         tickTimers();
       };
-      dealDots.forEach(function (b) { b.onclick = function () { showDeal(+b.dataset.dealIndex); }; });
+      dealDots.forEach(function (b) { b.onclick = function () { var target = +b.dataset.dealIndex; showDeal(target, target > dealIndex ? 1 : -1); }; });
       if (dealSlides.length > 1) {
         dealBanner.addEventListener('pointerdown', function (e) {
           if (e.isPrimary === false || (e.button != null && e.button !== 0)) return;
@@ -178,7 +202,7 @@
           var dx = e.clientX - swipeX; swipeX = null;
           if (Math.abs(dx) < 45) return;
           e.preventDefault(); swallowClick = true;
-          showDeal(dealIndex + (dx > 0 ? 1 : -1));
+          showDeal(dealIndex + (dx > 0 ? 1 : -1), dx > 0 ? 1 : -1);
           setTimeout(function () { swallowClick = false; }, 0);
         });
         dealBanner.addEventListener('pointercancel', function () { swipeX = null; });
