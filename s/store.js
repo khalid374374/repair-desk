@@ -715,6 +715,11 @@
   /* ---------- التثبيت كتطبيق ---------- */
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredInstall = e; installMaybe(); });
   function isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream; }
+  function desktopInstall() {
+    var ua = navigator.userAgent || '';
+    var ipadDesktop = /macintosh/i.test(ua) && navigator.maxTouchPoints > 1;
+    return window.matchMedia('(min-width: 1100px)').matches && !isIOS() && !ipadDesktop && !/android/i.test(ua);
+  }
   function standalone() { return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone; }
   function installMaybe() {
     var onShop = /^(#\/?|#\/cats.*|#\/c\/.*)?$/.test(location.hash), old = document.querySelector('.install');
@@ -723,9 +728,15 @@
     var seen = +(ls('inst') || 0); if (Date.now() - seen < 7 * 864e5) return;
     var visits = +(ls('visits') || 0); if (visits < 2 && !(ls('orders') || []).length) return;
     if (!deferredInstall && !isIOS()) return;
-    var d = document.createElement('div'); d.className = 'install';
-    d.innerHTML = '<button class="x" aria-label="إغلاق">✕</button><div class="logo">' + logoHTML() + '</div><div style="flex:1"><b>ثبّت "' + esc(C.shop.name) + '" على موبايلك</b><small>يفتح على طول من الشاشة الرئيسية، وتشوف العروض الجديدة أول بأول.</small><button class="btn b1" style="margin-top:8px;padding:9px;font-size:13.5px;width:100%">📲 ثبّت</button></div>';
-    document.body.appendChild(d);
+    var desktop = desktopInstall(), target = desktop ? 'على الكمبيوتر' : 'على موبايلك';
+    var detail = desktop ? 'يفتح كبرنامج مستقل من جهازك، ومعاه عروض المحل وطلباته.' : 'يفتح على طول من الشاشة الرئيسية، وتشوف العروض الجديدة أول بأول.';
+    var button = desktop ? '🖥️ ثبّت على الكمبيوتر' : '📲 ثبّت';
+    var d = document.createElement('div'); d.className = 'install'; d.dataset.target = desktop ? 'desktop' : 'mobile';
+    d.innerHTML = '<button class="x" aria-label="إغلاق">✕</button><div class="logo">' + logoHTML() + '</div><div style="flex:1"><b>ثبّت "' + esc(C.shop.name) + '" ' + target + '</b><small>' + detail + '</small><button class="btn b1" style="margin-top:8px;padding:9px;font-size:13.5px;width:100%">' + button + '</button></div>';
+    if (desktop) {
+      var page = document.querySelector('#app > .page'), head = page && page.querySelector('.hd');
+      if (page) head ? page.insertBefore(d, head.nextSibling) : page.appendChild(d); else document.body.appendChild(d);
+    } else document.body.appendChild(d);
     d.querySelector('.x').onclick = function () { ls('inst', Date.now()); d.remove(); };
     d.querySelector('.b1').onclick = function () {
       ls('inst', Date.now());
@@ -798,7 +809,11 @@
     var v = accentVars(ac); for (var k in v) document.documentElement.style.setProperty(k, v[k]);
     document.title = C.shop.name || 'المتجر';
     document.getElementById('mf').href = ST + slug + '/manifest.json';
-    if (C.shop.logo) document.getElementById('ati').href = img(C.shop.logo);
+    // نفس PNG المربعة للمتجر المثبّت على iOS ولأيقونة التبويب؛ اللوجو الخام يفضل لواجهة المتجر فقط.
+    var installIcon = C.shop.i192 ? img(C.shop.i192) : ST + 'icon-192.png';
+    var ati = document.getElementById('ati'), fav = document.getElementById('fav');
+    if (ati && ati.href !== installIcon) ati.href = installIcon;
+    if (fav && fav.href !== installIcon) fav.href = installIcon;
   }
   function loadCat(quiet) {
     loadCat.at = Date.now();

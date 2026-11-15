@@ -205,7 +205,9 @@ a.btn, a.btn:visited, .cta a, .box a.btn { text-decoration: none; }   /* لين�
 /* تثبيت كتطبيق */
 /* من غير transform للتوسيط: حركة الدخول (up) بتخلّص على transform: none، فكان الكارت بيتزق نص عرضه برّه الشاشة (خالد 2026-11-09: "نصها مستخبي") */
 .install { position: fixed; bottom: calc(84px + var(--safe-b)); left: 12px; right: 12px; margin-inline: auto; max-width: 536px; border-radius: 22px; padding: 14px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 18px 40px #0a1a4433; display: flex; gap: 12px; align-items: center; z-index: 40; animation: up .4s both; }
-.install .logo { width: 52px; height: 52px; } .install b { font-size: 14.5px; font-weight: 900; display: block; } .install small { color: var(--mut); font-weight: 600; font-size: 12px; display: block; line-height: 1.5; }
+.install { border-color: color-mix(in srgb, var(--ac) 28%, var(--line)); box-shadow: 0 18px 42px color-mix(in srgb, var(--ac) 16%, transparent), 0 18px 40px #0a1a4422; }
+.install .logo { width: 52px; height: 52px; border: 1px solid color-mix(in srgb, var(--ac) 42%, transparent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ac) 10%, transparent), inset 0 1px 0 #ffffff55, 0 6px 14px #0006; } .install b { font-size: 14.5px; font-weight: 900; display: block; } .install small { color: var(--mut); font-weight: 600; font-size: 12px; display: block; line-height: 1.5; }
+.install[data-target="desktop"] { position: relative; inset: auto; width: min(536px, calc(100% - 24px)); margin: 16px auto 4px; flex: none; }
 .install .x { position: absolute; top: 6px; left: 10px; color: var(--mut); font-size: 15px; }
 .sheet-bg { position: fixed; inset: 0; background: #0a1a4466; z-index: 60; animation: fade .2s both; } @keyframes fade { from { opacity: 0; } }
 .sheet { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 560px; background: var(--card); border-radius: 26px 26px 0 0; padding: 10px 16px calc(18px + var(--safe-b)); z-index: 61; animation: sheetUp .32s cubic-bezier(.2, .9, .2, 1) both; max-height: 86vh; max-height: 86dvh; overflow: auto; }   /* dvh: شريط المتصفح تحت كان بيخبّي نص الشيت */
