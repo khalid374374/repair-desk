@@ -69,6 +69,7 @@ img { display: block; max-width: 100%; }
 /* عرض اليوم */
 .deal-carousel { margin: 8px 14px 4px; width: calc(100% - 28px); min-width: 0; display: flow-root; }
 .deal-stage { position: relative; isolation: isolate; overflow: hidden; border-radius: 36px; margin: -14px; padding: 14px; }
+.deal-nav { display: none; }
 .deal { margin: 0; border-radius: 22px; padding: 15px 16px; color: #fff; background: linear-gradient(120deg, #d6455f, #f0753b); position: relative; overflow: hidden; box-shadow: 0 12px 26px #d6455f44; display: flex; gap: 12px; align-items: center; width: 100%; min-width: 0; min-height: 162px; text-align: start; touch-action: pan-y; user-select: none; }
 .deal.deal-leaving { position: absolute; inset: 14px; width: auto; z-index: 2; pointer-events: none; }
 .deal.deal-leave-left { animation: deal-card-out-left .36s cubic-bezier(.22,.72,.28,1) both; }
@@ -91,6 +92,14 @@ img { display: block; max-width: 100%; }
 .deal-dot { flex: 0 0 44px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; }
 .deal-dot::before { content: ''; display: block; width: 8px; height: 8px; border-radius: 99px; background: var(--mut); opacity: .7; transition: width .18s, opacity .18s, background-color .18s; }
 .deal-dot.on::before { width: 18px; background: #f0753b; opacity: 1; }
+@media (min-width: 700px) {
+  .deal-stage { padding-inline: 58px; }
+  .deal-nav { position: absolute; top: 50%; z-index: 4; width: 42px; height: 42px; display: grid; place-items: center; transform: translateY(-50%); border: 1px solid #ffffffa8; border-radius: 50%; background: #ffffffeb; color: #9b2d47; box-shadow: 0 4px 12px #48132930; font-size: 22px; font-weight: 900; line-height: 1; transition: transform .15s, background .15s; }
+  .deal-nav:hover { background: #fff; transform: translateY(-50%) scale(1.06); }
+  .deal-nav:active { transform: translateY(-50%) scale(.94); }
+  .deal-nav.prev { left: 8px; }
+  .deal-nav.next { right: 8px; }
+}
 .cd { display: flex; gap: 5px; margin-top: 6px; } .cd span { background: #ffffff2b; border-radius: 9px; padding: 2px 7px; font-weight: 900; font-size: 13px; text-align: center; min-width: 36px; } .cd em { font-style: normal; font-size: 9.5px; display: block; opacity: .85; margin-top: -3px; }
 
 /* المنتجات */

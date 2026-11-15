@@ -144,7 +144,10 @@
       + '<button class="chip" data-go="#/svc"><span style="--c1:#e48b07;--c2:#ffc35c">🛠</span>الخدمات</button></div>';
     if (dealSlides.length) {
       html += '<div class="sec"><b>🔥 عروض لفترة محدودة</b><button data-go="#/c/_off">الكل ←</button></div>';
-      html += '<div class="deal-carousel"><div class="deal-stage">' + dealSlideHTML(dealSlides[0], 0, dealSlides.length) + '</div>' + dealDotsHTML(dealSlides.length) + '</div>';
+      var dealNav = dealSlides.length > 1
+        ? '<button type="button" class="deal-nav prev" data-deal-step="-1" aria-label="العرض السابق">←</button><button type="button" class="deal-nav next" data-deal-step="1" aria-label="العرض التالي">→</button>'
+        : '';
+      html += '<div class="deal-carousel"><div class="deal-stage">' + dealSlideHTML(dealSlides[0], 0, dealSlides.length) + dealNav + '</div>' + dealDotsHTML(dealSlides.length) + '</div>';
     }
     if (newOnes.length) html += '<div class="sec"><b>✨ لسه واصل</b></div>' + gridHTML(newOnes);
     cats.slice(0, 4).forEach(function (c) { var l = sortList(visible().filter(function (p) { return p.c === c.id; })).slice(0, 4); html += '<div class="sec"><b>' + esc(c.ic || '') + ' ' + esc(c.n) + '</b><button data-go="#/c/' + esc(c.id) + '">الكل ←</button></div>' + gridHTML(l); });
@@ -165,7 +168,7 @@
       var showDeal = function (index, direction) {
         var nextIndex = (index + dealSlides.length) % dealSlides.length;
         if (nextIndex === dealIndex) { tickTimers(); return; }
-        var movingForward = direction == null ? nextIndex > dealIndex : direction > 0;
+        var movingRight = direction == null ? nextIndex > dealIndex : direction > 0;
         var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         clearDealMotion();
         if (!reduced) {
@@ -174,7 +177,7 @@
           leaving.setAttribute('aria-hidden', 'true');
           leaving.tabIndex = -1;
           leaving.disabled = true;
-          leaving.classList.add(movingForward ? 'deal-leave-left' : 'deal-leave-right', 'deal-leaving');
+          leaving.classList.add(movingRight ? 'deal-leave-right' : 'deal-leave-left', 'deal-leaving');
           dealStage.appendChild(leaving);
         }
         dealIndex = nextIndex;
@@ -184,13 +187,16 @@
         dealBanner.setAttribute('aria-label', 'العرض ' + (dealIndex + 1) + ' من ' + dealSlides.length + ': ' + p.n);
         dealBanner.innerHTML = dealContent(p);
         if (!reduced) {
-          dealBanner.classList.add(movingForward ? 'deal-enter-right' : 'deal-enter-left');
+          dealBanner.classList.add(movingRight ? 'deal-enter-left' : 'deal-enter-right');
           dealMotionTimer = setTimeout(clearDealMotion, 430);
         }
         dealDots.forEach(function (b, i) { b.classList.toggle('on', i === dealIndex); b.setAttribute('aria-pressed', String(i === dealIndex)); });
         tickTimers();
       };
       dealDots.forEach(function (b) { b.onclick = function () { var target = +b.dataset.dealIndex; showDeal(target, target > dealIndex ? 1 : -1); }; });
+      [].slice.call(app.querySelectorAll('[data-deal-step]')).forEach(function (b) {
+        b.onclick = function () { var step = +b.dataset.dealStep; showDeal(dealIndex + step, step); };
+      });
       if (dealSlides.length > 1) {
         dealBanner.addEventListener('pointerdown', function (e) {
           if (e.isPrimary === false || (e.button != null && e.button !== 0)) return;
