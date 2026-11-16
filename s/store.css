@@ -424,7 +424,7 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
 .lbx-s { flex: none; width: 100%; height: 100%; scroll-snap-align: center; scroll-snap-stop: always; display: grid; place-items: center; overflow: hidden; padding: 6px 10px; }
 .lbx-s img { width: 100%; height: 100%; object-fit: contain; cursor: zoom-in; user-select: none; -webkit-user-select: none; transition: opacity .35s; }
 .lbx-s.z { overflow: auto; display: block; direction: ltr; place-items: normal; scrollbar-width: none; } .lbx-s.z::-webkit-scrollbar { display: none; }
-.lbx-s.z img { max-width: none; width: 250%; height: auto; aspect-ratio: auto; border-radius: 0; cursor: zoom-out; }
+.lbx-s.z img { max-width: none; max-height: none; width: 250%; height: auto; aspect-ratio: auto; border-radius: 0; cursor: zoom-out; }
 .lbx-th { display: flex; gap: 8px; justify-content: safe center; overflow-x: auto; scrollbar-width: none; padding: 10px 14px calc(14px + env(safe-area-inset-bottom, 0px)); }
 .lbx-th::-webkit-scrollbar { display: none; }
 .lbx-th button { flex: none; width: 54px; height: 54px; border-radius: 12px; overflow: hidden; border: 2px solid transparent; opacity: .55; background: #ffffff14; padding: 0; transition: opacity .15s, border-color .15s; }
@@ -437,6 +437,8 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
   .lbx-nav:hover { background: #ffffff38; transform: translateY(-50%) scale(1.06); }
   .lbx-nav.next { left: 18px; } .lbx-nav.prev { right: 18px; }
   .lbx-th button { width: 64px; height: 64px; }
+  /* خالد 2026-11-16: على الكمبيوتر الصورة كانت بتتكبّر أكتر من مقاسها (زوم جامد): مقاسها الحقيقي بالكتير */
+  .lbx-s img { width: auto; height: auto; max-width: 100%; max-height: 100%; }
 }
 
 /* صفحة المنتج — فكرة 1 (خالد 2026-11-16): الصورة كبيرة فوق، والتفاصيل ورقة زجاج طالعة عليها ومبيّنة الصورة من تحتها.
@@ -460,6 +462,8 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
 
 /* الصورة الطايرة بين المعرض والشاشة الكاملة */
 .lbx-fly { position: fixed; z-index: 95; transform-origin: 0 0; object-fit: fill; pointer-events: none; will-change: transform; }
+.lbx-fly.in-gal { position: absolute; z-index: 1; }   /* الرجوع: جوه المعرض وتحت ورقة الزجاج (z-index 2) */
+.lbx.out { transition-duration: .14s; }
 /* لمعة التحميل على أي صورة لسه بتتحمّل، والصورة بتظهر بهدوء */
 .ld { position: relative; }
 .ld::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(100deg, transparent 20%, color-mix(in srgb, #fff 38%, transparent) 50%, transparent 80%) var(--soft); background-size: 200% 100%; animation: shim 1.2s linear infinite; }

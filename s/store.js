@@ -339,10 +339,13 @@
     var k = Math.min(r.width / nw, r.height / nh), w = nw * k, h = nh * k;
     return { left: r.left + (r.width - w) / 2, top: r.top + (r.height - h) / 2, width: w, height: h };
   }
-  function flyPic(src, a, b, ms, done) {
-    var f = document.createElement('img'); f.className = 'lbx-fly'; f.src = src; f.alt = '';
-    f.style.cssText = 'left:' + b.left + 'px;top:' + b.top + 'px;width:' + b.width + 'px;height:' + b.height + 'px';
-    document.body.appendChild(f);
+  /* host: لو اتدّى، الصورة بتطير جوه المعرض نفسه (تحت ورقة الزجاج) بدل ما تبقى فوق كل حاجة —
+     خالد 2026-11-16: "الجزء اللي فيه اسم الجهاز والسعر بيختفي ويظهر فجأة وانا بقفل الصورة" (الصورة الطايرة كانت بتغطيه) */
+  function flyPic(src, a, b, ms, done, host) {
+    var f = document.createElement('img'); f.className = 'lbx-fly' + (host ? ' in-gal' : ''); f.src = src; f.alt = '';
+    var o = host ? host.getBoundingClientRect() : { left: 0, top: 0 };
+    f.style.cssText = 'left:' + (b.left - o.left) + 'px;top:' + (b.top - o.top) + 'px;width:' + b.width + 'px;height:' + b.height + 'px';
+    (host || document.body).appendChild(f);
     var an = f.animate([{ transform: 'translate(' + (a.left - b.left) + 'px,' + (a.top - b.top) + 'px) scale(' + (a.width / b.width) + ',' + (a.height / b.height) + ')' }, { transform: 'none' }], { duration: ms, easing: 'cubic-bezier(.2,.9,.25,1)' });
     var end = function () { if (!f.isConnected) return; f.remove(); if (done) done(); };
     an.onfinish = end; setTimeout(end, ms + 200);
@@ -377,7 +380,7 @@
       // الرجوع: الصورة بتطير لمكانها في المعرض (المعرض بيروح للصورة اللي كنت عليها)
       var s = sl[cur], im = s && !s.classList.contains('z') && s.querySelector('img'), a = im && picBox(im), dst = a && from && from(cur), b = dst && picBox(dst);
       v.classList.remove('in'); v.style.pointerEvents = 'none';
-      if (a && b && !noMotion()) { im.style.visibility = 'hidden'; dst.style.visibility = 'hidden'; flyPic(list[cur], a, b, 340, function () { dst.style.visibility = ''; }); setTimeout(end, 220); }
+      if (a && b && !noMotion()) { v.classList.add('out'); im.style.visibility = 'hidden'; dst.style.visibility = 'hidden'; flyPic(list[cur], a, b, 380, function () { dst.style.visibility = ''; }, dst.closest('.gal')); setTimeout(end, 160); }
       else setTimeout(end, noMotion() ? 0 : 200);
     };
     var pop = function () { shut(); };
