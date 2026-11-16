@@ -102,12 +102,28 @@
   function clearTimers() { clearTimeout(pollT); timers.forEach(clearTimeout); timers = []; }
 
   /* ---------- الكروت ---------- */
+  /* ---------- تقييمات العملا (خالد 2026-11-16، memory store-product-reviews) ----------
+     الملف العام reviews.json (السيرفر بيعمله من جديد بعد أي تقييم/إخفاء/رد): لكل منتج المتوسط والعدد وآخر 30 رأي. اللي اشترى بس اللي بيقيّم (من صفحة طلبه) */
+  var REV = null;
+  function revOf(id) { var x = REV && REV.p && REV.p[id]; return x && x.n ? x : null; }
+  function starsHTML(a, big) { return '<span class="stars' + (big ? ' big' : '') + '" style="--v:' + Math.max(0, Math.min(100, a / 5 * 100)) + '%" aria-label="' + a + ' من 5">★★★★★</span>'; }
+  function loadRev() {
+    return fetch(ST + encodeURIComponent(slug) + '/reviews.json?t=' + Math.floor(Date.now() / 60000), { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { var had = JSON.stringify(REV); REV = j && j.p ? j : { p: {} }; if (JSON.stringify(REV) !== had && /^#\/(p\/|$|c\/|q\/)/.test(location.hash || '#/')) refresh(); }).catch(function () {});
+  }
+  function revLine(id) { var r = revOf(id); return r ? '<button type="button" class="rate" data-rev>' + starsHTML(r.a) + ' <b class="num">' + r.a + '</b> <span>(<span class="num">' + r.n + '</span> ' + (r.n > 10 ? 'تقييم' : r.n > 2 ? 'تقييمات' : 'تقييم') + ')</span></button>' : ''; }
+  function revCard(x) { return '<div class="rv"><div class="rv-h"><b>' + esc(x.n || 'عميل') + ' <small>✓ اشترى من المحل</small></b>' + starsHTML(x.s) + '</div>' + (x.t ? '<p>' + esc(x.t) + '</p>' : '') + '<small class="rv-d">' + new Date(x.at).toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' }) + '</small>' + (x.rp ? '<div class="rv-rp"><b>💬 رد المحل</b>' + esc(x.rp) + '</div>' : '') + '</div>'; }
+  function revSection(id) {
+    var r = revOf(id); if (!r) return '';
+    return '<div class="revs" id="revs"><h4>⭐ آراء العملا</h4><div class="rv-sum">' + '<b class="num">' + r.a + '</b><span>' + starsHTML(r.a, true) + '<small><span class="num">' + r.n + '</span> عميل اشتروه وقيّموه</small></span></div>'
+      + r.r.slice(0, 3).map(revCard).join('') + (r.r.length > 3 ? '<div id="rv-more" hidden>' + r.r.slice(3).map(revCard).join('') + '</div><button type="button" class="btn bs rv-all" id="rv-all">اعرض كل الآراء (<span class="num">' + r.r.length + '</span>)</button>' : '') + '</div>';
+  }
   function cardHTML(p, i) {
     var e = eff(p), q = avail(p), so = q <= 0;
     return '<div class="pc' + (so ? ' soldout' : '') + '" data-p="' + esc(p.id) + '" style="animation-delay:' + Math.min(i || 0, 12) * 30 + 'ms">'
       + (e.pct && !so ? '<span class="tag off">−' + e.pct + '%</span>' : so ? '<span class="tag low">خلص</span>' : q <= 2 ? '<span class="tag low">فاضل ' + q + '</span>' : '')
       + (p.st === 'new' ? '<span class="tag new">جديد متبرشم</span>' : p.st === 'used' ? '<span class="tag used">مستعمل</span>' : isFresh(p) ? '<span class="tag new">لسه واصل</span>' : p.sw ? '<span class="tag war">تبديل ' + esc(p.sw) + ' أيام</span>' : '')
-      + '<div class="img">' + pic(p) + '</div><div class="nm">' + esc(p.n) + '</div>'
+      + '<div class="img">' + pic(p) + '</div><div class="nm">' + esc(p.n) + '</div>' + (revOf(p.id) ? '<div class="cr">★ <b class="num">' + revOf(p.id).a + '</b> <span class="num">(' + revOf(p.id).n + ')</span></div>' : '')
       + '<div class="pr">' + (p.ask ? '<span class="ask">💬 اسأل على السعر</span>' : so ? '<span class="out">هيتوفر قريب</span>' : '<strong class="num">' + fm(e.pr) + '</strong>' + (e.was ? '<s class="num">' + fm(e.was) + '</s>' : '')) + '</div>'
       + (!p.ask && !so && !(p.add && p.add.length) ? '<button class="add" data-add="' + esc(p.id) + '" aria-label="ضيف للسلة">+</button>' : '') + '</div>';
   }
@@ -314,13 +330,13 @@
     var html = '<div class="gal"><div class="track">' + imgs.map(function (x) { return '<div>' + (x ? '<img src="' + esc(img(x)) + '" alt="">' : esc(iconOf(p))) + '</div>'; }).join('') + '</div>'
       + (imgs.length > 1 ? '<div class="dots">' + imgs.map(function (x, i) { return '<i class="' + (i ? '' : 'on') + '"></i>'; }).join('') + '</div>' : '')
       + '<div class="fl"><button data-back aria-label="رجوع">→</button><span class="fl-r"><button data-fav aria-label="المفضلة" class="' + (isFav(p.id) ? 'on' : '') + '">' + (isFav(p.id) ? '❤️' : '🤍') + '</button><button data-share aria-label="شارك">↗</button></span></div></div>'
-      + '<div class="pb"><h1>' + esc(p.n) + '</h1><div class="sub">' + esc([p.b, (catOf(p.c) || {}).n, (p.m || []).slice(0, 3).join('، ')].filter(Boolean).join(' · ')) + '</div>'
+      + '<div class="pb"><h1>' + esc(p.n) + '</h1><div class="sub">' + esc([p.b, (catOf(p.c) || {}).n, (p.m || []).slice(0, 3).join('، ')].filter(Boolean).join(' · ')) + '</div>' + revLine(p.id)
       + (p.ask ? '<span class="ask" style="font-size:14px;padding:6px 14px">💬 اسأل على السعر</span>' : '<div class="bigpr"><strong>' + money(e.pr) + '</strong>' + (e.was ? '<s class="num">' + fm(e.was) + '</s><span class="save">وفّر <span class="num">' + fm(e.was - e.pr) + '</span></span>' : '') + '</div>')
       + (e.end && !p.ask ? '<div class="timer"><span>⏳ العرض بيخلص بعد</span><span data-end="' + esc(e.end) + '"></span></div>' : '')
       + (so ? '<div class="timer" style="background:var(--badbg);color:var(--badc)"><span>😕 خلص من المحل</span><span>بلّغني لما يرجع ↓</span></div>' : q <= 3 ? '<div class="timer"><span>🔥 فاضل <span class="num">' + q + '</span> بس</span></div>' : '')
       + (specs.length ? '<div class="feat">' + specs.map(function (s) { return '<span><em>' + s[0] + '</em>' + esc(s[1]) + '</span>'; }).join('') + '</div>' : '')
       + '<div class="feat">' + (p.w ? '<span><em>🛡</em>ضمان ' + esc(p.w) + '</span>' : '') + (p.sw ? '<span><em>🔁</em>تبديل ' + esc(p.sw) + ' أيام</span>' : '') + '<span><em>🚚</em>' + (delFreeTxt() || 'توصيل لحد البيت') + '</span>' + (C.del && C.del.pickup !== false ? '<span><em>🏪</em>أو استلم من المحل</span>' : '') + '</div>'
-      + (p.d ? '<div class="desc">' + esc(p.d) + '</div>' : '')
+      + (p.d ? '<div class="desc">' + esc(p.d) + '</div>' : '') + revSection(p.id)
       + (!p.ask && !so && (p.add || []).length ? '<div class="addon"><b>➕ ضيف معاه</b>' + p.add.map(function (a, i) { return '<label><span><input type="checkbox" data-ai="' + i + '"><i class="ck">✓</i>' + esc(a.n) + '</span><span class="num">+ ' + fm(a.p) + '</span></label>'; }).join('') + '</div>' : '')
       + (!p.ask && !so ? '<div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0"><b style="font-weight:900">الكمية</b><span class="qty"><button data-q="-1">−</button><b class="num" id="pq">1</b><button data-q="1">+</button></span></div>' : '')
       + '</div>';
@@ -340,6 +356,8 @@
     if (tr && real.length) tr.querySelectorAll('img').forEach(function (im, i) { im.style.cursor = 'zoom-in'; im.onclick = function () { viewer(real.map(img), i, p.n, galAt); }; });
     /* الصورة رقم k في المعرض (بعد ما المعرض يروح لها) علشان الصورة تطير منها وترجعلها */
     function galAt(k) { var ims = tr.querySelectorAll('img'), el = ims[k]; if (!el) return null; var a = tr.getBoundingClientRect(), b = el.parentNode.getBoundingClientRect(); if (Math.abs(b.left - a.left) > 1) tr.scrollBy({ left: b.left - a.left, behavior: 'instant' }); return el; }
+    var rl = app.querySelector('[data-rev]'); if (rl) rl.onclick = function () { var el = document.getElementById('revs'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+    var ra = document.getElementById('rv-all'); if (ra) ra.onclick = function () { document.getElementById('rv-more').hidden = false; ra.remove(); };
     var fb = app.querySelector('[data-fav]'); if (fb) fb.onclick = function () { var on = toggleFav(p.id); fb.classList.toggle('on', on); fb.textContent = on ? '❤️' : '🤍'; fb.animate && fb.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 300 }); };
     app.querySelector('[data-share]').onclick = function () { var u = location.href; if (navigator.share) navigator.share({ title: p.n, text: p.n + ' — ' + C.shop.name, url: u }).catch(function () {}); else { copy(u); toast('اتنسخ اللينك', 'ok'); } };
   }
@@ -906,6 +924,42 @@
       fr.readAsDataURL(file);
     });
   }
+  function rateBox(trk, o) {
+    var box = document.getElementById('rvbox'); if (!box) return;
+    gw({ action: 'store-review-get', trk: trk }).then(function (r) {
+      if (!box.isConnected) return;
+      if (!r.ok || (!r.can && !(r.mine || []).length)) { box.remove(); return; }
+      var mine = {}; (r.mine || []).forEach(function (m) { mine[m.pid] = m; });
+      var seen = {}, items = (o.items || []).filter(function (x) { if (seen[x.id]) return false; seen[x.id] = 1; return true; });
+      var pick = {}; items.forEach(function (x) { pick[x.id] = mine[x.id] ? { s: mine[x.id].stars, t: mine[x.id].text || '' } : { s: 0, t: '' }; });
+      var done = items.every(function (x) { return mine[x.id]; }), edit = !done;
+      var paint = function () {
+        if (!edit) { box.innerHTML = '<div class="box rate-box"><h4>⭐ شكرًا على تقييمك</h4>' + items.map(function (x) { return '<div class="rt-row"><span class="rt-n">' + esc(x.n) + '</span>' + starsHTML(pick[x.id].s) + '</div>'; }).join('') + (r.can ? '<button type="button" class="btn bs" id="rt-edit" style="width:100%;margin-top:10px">✏️ عدّل تقييمك</button>' : '') + '</div>'; var e = document.getElementById('rt-edit'); if (e) e.onclick = function () { edit = true; paint(); }; return; }
+        box.innerHTML = '<div class="box rate-box"><h4>⭐ قيّم اللي اشتريته <small>رأيك بيساعد غيرك</small></h4>' + items.map(function (x) {
+          var v = pick[x.id];
+          return '<div class="rt-item" data-pid="' + esc(x.id) + '"><div class="rt-top"><span class="rt-im">' + (x.img ? '<img src="' + esc(img(x.img)) + '" alt="">' : '📦') + '</span><b>' + esc(x.n) + '</b></div>'
+            + '<div class="rt-stars" role="radiogroup" aria-label="عدد النجوم">' + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" role="radio" aria-checked="' + (v.s === n) + '" aria-label="' + n + ' من 5" data-s="' + n + '" class="' + (n <= v.s ? 'on' : '') + '">★</button>'; }).join('') + '<span class="rt-l">' + (['', 'وحش', 'مش أحسن حاجة', 'كويس', 'حلو', 'ممتاز'][v.s] || 'اختار') + '</span></div>'
+            + (v.s ? '<textarea class="in rt-t" maxlength="400" rows="2" placeholder="اكتب رأيك (اختياري)">' + esc(v.t) + '</textarea>' : '') + '</div>';
+        }).join('') + '<button type="button" class="btn bg" id="rt-send" style="width:100%;margin-top:6px"' + (items.some(function (x) { return pick[x.id].s; }) ? '' : ' disabled') + '>ابعت التقييم</button><div class="hint" style="margin-top:8px">بيظهر باسمك الأول بس، من غير رقمك.</div></div>';
+        box.querySelectorAll('.rt-item').forEach(function (it) {
+          var id = it.dataset.pid, ta = it.querySelector('.rt-t');
+          if (ta) ta.oninput = function () { pick[id].t = ta.value; };
+          it.querySelectorAll('[data-s]').forEach(function (b) { b.onclick = function () { if (ta) pick[id].t = ta.value; pick[id].s = +b.dataset.s; paint(); var t2 = box.querySelector('.rt-item[data-pid="' + id + '"] .rt-t'); if (t2 && !t2.value) t2.focus(); }; });
+        });
+        var sd = document.getElementById('rt-send');
+        sd.onclick = function () {
+          var list = items.filter(function (x) { return pick[x.id].s; }).map(function (x) { return { pid: x.id, s: pick[x.id].s, t: pick[x.id].t }; });
+          sd.disabled = true; sd.textContent = '⏳ بنبعت...';
+          gw({ action: 'store-review', trk: trk, items: list }).then(function (x) {
+            if (!x.ok) { sd.disabled = false; sd.textContent = 'ابعت التقييم'; return toast(x.error || 'التقييم ماتبعتش، جرّب تاني', 'bad'); }
+            list.forEach(function (l) { mine[l.pid] = { stars: l.s, text: l.t }; });
+            done = true; edit = false; paint(); toast('⭐ شكرًا! تقييمك اتنشر', 'ok'); loadRev();
+          });
+        };
+      };
+      paint();
+    });
+  }
   function trackPage(trk, isNew) {
     shell(barHTML('📦 الطلب') + '<div class="box"><div class="sk" style="height:110px"></div></div><div class="box"><div class="sk" style="height:200px"></div></div>', '#/orders', true);
     var sig = null;
@@ -945,6 +999,7 @@
         if (o.pay_state === 'paid') html += '<div class="banner" style="background:var(--okbg);color:var(--okc)">✓ اتدفع ' + (o.pay === 'card' ? 'بالفيزا' : o.pay === 'voda' ? 'بفودافون كاش' : 'بانستا') + '</div>';
         html += '<div class="box"><div class="trk">' + (bad ? '<div class="x"><i>✕</i><span><b>' + esc(lab(o.kind, o.pickup, s, ask, reply)) + '</b><small>' + tm(at[s]) + '</small></span></div>'
           : flow.map(function (f, i) { var c = i < idx || (i === idx && s === 'done') ? 'd' : i === idx ? 'c' : 'n'; return '<div class="' + c + '"><i>' + (c === 'd' ? '✓' : c === 'c' ? esc((ST_ORDER[f] || [''])[0]) : '') + '</i><span><b>' + esc(lab(o.kind, o.pickup, f, ask, reply)) + '</b><small>' + (i <= idx ? tm(at[f]) : '—') + '</small></span></div>'; }).join('')) + '</div></div>';
+        if (o.kind === 'order' && s === 'done' && (o.items || []).length) html += '<div id="rvbox"></div>';   // قيّم اللي اشتريته (بعد ما وصل)
         if ((o.items || []).length || o.totals) {
           var t = o.totals || {};
           html += '<div class="box sum">' + (o.items || []).map(function (x) { return '<div><span>' + esc(x.n) + (x.q > 1 ? ' ×' + x.q : '') + (x.add && x.add.length ? ' + ' + esc(x.add.map(function (a) { return a.n; }).join('، ')) : '') + '</span><span>' + money(x.q * (x.pr + (x.add || []).reduce(function (a, y) { return a + y.p; }, 0))) + '</span></div>'; }).join('')
@@ -957,6 +1012,7 @@
         }
         html += '<div class="cta">' + (waLink() ? '<a class="btn bw" target="_blank" rel="noopener" href="' + esc(waLink('بخصوص طلب W-' + o.no)) + '">💬 كلّم المحل</a>' : '') + (s === 'new' ? '<button class="btn bs" id="cancel">✕ الغي الطلب</button>' : s === 'done' && o.kind === 'order' && waLink() ? '<a class="btn bs" target="_blank" rel="noopener" href="' + esc(waLink('عايز أرجّع حاجة من طلب W-' + o.no + '. السبب: ')) + '">↩ عايز أرجّع حاجة</a>' : '') + '</div>';
         shell(html, '#/me', true); if (QUIET) { QUIET = false; window.scrollTo({ top: y, behavior: 'instant' }); }
+        if (document.getElementById('rvbox')) rateBox(trk, o);
         var cp = app.querySelector('[data-copy]'); if (cp) cp.onclick = function () { copy(cp.dataset.copy); toast('اتنسخ ✓', 'ok'); };
         var pf = document.getElementById('pf'); if (pf) pf.onchange = function () {
           var f = pf.files && pf.files[0]; if (!f) return; var lb = pf.parentNode; lb.classList.add('busy'); lb.lastChild.nodeValue = ' بنرفع الصورة...';
@@ -1100,7 +1156,7 @@
     if (fav && fav.href !== installIcon) fav.href = installIcon;
   }
   function loadCat(quiet) {
-    loadCat.at = Date.now();
+    loadCat.at = Date.now(); loadRev();
     return fetch(ST + encodeURIComponent(slug) + '/catalog.json?t=' + Math.floor(Date.now() / 30000), { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw r.status; return r.json(); })
       .then(function (j) { var txt = JSON.stringify(j), same = txt === loadCat.sig; loadCat.sig = txt; set(j); try { localStorage.setItem('rds_cat_' + slug, txt); } catch (e) {} if (quiet && !same) refresh(); })
       .catch(function (st) { if (C) return; var old = null; try { old = JSON.parse(localStorage.getItem('rds_cat_' + slug)); } catch (e) {} if (old) { set(old); render(); toast('مفيش نت — بتشوف آخر نسخة', 'bad'); } else fail(st === 400 || st === 404 ? 'المتجر ده مش موجود' : 'مفيش نت. جرّب تاني.'); });
