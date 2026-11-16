@@ -73,9 +73,11 @@
 
   /* ---------- الهيكل ---------- */
   // dk = صفحة من غير القايمة على الموبايل (المنتج / السلة / الفورمات): القايمة بتظهر على الشاشات الكبيرة بس (خالد 2026-11-13: المتجر على الكمبيوتر)
+  /* خالد 2026-11-16: زرار "العروض" في الشريط اللي تحت، لو المحل عنده حاجة عليها خصم بس */
+  function hasOffers() { return (C.p || []).some(function (p) { return !p.hide && eff(p).pct && avail(p) > 0; }); }
   function navHTML(on, dk) {
     var b = function (k, ic, t, extra) { return '<button data-go="' + k + '" class="' + (on === k ? 'on' : '') + '"><em>' + ic + '</em>' + t + (extra || '') + '</button>'; };
-    return '<nav class="nav' + (dk ? ' dk' : '') + '"><div class="nlogo" data-go="#/"><span class="logo">' + logoHTML() + '</span><b>' + esc(C.shop.name) + '</b></div>' + b('#/', '🏠', 'الرئيسية') + b('#/cats', '🗂', 'الأقسام') + b('#/cart', '🛒', 'السلة', '<i class="bdg" data-cart hidden></i>') + b('#/orders', '📦', 'طلباتي') + b('#/svc', '🛠', 'الخدمات') + '</nav>'
+    return '<nav class="nav' + (dk ? ' dk' : '') + '"><div class="nlogo" data-go="#/"><span class="logo">' + logoHTML() + '</span><b>' + esc(C.shop.name) + '</b></div>' + b('#/', '🏠', 'الرئيسية') + b('#/cats', '🗂', 'الأقسام') + (hasOffers() ? b('#/c/_off', '🔥', 'العروض') : '') + b('#/cart', '🛒', 'السلة', '<i class="bdg" data-cart hidden></i>') + b('#/orders', '📦', 'طلباتي') + b('#/svc', '🛠', 'الخدمات') + '</nav>'
       + (!dk && waLink() ? '<a class="wa" href="' + esc(waLink('السلام عليكم، عندي سؤال')) + '" target="_blank" rel="noopener" aria-label="واتساب">' + WA_SVG + '</a>' : '');
   }
   function barHTML(t, sub, back) { return '<div class="bar"><button class="bk" data-back="' + esc(back || '') + '" aria-label="رجوع">→</button><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; }
@@ -116,6 +118,16 @@
     return '<div class="di">' + pic(p, true) + '</div><div class="deal-copy"><small>⚡ ' + (C.dealT ? esc(C.dealT) : 'عرض لفترة محدودة') + '</small><b>' + esc(p.n) + '</b>'
       + '<div class="deal-money"><span class="pr">' + money(e.pr) + '</span>' + (e.was ? '<s class="num">' + fm(e.was) + '</s>' : '') + '</div>'
       + '<div class="deal-timer">' + (e.end ? cdHTML(e.end) : '') + '</div></div>';
+  }
+  /* اسم العرض في البانر (خالد 2026-11-16: "الكلام لو كتير بيتقص ويجيب نقط"): مكانه ثابت (سطرين بالخط العادي علشان البانر مايتغيّرش طوله)،
+     والخط بيصغر لحد ما الاسم كله يدخل. لو طويل جدًا (أصغر خط ومش داخل) بيبقى 3 أو 4 سطور بالخط الصغير، والاسم كامل في صفحة المنتج */
+  function fitDeal(b) {
+    if (!b || !b.isConnected) return;
+    b.style.fontSize = ''; b.style.height = ''; b.style.webkitLineClamp = ''; b.style.display = '';
+    var base = parseFloat(getComputedStyle(b).fontSize) || 16, H = Math.ceil(base * 1.35 * 2), f = base;
+    b.style.height = H + 'px'; b.style.minHeight = '0'; b.style.display = 'block';
+    for (; f >= 12; f -= 0.5) { b.style.fontSize = f + 'px'; if (b.scrollHeight <= H + 1) return; }
+    b.style.display = '-webkit-box'; b.style.webkitLineClamp = String(Math.max(2, Math.floor(H / (f * 1.35))));
   }
   function dealSlideHTML(p, index, total) {
     return '<button type="button" class="deal" data-p="' + esc(p.id) + '" data-deal-banner aria-live="polite" aria-label="العرض ' + (index + 1) + ' من ' + total + ': ' + esc(p.n) + '">' + dealContent(p) + '</button>';
@@ -177,6 +189,8 @@
     html += footHTML();
     shell(html, '#/');
     var dealBanner = app.querySelector('[data-deal-banner]');
+    var refit = function () { fitDeal(dealBanner && dealBanner.querySelector('b')); };
+    refit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
     var dealDots = [].slice.call(app.querySelectorAll('[data-deal-index]'));
     if (dealBanner && dealSlides.length) {
       var dealIndex = 0, swipeX = null, swallowClick = false, dealMotionTimer = 0;
@@ -207,7 +221,7 @@
         activeDealId = p.id;
         dealBanner.dataset.p = p.id;
         dealBanner.setAttribute('aria-label', 'العرض ' + (dealIndex + 1) + ' من ' + dealSlides.length + ': ' + p.n);
-        dealBanner.innerHTML = dealContent(p);
+        dealBanner.innerHTML = dealContent(p); refit();
         if (!reduced) {
           dealBanner.classList.add(movingRight ? 'deal-enter-left' : 'deal-enter-right');
           dealMotionTimer = setTimeout(clearDealMotion, 430);
@@ -279,7 +293,7 @@
     if (brands.length > 1) html += '<div class="brands">' + ['<button data-b="" class="' + (!st.b ? 'on' : '') + '">الكل</button>'].concat(brands.map(function (b) { return '<button data-b="' + esc(b) + '" class="' + (st.b === b ? 'on' : '') + '">' + esc(b) + '</button>'; })).join('') + '</div>';
     if (models.length) html += '<div class="models">' + ['<button data-m="" class="' + (!st.m ? 'on' : '') + '">كل الموديلات</button>'].concat(models.map(function (m) { return '<button data-m="' + esc(m) + '" class="' + (st.m === m ? 'on' : '') + '">' + esc(m) + '</button>'; })).join('') + '</div>';
     html += '<div class="sec"><b>' + (st.m ? esc(st.s || c.n) + ' ' + esc(st.m) : st.b ? esc(st.b) : st.s ? esc(st.s) : 'كل المنتجات') + '</b><button data-sort>' + ({ low: 'الأرخص ↓', high: 'الأغلى ↑' }[st.sort] || 'الترتيب ⇅') + '</button></div>' + gridHTML(list);
-    shell(html, '#/cats');
+    shell(html, id === '_off' ? '#/c/_off' : '#/cats');
     app.querySelectorAll('[data-s]').forEach(function (b) { b.onclick = function () { st.s = b.dataset.s; st.b = ''; st.m = ''; catPage(id, q); }; });
     app.querySelectorAll('[data-b]').forEach(function (b) { b.onclick = function () { st.b = b.dataset.b; st.m = ''; catPage(id, q); }; });
     app.querySelectorAll('[data-m]').forEach(function (b) { b.onclick = function () { st.m = b.dataset.m; catPage(id, q); }; });
@@ -897,6 +911,7 @@
   }
   try { history.scrollRestoration = 'manual'; } catch (e) {}
   window.addEventListener('hashchange', render);
+  var fitT; window.addEventListener('resize', function () { clearTimeout(fitT); fitT = setTimeout(function () { fitDeal(document.querySelector('[data-deal-banner] b')); }, 120); });
   window.addEventListener('beforeunload', saveY);
   document.addEventListener('click', function () { clearTimeout(saveT); saveY(); }, true);   // قبل أي تنقّل: احفظ مكان الصفحة اللي انت فيها
   document.addEventListener('click', function (e) {

@@ -438,6 +438,7 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
   .lbx-nav.next { left: 18px; } .lbx-nav.prev { right: 18px; }
   .lbx-th button { width: 64px; height: 64px; }
   /* خالد 2026-11-16: على الكمبيوتر الصورة كانت بتتكبّر أكتر من مقاسها (زوم جامد): مقاسها الحقيقي بالكتير */
+  .lbx-s { display: flex; align-items: center; justify-content: center; }   /* grid كان بيخلّي max-height % مايشتغلش والصورة بتتقص من تحت */
   .lbx-s img { width: auto; height: auto; max-width: 100%; max-height: 100%; }
 }
 
