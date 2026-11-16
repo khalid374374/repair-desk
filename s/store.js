@@ -37,8 +37,9 @@
     document.querySelectorAll('[data-end]').forEach(function (el) {
       var left = Math.max(0, Date.parse(el.dataset.end) - Date.now()), d = Math.floor(left / 864e5), h = Math.floor(left / 36e5) % 24, m = Math.floor(left / 6e4) % 60, s = Math.floor(left / 1e3) % 60;
       var p2 = function (n) { return String(n).padStart(2, '0'); };
-      if (el.classList.contains('cd')) el.innerHTML = (d ? '<span class="num">' + d + '<em>يوم</em></span>' : '') + '<span class="num">' + p2(h) + '<em>ساعة</em></span><span class="num">' + p2(m) + '<em>دقيقة</em></span><span class="num">' + p2(s) + '<em>ثانية</em></span>';
-      else el.innerHTML = (d ? d + ' يوم و ' : '') + '<bdi dir="ltr">' + p2(h) + ':' + p2(m) + ':' + p2(s) + '</bdi>';
+      // خالد 2026-11-16: الثواني بتظهر في آخر يوم بس؛ قبلها يوم / ساعة / دقيقة
+      if (el.classList.contains('cd')) el.innerHTML = (d ? '<span class="num">' + d + '<em>يوم</em></span>' : '') + '<span class="num">' + p2(h) + '<em>ساعة</em></span><span class="num">' + p2(m) + '<em>دقيقة</em></span>' + (d ? '' : '<span class="num">' + p2(s) + '<em>ثانية</em></span>');
+      else el.innerHTML = (d ? d + ' يوم و ' : '') + '<bdi dir="ltr">' + p2(h) + ':' + p2(m) + (d ? '' : ':' + p2(s)) + '</bdi>';
       if (!left && !el.dataset.done) { el.dataset.done = 1; setTimeout(refresh, 400); }
     });
   }
@@ -82,7 +83,17 @@
   /* QUIET (خالد 2026-11-09: "الموقع بيفضل يعمل ريفرش"): الرسم اللي جاي من تحديث في الخلفية (الكتالوج اتغيّر، حالة الطلب اتغيّرت، عرض خلص) بيتعمل
      من غير حركة الدخول ومن غير ما الصفحة ترجع لفوق. الحركة للتنقّل اللي العميل عمله بس */
   var QUIET = false;
-  function shell(html, on, noNav) { clearTimers(); app.className = noNav ? '' : 'has-nav'; app.innerHTML = '<div class="page' + (QUIET ? ' still' : '') + '">' + html + '</div>' + navHTML(on, noNav); badge(); tickTimers(); installMaybe(); }
+  function shell(html, on, noNav) { clearTimers(); app.className = noNav ? '' : 'has-nav'; app.innerHTML = '<div class="page' + (QUIET ? ' still' : '') + '">' + html + '</div>' + navHTML(on, noNav); badge(); tickTimers(); installMaybe(); markLoading(app); }
+  /* خالد 2026-11-16: الصورة وهي بتتحمّل بيظهر عليها لمعة التحميل، وبعدين بتظهر بهدوء */
+  function markLoading(root) {
+    root.querySelectorAll('img').forEach(function (im) {
+      if (im.complete && im.naturalWidth) return;
+      var box = im.parentNode; if (!box || box.classList.contains('ld')) return;
+      box.classList.add('ld');
+      var off = function () { box.classList.remove('ld'); };
+      im.addEventListener('load', off, { once: true }); im.addEventListener('error', off, { once: true });
+    });
+  }
   // صفحات فيها خانات العميل بيكتب فيها: ماتترسمش من تاني من ورا ضهره (كان بيمسح اللي كتبه)
   function onForm() { return /^#\/(checkout|bill|repair|wish|trade)/.test(location.hash) || !!(document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)); }
   function refresh() { if (!C || onForm() || document.querySelector('.sheet')) return; var y = window.scrollY; QUIET = true; try { render(); } finally { QUIET = false; } window.scrollTo({ top: y, behavior: 'instant' }); }
@@ -109,6 +120,16 @@
   function dealSlideHTML(p, index, total) {
     return '<button type="button" class="deal" data-p="' + esc(p.id) + '" data-deal-banner aria-live="polite" aria-label="العرض ' + (index + 1) + ' من ' + total + ': ' + esc(p.n) + '">' + dealContent(p) + '</button>';
   }
+  /* خالد 2026-11-16: العروض الكتير كانت بتعمل صفين نقط. دلوقتي صف واحد، 5 نقط بالكتير بتتزحلق مع العرض، واللي على الطرف أصغر لو فيه عروض بعدها */
+  var DOT_MAX = 5;
+  function dotWin(dots, at) {
+    var n = dots.length, from = Math.max(0, Math.min(at - Math.floor(DOT_MAX / 2), n - DOT_MAX));
+    dots.forEach(function (b, i) {
+      var inWin = n <= DOT_MAX || (i >= from && i < from + DOT_MAX);
+      b.hidden = !inWin;
+      b.classList.toggle('sm', inWin && n > DOT_MAX && ((i === from && from > 0) || (i === from + DOT_MAX - 1 && from + DOT_MAX < n)));
+    });
+  }
   function dealDotsHTML(total) {
     if (total < 2) return '';
     return '<div class="deal-dots" role="group" aria-label="اختيار العرض من ' + total + ' عروض">' + Array.from({ length: total }, function (_, i) {
@@ -129,7 +150,7 @@
     var cats = (C.cats || []).filter(function (c) { return visible().some(function (p) { return p.c === c.id; }); });
     var offs = sortList(visible(), 'off').filter(function (p) { return avail(p) > 0; });
     if (dealCampaign !== (C.deal || '')) { dealCampaign = C.deal || ''; activeDealId = ''; }
-    var dealSlides = offs.slice(), preferredDeal = activeDealId || C.deal;
+    var dealSlides = offs.filter(function (p) { return eff(p).end; }), preferredDeal = activeDealId || C.deal;   // خالد 2026-11-16: البانر للعروض اللي ليها مدة بس؛ اللي من غير مدة بتفضل بخصمها في مكانها وفي "العروض"
     var preferredIndex = dealSlides.findIndex(function (p) { return p.id === preferredDeal; });
     if (preferredIndex > 0) dealSlides.unshift(dealSlides.splice(preferredIndex, 1)[0]);
     var newOnes = visible().filter(function (p) { return isFresh(p) && avail(p) > 0; }).slice(0, 6);
@@ -159,6 +180,7 @@
     var dealDots = [].slice.call(app.querySelectorAll('[data-deal-index]'));
     if (dealBanner && dealSlides.length) {
       var dealIndex = 0, swipeX = null, swallowClick = false, dealMotionTimer = 0;
+      dotWin(dealDots, 0);
       var dealStage = dealBanner.parentElement;
       var clearDealMotion = function () {
         if (dealMotionTimer) { clearTimeout(dealMotionTimer); dealMotionTimer = 0; }
@@ -191,6 +213,7 @@
           dealMotionTimer = setTimeout(clearDealMotion, 430);
         }
         dealDots.forEach(function (b, i) { b.classList.toggle('on', i === dealIndex); b.setAttribute('aria-pressed', String(i === dealIndex)); });
+        dotWin(dealDots, dealIndex);
         tickTimers();
       };
       dealDots.forEach(function (b) { b.onclick = function () { var target = +b.dataset.dealIndex; showDeal(target, target > dealIndex ? 1 : -1); }; });
@@ -299,7 +322,81 @@
     var nt = document.getElementById('notify'); if (nt) nt.onclick = function () { go('#/wish?p=' + encodeURIComponent(p.id)); };
     var tr = app.querySelector('.gal .track'), dots = app.querySelectorAll('.gal .dots i');
     if (tr && dots.length) tr.onscroll = function () { var i = Math.round(Math.abs(tr.scrollLeft) / tr.clientWidth); dots.forEach(function (d, k) { d.classList.toggle('on', k === i); }); };
+    var real = imgs.filter(Boolean);
+    if (tr && real.length) tr.querySelectorAll('img').forEach(function (im, i) { im.style.cursor = 'zoom-in'; im.onclick = function () { viewer(real.map(img), i, p.n, galAt); }; });
+    /* الصورة رقم k في المعرض (بعد ما المعرض يروح لها) علشان الصورة تطير منها وترجعلها */
+    function galAt(k) { var ims = tr.querySelectorAll('img'), el = ims[k]; if (!el) return null; var a = tr.getBoundingClientRect(), b = el.parentNode.getBoundingClientRect(); if (Math.abs(b.left - a.left) > 1) tr.scrollBy({ left: b.left - a.left, behavior: 'instant' }); return el; }
     app.querySelector('[data-share]').onclick = function () { var u = location.href; if (navigator.share) navigator.share({ title: p.n, text: p.n + ' — ' + C.shop.name, url: u }).catch(function () {}); else { copy(u); toast('اتنسخ اللينك', 'ok'); } };
+  }
+  /* عرض الصور كاملة (خالد 2026-11-16: "الصورة اللي جوه تفاصيل المنتج مش بتفتح"): شاشة سودا، سحب بين الصور، عدّاد،
+     صور صغيرة تحت، أسهم وEsc على الكمبيوتر، دوستين = تكبير، وزرار الرجوع في الموبايل بيقفلها بس (pushState من غير تغيير اللينك) */
+  /* حركة الصورة (خالد 2026-11-16: "الصورة تنط من مكانها بانميشن واما اخرج ترجع مكانها"): صورة طايرة فوق كل حاجة
+     من مكان الصورة الحقيقي (جوه object-fit: contain) لمكانها الجديد، وبعدين الصورة الحقيقية بتظهر */
+  var noMotion = function () { return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; };
+  function picBox(im) {
+    var r = im.getBoundingClientRect(), nw = im.naturalWidth, nh = im.naturalHeight;
+    if (!nw || !nh || !r.width || !r.height) return null;
+    var k = Math.min(r.width / nw, r.height / nh), w = nw * k, h = nh * k;
+    return { left: r.left + (r.width - w) / 2, top: r.top + (r.height - h) / 2, width: w, height: h };
+  }
+  function flyPic(src, a, b, ms, done) {
+    var f = document.createElement('img'); f.className = 'lbx-fly'; f.src = src; f.alt = '';
+    f.style.cssText = 'left:' + b.left + 'px;top:' + b.top + 'px;width:' + b.width + 'px;height:' + b.height + 'px';
+    document.body.appendChild(f);
+    var an = f.animate([{ transform: 'translate(' + (a.left - b.left) + 'px,' + (a.top - b.top) + 'px) scale(' + (a.width / b.width) + ',' + (a.height / b.height) + ')' }, { transform: 'none' }], { duration: ms, easing: 'cubic-bezier(.2,.9,.25,1)' });
+    var end = function () { if (!f.isConnected) return; f.remove(); if (done) done(); };
+    an.onfinish = end; setTimeout(end, ms + 200);
+  }
+  function viewer(list, start, title, from) {
+    if (!list.length || document.querySelector('.lbx')) return;
+    var cur = start || 0, many = list.length > 1;
+    var v = document.createElement('div'); v.className = 'lbx'; v.setAttribute('role', 'dialog'); v.setAttribute('aria-label', title || 'الصور');
+    v.innerHTML = '<div class="lbx-top"><span class="lbx-n num">' + (many ? (cur + 1) + ' / ' + list.length : '') + '</span><button class="lbx-x" aria-label="اقفل">✕</button></div>'
+      + '<div class="lbx-t">' + list.map(function (u) { return '<div class="lbx-s"><img src="' + esc(u) + '" alt="" draggable="false"></div>'; }).join('') + '</div>'
+      + (many ? '<button class="lbx-nav prev" aria-label="اللي قبلها">›</button><button class="lbx-nav next" aria-label="اللي بعدها">‹</button>'
+        + '<div class="lbx-th">' + list.map(function (u, i) { return '<button data-i="' + i + '" aria-label="صورة ' + (i + 1) + '"><img src="' + esc(u) + '" alt=""></button>'; }).join('') + '</div>' : '');
+    document.body.appendChild(v); document.documentElement.classList.add('lbx-on');
+    var t = v.querySelector('.lbx-t'), sl = v.querySelectorAll('.lbx-s'), th = v.querySelectorAll('.lbx-th button'), n = v.querySelector('.lbx-n');
+    // الحساب بالبكسل على الشاشة (scrollBy) علشان يشتغل مع الاتجاه العربي، ومن غير scrollIntoView اللي ممكن يحرّك الصفحة اللي ورا
+    var center = function (box, el, smooth) { var a = box.getBoundingClientRect(), b = el.getBoundingClientRect(); box.scrollBy({ left: (b.left + b.width / 2) - (a.left + a.width / 2), behavior: smooth ? 'smooth' : 'instant' }); };
+    var mark = function () { if (n && many) n.textContent = (cur + 1) + ' / ' + list.length; th.forEach(function (b, i) { b.classList.toggle('on', i === cur); if (i === cur) center(b.parentNode, b, true); }); };
+    var to = function (i, smooth) { cur = (i + list.length) % list.length; sl.forEach(function (s) { s.classList.remove('z'); }); center(t, sl[cur], smooth); mark(); };
+    markLoading(v);
+    requestAnimationFrame(function () {
+      to(cur, false); v.classList.add('in');
+      // طيران من المعرض للشاشة الكاملة
+      var src = from && from(cur), im = sl[cur].querySelector('img'), a = src && picBox(src), b = a && picBox(im);
+      if (a && b && !noMotion()) { im.style.visibility = 'hidden'; src.style.visibility = 'hidden'; flyPic(list[cur], a, b, 380, function () { im.style.visibility = ''; src.style.visibility = ''; }); }
+    });
+    var st; t.addEventListener('scroll', function () { clearTimeout(st); st = setTimeout(function () { var w = t.clientWidth || 1, i = Math.round(Math.abs(t.scrollLeft) / w); if (i !== cur && sl[i]) { sl[cur].classList.remove('z'); cur = i; mark(); } }, 80); }, { passive: true });
+    var gone = false;
+    var shut = function () {
+      if (gone) return; gone = true;
+      document.removeEventListener('keydown', key); window.removeEventListener('popstate', pop);
+      var end = function () { document.documentElement.classList.remove('lbx-on'); v.remove(); };
+      // الرجوع: الصورة بتطير لمكانها في المعرض (المعرض بيروح للصورة اللي كنت عليها)
+      var s = sl[cur], im = s && !s.classList.contains('z') && s.querySelector('img'), a = im && picBox(im), dst = a && from && from(cur), b = dst && picBox(dst);
+      v.classList.remove('in'); v.style.pointerEvents = 'none';
+      if (a && b && !noMotion()) { im.style.visibility = 'hidden'; dst.style.visibility = 'hidden'; flyPic(list[cur], a, b, 340, function () { dst.style.visibility = ''; }); setTimeout(end, 220); }
+      else setTimeout(end, noMotion() ? 0 : 200);
+    };
+    var pop = function () { shut(); };
+    var close = function () { if (history.state && history.state.lbx) history.back(); else shut(); };
+    var key = function (e) { if (e.key === 'Escape') close(); else if (many && e.key === 'ArrowLeft') to(cur + 1, true); else if (many && e.key === 'ArrowRight') to(cur - 1, true); };
+    try { history.pushState(Object.assign({}, history.state || {}, { lbx: 1 }), ''); window.addEventListener('popstate', pop); } catch (e) {}
+    document.addEventListener('keydown', key);
+    v.querySelector('.lbx-x').onclick = close;
+    v.querySelectorAll('.lbx-nav').forEach(function (b) { b.onclick = function () { to(cur + (b.classList.contains('next') ? 1 : -1), true); }; });
+    th.forEach(function (b) { b.onclick = function () { to(+b.dataset.i, true); }; });
+    // دوسة على الفاضي حوالين الصورة بتقفل، ودوستين على الصورة بيكبّروها (والسحب جوه الصورة المكبّرة بيحرّكها)
+    sl.forEach(function (s) {
+      s.addEventListener('click', function (e) { if (e.target === s && !s.classList.contains('z')) close(); });
+      s.addEventListener('dblclick', function (e) {
+        var im = s.querySelector('img'), r = im.getBoundingClientRect(), fx = (e.clientX - r.left) / (r.width || 1), fy = (e.clientY - r.top) / (r.height || 1);
+        s.classList.toggle('z');
+        if (s.classList.contains('z')) requestAnimationFrame(function () { var a = s.getBoundingClientRect(), b = im.getBoundingClientRect(); s.scrollBy({ left: b.left + fx * b.width - (a.left + a.width / 2), top: b.top + fy * b.height - (a.top + a.height / 2), behavior: 'instant' }); });
+      });
+    });
   }
   function delFreeTxt() { var d = C.del || {}, z = (d.zones || [])[0]; if (z && !(+z.fee)) return 'توصيل ببلاش لحد ' + z.km + ' كم'; if (+d.freeOver) return 'ببلاش فوق ' + fm(d.freeOver); return ''; }
   function copy(t) { try { navigator.clipboard.writeText(t); } catch (e) { var a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); } }
@@ -758,7 +855,11 @@
     if (!C) return;
     var h = location.hash || '#/', path = h.split('?')[0], q = new URLSearchParams(h.split('?')[1] || ''), seg = path.slice(2).split('/');
     if (!QUIET) { var tt = document.getElementById('toast'); if (tt && /bad/.test(tt.className)) { clearTimeout(toast.t); tt.className = ''; } }   // رسالة خطأ من الصفحة اللي فاتت ماتفضلش فوق الصفحة الجديدة
+    /* خالد 2026-11-16: الرجوع من منتج بيرجّعك لنفس المكان. كل صفحة بتحفظ مكانها في history.state (saveY)؛
+       الصفحة اللي اتزارت قبل كده (رجوع/قدام/ريفرش) بترجع لمكانها، والجديدة بتبدأ من فوق */
+    var backY = !QUIET && history.state && typeof history.state.y === 'number' ? history.state.y : null;
     if (!QUIET) window.scrollTo({ top: 0, behavior: 'instant' });   // من غير الانزلاق الناعم (html: scroll-behavior smooth) علشان الصفحة الجديدة تبدأ من فوق على طول
+    if (backY) restoreY(backY);
     if (C.open === false && seg[0] !== 'o' && seg[0] !== 'orders') return shell('<div class="closed"><div class="logo" style="width:84px;height:84px;margin:0 auto;font-size:40px;border-radius:26px">' + logoHTML() + '</div><b>' + esc(C.shop.name) + '</b><div class="e">🌙</div><b>المتجر مقفول مؤقتًا</b><p>' + (waLink() ? 'تقدر تكلّمنا على واتساب.' : '') + '</p>' + (waLink() ? '<a class="btn bw" style="margin-top:12px" href="' + esc(waLink('السلام عليكم')) + '" target="_blank" rel="noopener">💬 كلّمنا</a>' : '') + '</div>', '', true);
     switch (seg[0]) {
       case '': return home();
@@ -779,7 +880,22 @@
       default: return home();
     }
   }
+  /* مكان كل صفحة: بيتحفظ في history.state بعد ما السكرول يقف (Safari بيسمح بـ 100 replaceState كل 30 ثانية، فمش مع كل حركة) */
+  function saveY() { try { var st = history.state && typeof history.state === 'object' ? history.state : {}; if (st.y === window.scrollY) return; history.replaceState(Object.assign({}, st, { y: window.scrollY }), ''); } catch (e) {} }
+  var saveT; window.addEventListener('scroll', function () { clearTimeout(saveT); saveT = setTimeout(saveY, 250); }, { passive: true });
+  /* الرجوع للمكان: الصفحة بتترسم كلها مرة واحدة، بس الصور ممكن تكبّر الطول بعدها؛ بنعيد المحاولة كام مرة لحد ما الطول يكفي أو المستخدم يحرّك */
+  function restoreY(y) {
+    var tries = 0, moved = false, stop = function () { moved = true; };
+    window.addEventListener('touchstart', stop, { once: true, passive: true }); window.addEventListener('wheel', stop, { once: true, passive: true });
+    (function again() {
+      if (moved) return; window.scrollTo({ top: y, behavior: 'instant' });
+      if (Math.abs(window.scrollY - y) > 2 && ++tries < 12) setTimeout(again, 60);
+    })();
+  }
+  try { history.scrollRestoration = 'manual'; } catch (e) {}
   window.addEventListener('hashchange', render);
+  window.addEventListener('beforeunload', saveY);
+  document.addEventListener('click', function () { clearTimeout(saveT); saveY(); }, true);   // قبل أي تنقّل: احفظ مكان الصفحة اللي انت فيها
   document.addEventListener('click', function (e) {
     var t = e.target.closest('[data-add]'); if (t) { e.stopPropagation(); return addToCart(t.dataset.add, 1, []); }
     var g = e.target.closest('[data-go]'); if (g) { e.preventDefault(); return go(g.dataset.go); }
