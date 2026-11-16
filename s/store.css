@@ -472,3 +472,31 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
 .ld > img { opacity: 0; }
 .gal img, .pc .img img, .lbx-th img, .deal .di img, .ci .im img { transition: opacity .35s; }
 @media (prefers-color-scheme: dark) { .ld::after { background-image: linear-gradient(100deg, transparent 20%, #ffffff14 50%, transparent 80%); } }
+
+/* حسابي (خالد 2026-11-16، فكرة 2: تبويبات) */
+.me-top { display: flex; gap: 12px; align-items: center; margin: 0 0 4px; padding: calc(18px + env(safe-area-inset-top, 0px)) 18px 22px; border-radius: 0 0 28px 28px; background: linear-gradient(140deg, var(--navy, #0b1f4d), #1d4fa8); color: #fff; }
+.me-av { width: 56px; height: 56px; border-radius: 19px; flex: none; display: grid; place-items: center; font-size: 25px; font-weight: 900; background: #ffffff26; border: 1px solid #ffffff40; }
+.me-nm { flex: 1; min-width: 0; } .me-nm b { display: block; font-size: 18px; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .me-nm small { display: block; font-size: 13px; opacity: .85; font-weight: 700; text-align: right; }
+.me-ok { flex: none; font-size: 11.5px; font-weight: 800; padding: 3px 10px; border-radius: 99px; background: #ffffff22; }
+.me-in { flex: none; padding: 9px 14px; border-radius: 999px; background: #fff; color: #0b1f4d; font-weight: 900; font-size: 13px; }
+.me-tabs { display: flex; gap: 6px; margin: 12px 14px 4px; padding: 5px; border-radius: 16px; background: var(--card); box-shadow: 0 2px 14px #0a1a440d; }
+.me-tabs button { flex: 1; padding: 9px 4px; border-radius: 12px; font-size: 13px; font-weight: 800; color: var(--mut); white-space: nowrap; transition: background .2s, color .2s; }
+.me-tabs button:last-child { flex: none; padding-inline: 14px; }
+.me-tabs button.on { background: var(--ac-fill, var(--ac)); color: var(--on-ac, #fff); }
+.me-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 2px; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none; font-size: 14px; text-align: start; }
+.me-row:last-child { border: 0; } .me-row span { width: 36px; height: 36px; border-radius: 12px; background: var(--soft); display: grid; place-items: center; font-size: 17px; flex: none; } .me-row b { flex: 1; font-weight: 800; } .me-row i { font-style: normal; color: var(--mut); }
+.me-row.del { color: var(--badc); } .me-row.del span { background: var(--badbg); }
+.me-sw { display: flex; align-items: center; gap: 12px; cursor: pointer; } .me-sw span { flex: 1; } .me-sw b { display: block; font-size: 14px; font-weight: 900; } .me-sw small { display: block; font-size: 12px; color: var(--mut); font-weight: 700; margin-top: 2px; }
+.me-sw input { position: absolute; opacity: 0; pointer-events: none; }
+.me-sw i { flex: none; width: 46px; height: 28px; border-radius: 99px; background: var(--inl); position: relative; transition: background .2s; }
+.me-sw i::after { content: ''; position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 2px 5px #0003; transition: right .2s; }
+.me-sw input:checked + i { background: #17904f; } .me-sw input:checked + i::after { right: 21px; }
+.me-sw input:focus-visible + i { outline: 2px solid var(--ac); outline-offset: 2px; }
+.ad-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); } .ad-row:last-child { border: 0; }
+.ad-ic { width: 38px; height: 38px; border-radius: 13px; background: var(--soft); display: grid; place-items: center; font-size: 18px; flex: none; }
+.ad-row .t { flex: 1; min-width: 0; } .ad-row b { display: block; font-size: 14px; font-weight: 900; } .ad-row small { display: block; font-size: 12px; color: var(--mut); font-weight: 700; overflow-wrap: anywhere; }
+.ad-x { width: 34px; height: 34px; border-radius: 11px; background: var(--badbg); color: var(--badc); font-weight: 900; flex: none; }
+.ad-pick { margin: -2px 0 10px; } .ad-pick button.on { border-color: var(--ac); }
+.pills button.on { border-color: var(--ac); color: var(--ac-tx); }
+.gal .fl .fl-r { display: flex; gap: 8px; } .gal .fl button[data-fav].on { background: color-mix(in srgb, #ffe4ea 85%, transparent); }
+@media (min-width: 1100px) { .me-top { border-radius: 28px; margin: 14px 0 4px; } .me-tabs { margin-inline: 0; } }

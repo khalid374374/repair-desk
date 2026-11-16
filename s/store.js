@@ -77,7 +77,7 @@
   function hasOffers() { return (C.p || []).some(function (p) { return !p.hide && eff(p).pct && avail(p) > 0; }); }
   function navHTML(on, dk) {
     var b = function (k, ic, t, extra) { return '<button data-go="' + k + '" class="' + (on === k ? 'on' : '') + '"><em>' + ic + '</em>' + t + (extra || '') + '</button>'; };
-    return '<nav class="nav' + (dk ? ' dk' : '') + '"><div class="nlogo" data-go="#/"><span class="logo">' + logoHTML() + '</span><b>' + esc(C.shop.name) + '</b></div>' + b('#/', '🏠', 'الرئيسية') + b('#/cats', '🗂', 'الأقسام') + (hasOffers() ? b('#/c/_off', '🔥', 'العروض') : '') + b('#/cart', '🛒', 'السلة', '<i class="bdg" data-cart hidden></i>') + b('#/orders', '📦', 'طلباتي') + b('#/svc', '🛠', 'الخدمات') + '</nav>'
+    return '<nav class="nav' + (dk ? ' dk' : '') + '"><div class="nlogo" data-go="#/"><span class="logo">' + logoHTML() + '</span><b>' + esc(C.shop.name) + '</b></div>' + b('#/', '🏠', 'الرئيسية') + b('#/cats', '🗂', 'الأقسام') + (hasOffers() ? b('#/c/_off', '🔥', 'العروض') : '') + b('#/cart', '🛒', 'السلة', '<i class="bdg" data-cart hidden></i>') + b('#/me', '👤', 'حسابي') + b('#/svc', '🛠', 'الخدمات') + '</nav>'
       + (!dk && waLink() ? '<a class="wa" href="' + esc(waLink('السلام عليكم، عندي سؤال')) + '" target="_blank" rel="noopener" aria-label="واتساب">' + WA_SVG + '</a>' : '');
   }
   function barHTML(t, sub, back) { return '<div class="bar"><button class="bk" data-back="' + esc(back || '') + '" aria-label="رجوع">→</button><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; }
@@ -85,7 +85,7 @@
   /* QUIET (خالد 2026-11-09: "الموقع بيفضل يعمل ريفرش"): الرسم اللي جاي من تحديث في الخلفية (الكتالوج اتغيّر، حالة الطلب اتغيّرت، عرض خلص) بيتعمل
      من غير حركة الدخول ومن غير ما الصفحة ترجع لفوق. الحركة للتنقّل اللي العميل عمله بس */
   var QUIET = false;
-  function shell(html, on, noNav) { clearTimers(); app.className = noNav ? '' : 'has-nav'; app.innerHTML = '<div class="page' + (QUIET ? ' still' : '') + '">' + html + '</div>' + navHTML(on, noNav); badge(); tickTimers(); installMaybe(); markLoading(app); }
+  function shell(html, on, noNav) { clearTimers(); app.className = noNav ? '' : 'has-nav'; app.innerHTML = '<div class="page' + (QUIET ? ' still' : '') + '">' + html + '</div>' + navHTML(on, noNav); badge(); tickTimers(); installMaybe(); markLoading(app); adPick(); }
   /* خالد 2026-11-16: الصورة وهي بتتحمّل بيظهر عليها لمعة التحميل، وبعدين بتظهر بهدوء */
   function markLoading(root) {
     root.querySelectorAll('img').forEach(function (im) {
@@ -270,7 +270,7 @@
   function footHTML() {
     var s = C.shop;
     return '<div class="foot">' + (s.addr ? '📍 ' + esc(s.addr) + '<br>' : '') + (s.phone ? '📞 <a href="tel:' + esc(s.phone) + '" class="num">' + esc(s.phone) + '</a>' + (hoursTxt() ? ' · 🕘 ' + esc(hoursTxt()) : '') + '<br>' : '')
-      + legalTxt() + '<a href="#/info">الشروط والاسترجاع والضمان</a><br><span class="made">متجر بيشتغل بـ Repair Desk</span></div>';
+      + legalTxt() + '<a href="#/info">الشروط والاسترجاع والضمان</a> · <a href="#/privacy">الخصوصية</a><br><span class="made">متجر بيشتغل بـ Repair Desk</span></div>';
   }
   function cats() {
     var list = (C.cats || []).filter(function (c) { return visible().some(function (p) { return p.c === c.id; }); });
@@ -313,7 +313,7 @@
     var specs = [spec.storage && ['💾', spec.storage], spec.ram && ['⚡', spec.ram + ' رام'], spec.batt && ['🔋', 'بطارية ' + spec.batt + '%'], spec.cond && ['✨', spec.cond], p.st === 'new' && ['📦', 'جديد متبرشم'], p.st === 'used' && !spec.cond && ['♻️', 'مستعمل']].filter(Boolean);
     var html = '<div class="gal"><div class="track">' + imgs.map(function (x) { return '<div>' + (x ? '<img src="' + esc(img(x)) + '" alt="">' : esc(iconOf(p))) + '</div>'; }).join('') + '</div>'
       + (imgs.length > 1 ? '<div class="dots">' + imgs.map(function (x, i) { return '<i class="' + (i ? '' : 'on') + '"></i>'; }).join('') + '</div>' : '')
-      + '<div class="fl"><button data-back aria-label="رجوع">→</button><button data-share aria-label="شارك">↗</button></div></div>'
+      + '<div class="fl"><button data-back aria-label="رجوع">→</button><span class="fl-r"><button data-fav aria-label="المفضلة" class="' + (isFav(p.id) ? 'on' : '') + '">' + (isFav(p.id) ? '❤️' : '🤍') + '</button><button data-share aria-label="شارك">↗</button></span></div></div>'
       + '<div class="pb"><h1>' + esc(p.n) + '</h1><div class="sub">' + esc([p.b, (catOf(p.c) || {}).n, (p.m || []).slice(0, 3).join('، ')].filter(Boolean).join(' · ')) + '</div>'
       + (p.ask ? '<span class="ask" style="font-size:14px;padding:6px 14px">💬 اسأل على السعر</span>' : '<div class="bigpr"><strong>' + money(e.pr) + '</strong>' + (e.was ? '<s class="num">' + fm(e.was) + '</s><span class="save">وفّر <span class="num">' + fm(e.was - e.pr) + '</span></span>' : '') + '</div>')
       + (e.end && !p.ask ? '<div class="timer"><span>⏳ العرض بيخلص بعد</span><span data-end="' + esc(e.end) + '"></span></div>' : '')
@@ -340,6 +340,7 @@
     if (tr && real.length) tr.querySelectorAll('img').forEach(function (im, i) { im.style.cursor = 'zoom-in'; im.onclick = function () { viewer(real.map(img), i, p.n, galAt); }; });
     /* الصورة رقم k في المعرض (بعد ما المعرض يروح لها) علشان الصورة تطير منها وترجعلها */
     function galAt(k) { var ims = tr.querySelectorAll('img'), el = ims[k]; if (!el) return null; var a = tr.getBoundingClientRect(), b = el.parentNode.getBoundingClientRect(); if (Math.abs(b.left - a.left) > 1) tr.scrollBy({ left: b.left - a.left, behavior: 'instant' }); return el; }
+    var fb = app.querySelector('[data-fav]'); if (fb) fb.onclick = function () { var on = toggleFav(p.id); fb.classList.toggle('on', on); fb.textContent = on ? '❤️' : '🤍'; fb.animate && fb.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 300 }); };
     app.querySelector('[data-share]').onclick = function () { var u = location.href; if (navigator.share) navigator.share({ title: p.n, text: p.n + ' — ' + C.shop.name, url: u }).catch(function () {}); else { copy(u); toast('اتنسخ اللينك', 'ok'); } };
   }
   /* عرض الصور كاملة (خالد 2026-11-16: "الصورة اللي جوه تفاصيل المنتج مش بتفتح"): شاشة سودا، سحب بين الصور، عدّاد،
@@ -435,10 +436,12 @@
   }
 
   /* ---------- إتمام الطلب (منتجات / فاتورة / صيانة / مش لاقي / بدّل) ---------- */
-  function me() { return ls('me') || {}; }
+  function me() { var m = ls('me') || {}, A = acct(); if (A) { if (!m.phone) m.phone = A.me.phone; if (!m.name && A.me.name) m.name = A.me.name; } return m; }
   function custBox(o) {
     var m = me(); o = o || {};
-    return '<div class="box"><h4>👤 بياناتك <small>مش محتاج حساب</small></h4>'
+    var A = acct(), ad = A && !o.noAddr ? (A.me.addrs || []) : [];
+    return '<div class="box"><h4>👤 بياناتك <small>' + (A ? '✓ داخل بحسابك' : 'مش محتاج حساب') + '</small></h4>'
+      + (ad.length ? '<div class="pills ad-pick">' + ad.map(function (a, i) { return '<button type="button" data-ad="' + i + '">📍 ' + esc(a.label || 'عنوان') + '</button>'; }).join('') + '</div>' : '')
       + '<label class="f"><span>الاسم</span><input class="in" id="cn" autocomplete="name" value="' + esc(m.name || '') + '" placeholder="اسمك"></label>'
       + '<label class="f"><span>رقم التليفون (واتساب)</span><input class="in num" id="cp" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" style="text-align:right" value="' + esc(m.phone || '') + '" placeholder="01xxxxxxxxx"></label>'
       + (o.noAddr ? '' : '<div id="addrw"><label class="f"><span>العنوان بالتفصيل</span><input class="in" id="ca" autocomplete="street-address" value="' + esc(m.addr || '') + '" placeholder="الشارع، رقم العمارة، الدور، الشقة، علامة مميزة"></label></div>')
@@ -487,7 +490,7 @@
         function (er) { b.textContent = '📡 حدد مكاني'; toast(er && er.code === 1 ? 'اسمح للمتصفح يعرف مكانك، أو حرّك الدبوس بإيدك' : 'مقدرناش نحدد مكانك. حرّك الدبوس بإيدك', 'bad'); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
     };
     document.getElementById('pinhelp').onclick = function () { toast('اسحب الدبوس 📍 أو دوس على المكان في الخريطة'); };
-    return function () { return loc; };
+    var get = function () { return loc; }; get.set = function (ll) { set(ll, true); }; return get;
   }
   function readCust(needAddr) {
     var g = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; };
@@ -562,7 +565,8 @@
     });
   }
   function submitOrder(body, btn) {
-    if (needVf(body) && !body.vtok) {
+    var A = acct(); if (A && body.cust && digits10(body.cust.phone) === digits10(A.me.phone)) body.stok = A.stok;   // داخل بحسابه بنفس الرقم: الرقم متأكد
+    if (needVf(body) && !body.vtok && !body.stok) {
       var saved = vfSaved(body.cust && body.cust.phone);
       if (saved) body.vtok = saved;
       else return verifyPhone(body.cust.phone).then(function (tok) { if (tok === null) return null; body.vtok = tok || undefined; return submitOrder(Object.assign(body, { vtok: tok || '-' }), btn); });   // null = قفل النافذة (مايبعتش)، '' = كمّل من غير تأكيد
@@ -600,6 +604,7 @@
       document.getElementById('sum').innerHTML = '<div><span>المنتجات (' + cartCount() + ')</span><span>' + money(sub) + '</span></div><div><span>التوصيل</span><span class="' + (q.fee === 0 ? 'free' : '') + '">' + (pickup ? 'استلام من المحل' : q.need ? 'حدد مكانك الأول' : q.out ? '—' : q.fee ? money(q.fee) : 'ببلاش 🎉') + '</span></div>' + '<div class="tot"><span>الإجمالي</span><span>' + money(sub + (q.fee || 0)) + '</span></div><div style="font-size:11.5px">الخصم (لو فيه كوبون) بيتحسب لما تأكد.</div>';
     };
     getLoc = mapInit(function (l) { loc = l; var m = me(); m.lat = l.lat; m.lng = l.lng; ls('me', m); paint(); });
+    adPick(function (a) { if (a.lat != null && getLoc.set) getLoc.set({ lat: a.lat, lng: a.lng }); });
     app.querySelectorAll('#mode [data-m]').forEach(function (b) { b.onclick = function () { pickup = b.dataset.m === 'pick'; var m = me(); m.pickup = pickup; ls('me', m); app.querySelectorAll('#mode [data-m]').forEach(function (x) { x.classList.toggle('on', x === b); }); paint(); }; });
     paint();
     document.getElementById('go').onclick = function () {
@@ -735,6 +740,143 @@
     shell(barHTML('📜 الشروط') + blk('↩ الاسترجاع والاستبدال', t.ret) + blk('🛡 الضمان', t.war) + blk('🚚 التوصيل', t.del) + blk('🔒 بياناتك', t.priv || 'بنستخدم اسمك وتليفونك وعنوانك ومكانك علشان طلبك بس، ومابنديهمش لحد.') + legalBox() + footHTML(), '#/svc');
   }
 
+  /* ---------- حسابي (خالد 2026-11-16، memory store-login): اختياري، بكود واتساب بس، ولكل محل لوحده ----------
+     الحساب = علامة تأكيد الرقم (نفس verifyPhone) → جلسة على السيرفر (store-login). المفضلة من غير حساب بتتحفظ على الموبايل وبتتضم للحساب لما يدخل.
+     الشكل: فكرة 2 (تبويبات: طلباتي / العناوين / المفضلة / ⚙️) */
+  function acct() { var a = ls('acct'); return a && a.stok && a.me ? a : null; }
+  function setAcct(a) { ls('acct', a); }
+  function favs() { var A = acct(); return (A ? A.me.favs : ls('favs')) || []; }
+  function isFav(id) { return favs().indexOf(id) >= 0; }
+  var favT;
+  function toggleFav(id) {
+    var A = acct(), l = favs().slice(), i = l.indexOf(id), on = i < 0;
+    if (on) l.unshift(id); else l.splice(i, 1);
+    l = l.slice(0, 60);
+    if (A) { A.me.favs = l; setAcct(A); clearTimeout(favT); favT = setTimeout(function () { meSet({ favs: acct() ? acct().me.favs : l }); }, 700); } else ls('favs', l);
+    toast(on ? '❤ اتضاف للمفضلة' : 'اتشال من المفضلة', on ? 'ok' : '');
+    return on;
+  }
+  function meSet(o) { var A = acct(); if (!A) return Promise.resolve(null); return gw(Object.assign({ action: 'store-me-set', slug: slug, stok: A.stok }, o)).then(function (r) { if (r.out) { setAcct(null); return null; } if (r.ok && r.me) { var B = acct(); if (B) { B.me = r.me; setAcct(B); } } return r; }); }
+  // الدخول: رقم → (لو الموبايل ده أكّد الرقم قبل كده: على طول) وإلا كود واتساب → جلسة
+  function login(after) {
+    if (!C.vf) { toast('الدخول مش متاح دلوقتي في المحل ده', 'bad'); return; }
+    var dim = document.createElement('div'), sh = document.createElement('div'), m = ls('me') || {};
+    dim.className = 'vf-dim'; sh.className = 'vf-sheet'; sh.setAttribute('role', 'dialog');
+    sh.innerHTML = '<div class="vf-gr"></div><button class="vf-x" aria-label="اقفل">✕</button><div class="vf-b"><h3>👤 ادخل برقمك</h3>'
+      + '<div class="vf-sub">علشان طلباتك وعناوينك والمفضلة تبقى معاك على أي موبايل. مش لازم علشان تطلب.</div>'
+      + '<input class="in num" id="lg-ph" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" style="text-align:right;margin:4px 0 12px" placeholder="01xxxxxxxxx" value="' + esc(m.phone || ((ls('vf') || {}).phone) || '') + '">'
+      + '<button class="btn vf-wa" id="lg-go">💬 كمّل بكود واتساب</button><button class="vf-skip" id="lg-no">مش دلوقتي</button>'
+      + '<div class="vf-note">مابنبعتلكش رسايل غير لو انت وافقت. <a href="#/privacy" id="lg-pv">الخصوصية</a></div></div>';
+    var close = function () { sh.classList.remove('on'); dim.classList.remove('on'); setTimeout(function () { sh.remove(); dim.remove(); }, 260); };
+    dim.onclick = close; sh.querySelector('.vf-x').onclick = close; sh.querySelector('#lg-no').onclick = close; sh.querySelector('#lg-pv').onclick = close;
+    document.body.appendChild(dim); document.body.appendChild(sh);
+    requestAnimationFrame(function () { dim.classList.add('on'); sh.classList.add('on'); });
+    var inp = sh.querySelector('#lg-ph'); setTimeout(function () { try { inp.focus(); } catch (e) {} }, 300);
+    sh.querySelector('#lg-go').onclick = function () {
+      var ph = inp.value.trim().replace(/[\s-]/g, '').replace(/[٠-٩]/g, function (d) { return d.charCodeAt(0) - 1632; });
+      if (!/^(\+?20|0)?1[0125]\d{8}$/.test(ph)) { inp.classList.add('bad'); inp.focus(); return toast('اكتب رقم موبايل صح (01...)', 'bad'); }
+      if (ph.length === 10) ph = '0' + ph; else if (ph.indexOf('+20') === 0) ph = '0' + ph.slice(3); else if (/^20\d{10}$/.test(ph)) ph = '0' + ph.slice(2);
+      close();
+      var saved = vfSaved(ph);
+      (saved ? Promise.resolve(saved) : verifyPhone(ph)).then(function (tok) {
+        if (!tok) return;
+        return gw({ action: 'store-login', slug: slug, vtok: tok, name: m.name || '' }).then(function (r) {
+          if (!r.ok) { if (r.again) ls('vf', null); return toast(r.error || 'الدخول ماتمّش، جرّب تاني', 'bad'); }
+          var local = ls('favs') || [], merged = (r.me.favs || []).concat(local.filter(function (x) { return (r.me.favs || []).indexOf(x) < 0; })).slice(0, 60);
+          setAcct({ stok: r.stok, me: r.me }); ls('favs', null);
+          if (merged.length !== (r.me.favs || []).length) meSet({ favs: merged });
+          toast('أهلًا ' + (r.me.name || '') + ' ✓ دخلت', 'ok');
+          if (after) after(); else go('#/me');
+        });
+      });
+    };
+  }
+  function logout(all) { var A = acct(); setAcct(null); if (A) gw({ action: 'store-logout', slug: slug, stok: A.stok, all: !!all }); toast(all ? 'خرجت من كل الأجهزة' : 'خرجت من حسابك', 'ok'); go('#/me'); }
+  var ME_TABS = [['orders', '📦 طلباتي'], ['addr', '📍 العناوين'], ['fav', '❤️ المفضلة'], ['set', '⚙️']];
+  function meHead(A) {
+    if (!A) return '<div class="me-top"><div class="me-av">👤</div><div class="me-nm"><b>انت مش داخل</b><small>تقدر تطلب عادي من غير حساب</small></div>'
+      + (C.vf ? '<button class="me-in" id="me-login">ادخل برقمك</button>' : '') + '</div>';
+    var nm = A.me.name || 'أهلًا بيك';
+    return '<div class="me-top"><div class="me-av">' + esc(nm.trim().charAt(0) || '👤') + '</div><div class="me-nm"><b>' + esc(nm) + '</b><small class="num" dir="ltr">' + esc(A.me.phone) + '</small></div><span class="me-ok">✓ رقم متأكد</span></div>';
+  }
+  function mePage(tab) {
+    var A = acct(); if (!ME_TABS.some(function (t) { return t[0] === tab; })) tab = 'orders';
+    var html = '<div class="me">' + meHead(A) + '<div class="me-tabs" role="tablist">' + ME_TABS.map(function (t) { return '<button role="tab" data-go="#/me?t=' + t[0] + '" class="' + (t[0] === tab ? 'on' : '') + '" aria-label="' + (t[0] === 'set' ? 'الإعدادات' : esc(t[1])) + '">' + t[1] + '</button>'; }).join('') + '</div><div id="me-b"></div></div>';
+    shell(html, '#/me');
+    var lb = document.getElementById('me-login'); if (lb) lb.onclick = function () { login(); };
+    var box = document.getElementById('me-b');
+    if (tab === 'orders') return meOrders(box, A);
+    if (tab === 'fav') { var l = favs().map(function (id) { return P[id]; }).filter(Boolean); box.innerHTML = l.length ? gridHTML(l) : '<div class="empty"><div class="e">❤️</div><b>مفيش حاجة في المفضلة</b><p>دوس ❤ على أي منتج علشان ترجعله بسهولة.</p><button class="btn b1" data-go="#/">تسوّق</button></div>'; markLoading(box); return; }
+    if (tab === 'addr') return meAddrs(box, A);
+    return meSettings(box, A);
+  }
+  function orderRow(o) { return '<div class="ol" data-go="#/o/' + esc(o.trk) + '"><span style="font-size:24px">' + ({ order: '🛒', bill: '🧾', repair: '🛠', wish: '🤔' }[o.kind] || '🛒') + '</span><div class="t"><b><span class="num">W-' + esc(o.no) + '</span>' + (o.first ? ' · ' + esc(o.first) : '') + '</b><small>' + new Date(o.at).toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'long' }) + (o.total ? ' · ' + fm(o.total) + ' ' + esc(cur()) : '') + '</small></div><span class="pill" data-st="' + esc(o.trk) + '">' + (o.status ? esc(lab(o.kind, false, o.status)) : '…') + '</span></div>'; }
+  function pillCls(s) { return 'pill ' + (s === 'cancel' || s === 'ret' ? 'bad' : s === 'done' || s === 'paid' ? 'ok' : 'wait'); }
+  function meOrders(box, A) {
+    var local = ls('orders') || [];
+    if (!A) {
+      if (!local.length) { box.innerHTML = '<div class="empty"><div class="e">📦</div><b>لسه مفيش طلبات</b><p>طلباتك من الموبايل ده بتظهر هنا.' + (C.vf ? ' ولو دخلت برقمك هتشوفها من أي موبايل.' : '') + '</p><button class="btn b1" data-go="#/">تسوّق دلوقتي</button></div>'; return; }
+      box.innerHTML = '<div class="box">' + local.map(orderRow).join('') + '</div>';
+      local.slice(0, 5).forEach(function (o) { gw({ action: 'store-track', trk: o.trk }).then(function (r) { var el = box.querySelector('[data-st="' + o.trk + '"]'); if (!el) return; if (!r.ok) { el.textContent = '—'; return; } el.textContent = lab(r.order.kind, r.order.pickup, r.order.status); el.className = pillCls(r.order.status); }); });
+      return;
+    }
+    box.innerHTML = '<div class="box"><div class="sk" style="height:56px;margin-bottom:8px"></div><div class="sk" style="height:56px"></div></div>';
+    gw({ action: 'store-me', slug: slug, stok: A.stok }).then(function (r) {
+      if (!box.isConnected) return;
+      if (r.out) { setAcct(null); toast(r.error || 'خرجت من حسابك', 'bad'); return mePage('orders'); }
+      if (!r.ok) { box.innerHTML = '<div class="empty"><div class="e">📡</div><b>' + esc(r.error || 'مش قادرين نجيب طلباتك دلوقتي') + '</b></div>'; return; }
+      var B = acct(); if (B) { B.me = r.me; setAcct(B); }
+      var l = r.orders || [];
+      box.innerHTML = l.length ? '<div class="box">' + l.map(orderRow).join('') + '</div>' : '<div class="empty"><div class="e">📦</div><b>لسه مفيش طلبات</b><p>أي طلب برقمك هيظهر هنا من أي موبايل.</p><button class="btn b1" data-go="#/">تسوّق دلوقتي</button></div>';
+      l.forEach(function (o) { var el = box.querySelector('[data-st="' + o.trk + '"]'); if (el) el.className = pillCls(o.status); });
+    });
+  }
+  function meAddrs(box, A) {
+    if (!A) { box.innerHTML = '<div class="empty"><div class="e">📍</div><b>احفظ عناوينك</b><p>ادخل برقمك وعناوينك (البيت، الشغل...) تبقى جاهزة بدوسة وانت بتطلب.</p>' + (C.vf ? '<button class="btn b1" id="me-login2">ادخل برقمك</button>' : '') + '</div>'; var b2 = document.getElementById('me-login2'); if (b2) b2.onclick = function () { login(function () { go('#/me?t=addr'); }); }; return; }
+    var list = A.me.addrs || [];
+    var paint = function () {
+      list = (acct() || A).me.addrs || [];
+      box.innerHTML = '<div class="box">' + (list.length ? list.map(function (a, i) { return '<div class="ad-row"><span class="ad-ic">' + (/شغل/.test(a.label) ? '🏢' : /بيت/.test(a.label) ? '🏠' : '📍') + '</span><div class="t"><b>' + esc(a.label || 'عنوان') + '</b><small>' + esc(a.addr || '') + (a.lat != null ? ' · 📌 على الخريطة' : '') + '</small></div><button class="ad-x" data-del="' + i + '" aria-label="امسح">✕</button></div>'; }).join('') : '<div class="hint">مفيش عناوين محفوظة لسه.</div>') + '</div>'
+        + (list.length < 5 ? '<div class="box"><h4>➕ عنوان جديد</h4><div class="pills" id="ad-lb"><button type="button" class="on" data-l="البيت">🏠 البيت</button><button type="button" data-l="الشغل">🏢 الشغل</button><button type="button" data-l="تاني">📍 تاني</button></div>'
+          + '<label class="f" style="margin-top:10px"><span>العنوان بالتفصيل</span><input class="in" id="ad-a" placeholder="الشارع، رقم العمارة، الدور، الشقة"></label><div class="locb" style="margin:6px 0 10px"><button type="button" id="ad-geo">📡 احفظ مكاني الحالي كمان</button></div><button class="btn bg" id="ad-save">احفظ العنوان</button></div>' : '');
+      var lbl = 'البيت', ll = null;
+      box.querySelectorAll('#ad-lb button').forEach(function (b) { b.onclick = function () { lbl = b.dataset.l; box.querySelectorAll('#ad-lb button').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
+      box.querySelectorAll('[data-del]').forEach(function (b) { b.onclick = function () { var l = list.slice(); l.splice(+b.dataset.del, 1); meSet({ addrs: l }).then(function () { paint(); }); }; });
+      var g = document.getElementById('ad-geo'); if (g) g.onclick = function () { if (!navigator.geolocation) return toast('الموبايل مش بيدعم تحديد المكان', 'bad'); g.textContent = '⏳ بنحدد...'; navigator.geolocation.getCurrentPosition(function (pos) { ll = { lat: +pos.coords.latitude.toFixed(6), lng: +pos.coords.longitude.toFixed(6) }; g.textContent = '✓ مكانك اتحفظ مع العنوان'; }, function () { g.textContent = '📡 احفظ مكاني الحالي كمان'; toast('مقدرناش نحدد مكانك', 'bad'); }, { enableHighAccuracy: true, timeout: 15000 }); };
+      var sv = document.getElementById('ad-save'); if (sv) sv.onclick = function () { var t = document.getElementById('ad-a'); if (t.value.trim().length < 5 && !ll) { t.classList.add('bad'); t.focus(); return toast('اكتب العنوان بالتفصيل', 'bad'); } sv.disabled = true; meSet({ addrs: list.concat([Object.assign({ label: lbl, addr: t.value.trim() }, ll || {})]) }).then(function (r) { sv.disabled = false; if (r && r.ok) { toast('✓ العنوان اتحفظ', 'ok'); paint(); } else toast((r && r.error) || 'ماتحفظش، جرّب تاني', 'bad'); }); };
+    };
+    paint();
+  }
+  function meSettings(box, A) {
+    if (!A) { box.innerHTML = '<div class="box"><a class="me-row" href="#/privacy"><span>🔒</span><b>الخصوصية وبياناتك</b><i>‹</i></a><a class="me-row" href="#/info"><span>📜</span><b>الشروط والاسترجاع والضمان</b><i>‹</i></a></div>' + (C.vf ? '<div class="box"><button class="btn b1" id="me-login3" style="width:100%">👤 ادخل برقمك</button></div>' : ''); var b3 = document.getElementById('me-login3'); if (b3) b3.onclick = function () { login(); }; return; }
+    box.innerHTML = '<div class="box"><h4>👤 اسمك</h4><div style="display:flex;gap:8px"><input class="in" id="me-n" value="' + esc(A.me.name || '') + '" placeholder="اسمك" style="flex:1"><button class="btn bs" id="me-ns" style="flex:none">احفظ</button></div></div>'
+      + '<div class="box"><label class="me-sw"><span><b>🔔 عروض المحل على واتساب</b><small>مقفولة لحد ما توافق. تقدر تقفلها في أي وقت.</small></span><input type="checkbox" id="me-of"' + (A.me.offers ? ' checked' : '') + '><i></i></label></div>'
+      + '<div class="box"><a class="me-row" href="#/privacy"><span>🔒</span><b>الخصوصية وبياناتك</b><i>‹</i></a><a class="me-row" href="#/info"><span>📜</span><b>الشروط والاسترجاع والضمان</b><i>‹</i></a>'
+      + '<button class="me-row" id="me-out"><span>🚪</span><b>خروج من الموبايل ده</b><i>‹</i></button><button class="me-row" id="me-outall"><span>📵</span><b>خروج من كل الأجهزة</b><i>‹</i></button></div>'
+      + '<div class="box"><button class="me-row del" id="me-del"><span>🗑</span><b>امسح حسابي وبياناتي</b><i>‹</i></button></div>';
+    document.getElementById('me-ns').onclick = function () { var v = document.getElementById('me-n').value.trim(); meSet({ name: v }).then(function (r) { if (r && r.ok) { var m = ls('me') || {}; m.name = v; ls('me', m); toast('✓ اتحفظ', 'ok'); } }); };
+    document.getElementById('me-of').onchange = function () { var on = this.checked; meSet({ offers: on }).then(function (r) { if (r && r.ok) toast(on ? '✓ هنبعتلك العروض' : 'مش هنبعتلك عروض', 'ok'); }); };
+    document.getElementById('me-out').onclick = function () { logout(false); };
+    document.getElementById('me-outall').onclick = function () { logout(true); };
+    document.getElementById('me-del').onclick = function () {
+      sheet('<h3 style="font-weight:900;margin-bottom:8px">🗑 تمسح حسابك؟</h3><div class="terms">هيتمسح: اسمك ورقمك وعناوينك والمفضلة، وهتخرج من كل الأجهزة.\nطلباتك اللي خلصت بتفضل عند المحل للحسابات من غير اسمك ورقمك وعنوانك.\nمينفعش ترجع فيها.</div><button class="btn" id="dl-yes" style="width:100%;margin-top:14px;background:#b42339;color:#fff">امسح حسابي</button><button class="btn bs" data-close style="width:100%;margin-top:8px">لأ، سيبه</button>');
+      var y = document.getElementById('dl-yes'); y.onclick = function () { y.disabled = true; gw({ action: 'store-me-delete', slug: slug, stok: A.stok }).then(function (r) { y.disabled = false; if (r.ok || r.out) { document.querySelectorAll('.sheet,.sheet-bg').forEach(function (e) { e.remove(); }); setAcct(null); ls('me', null); ls('vf', null); ls('orders', null); toast('✓ حسابك اتمسح', 'ok'); go('#/'); } else toast(r.error || 'ماتمسحش، جرّب تاني', 'bad'); }); };
+    };
+  }
+  // اختيار عنوان محفوظ في إتمام الطلب
+  function adPick(onLoc) { var A = acct(); if (!A) return; app.querySelectorAll('[data-ad]').forEach(function (b) { b.onclick = function () { var a = (A.me.addrs || [])[+b.dataset.ad]; if (!a) return; var t = document.getElementById('ca'); if (t && a.addr) t.value = a.addr; app.querySelectorAll('[data-ad]').forEach(function (x) { x.classList.toggle('on', x === b); }); if (onLoc) onLoc(a); }; }); }
+  // صفحة الخصوصية (خالد 2026-11-16: "راجع كل حاجة ليها علاقة بسياسة الاستخدام والخصوصية")
+  function privacyPage() {
+    var t = C.terms || {}, n = esc(C.shop.name || 'المحل');
+    var blk = function (h, x) { return '<div class="box"><h4>' + h + '</h4><div class="terms">' + x + '</div></div>'; };
+    shell(barHTML('🔒 الخصوصية') + (t.priv ? blk('📌 من ' + n, esc(t.priv)) : '')
+      + blk('📋 بنحفظ إيه', 'لما تطلب: اسمك ورقمك وعنوانك ومكانك على الخريطة (لو التوصيل)، والطلب نفسه.\nلو دخلت بحسابك: كمان العناوين اللي حفظتها والمفضلة.\nعلى موبايلك بس: السلة وآخر بيانات كتبتها، علشان ماتكتبهاش تاني.')
+      + blk('🎯 ليه', 'علشان نجهّز طلبك ونوصلهولك ونكلمك عنه بس. مابنبيعش بياناتك ولا بندّيها لحد، غير المندوب اللي بيوصل طلبك (الاسم والرقم والعنوان).')
+      + blk('💬 الرسايل', 'مابنبعتلكش عروض غير لو انت وافقت من حسابك ← ⚙️، وتقدر تقفلها في أي وقت.\nتأكيد الرقم بيحصل بإنك انت اللي بتبعت كود لواتساب المحل، فالمحل مش بيبعتلك حاجة.')
+      + blk('⏳ لحد إمتى', 'الدخول بيفضل 6 شهور على الموبايل وبعدين تدخل تاني. تأكيد الرقم بيفضل 3 شهور.\nالطلبات بتفضل عند المحل لأنها جزء من حساباته.')
+      + blk('✋ حقك', 'تشوف وتعدّل اسمك وعناوينك من "حسابي".\nتخرج من الموبايل ده أو من كل الأجهزة.\nتمسح حسابك وبياناتك من حسابي ← ⚙️ ← امسح حسابي (الطلبات اللي خلصت بتفضل من غير اسمك ورقمك وعنوانك).\nأي سؤال: كلّم المحل' + (C.shop.phone ? ' على <span class="num">' + esc(C.shop.phone) + '</span>' : '') + '.')
+      + legalBox() + footHTML(), '#/me');
+  }
   /* ---------- طلباتي والتتبّع ---------- */
   var ST_ORDER = { new: ['📝', 'استلمنا طلبك'], ok: ['✅', 'المحل أكّد الطلب'], prep: ['📦', 'بيتجهز'], ready: ['🎁', 'جاهز'], out: ['🛵', 'مع المندوب في السكة'], done: ['🏠', 'اتسلّم'], paid: ['🏠', 'اتسلّم'], cancel: ['✕', 'اتلغى'], ret: ['↩', 'مرتجع'] };
   var FLOW = { order: ['new', 'ok', 'prep', 'ready', 'out', 'done'], pick: ['new', 'ok', 'prep', 'ready', 'done'], bill: ['new', 'ok', 'done'], repair: ['new', 'ok', 'out', 'prep', 'ready', 'done'], wish: ['new', 'ok', 'done'], ask: ['new', 'ok', 'done'] };   // ask = استشارة (سؤال مش جهاز)
@@ -782,7 +924,7 @@
         var at = {}; (o.hist || []).forEach(function (h) { at[h.s === 'paid' ? 'done' : h.s] = h; });
         var tm = function (h) { return h ? new Date(h.at).toLocaleString('ar-EG-u-nu-latn', { hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short' }) + (h.n ? ' · ' + esc(h.n) : '') : '—'; };
         var col = bad ? ['#8f1f35', '#b8304a'] : s === 'done' ? ['#0b5c32', '#137a43'] : s === 'out' ? ['#8a3c06', '#b45309'] : ['#16407f', '#1f5fae'];   // أغمق: الكلام الأبيض الصغير عليها واضح (WCAG)
-        var html = barHTML('📦 طلب <span class="num">W-' + esc(o.no) + '</span>', '', '#/orders')
+        var html = barHTML('📦 طلب <span class="num">W-' + esc(o.no) + '</span>', '', '#/me')
           + (isNew ? '<div class="banner info" style="background:var(--okbg);color:var(--okc)">🎉 طلبك وصل للمحل! هنكلمك على واتساب.</div>' : '')
           + '<div class="oh" style="--c1:' + col[0] + ';--c2:' + col[1] + '"><small>الحالة دلوقتي</small><b>' + esc((ST_ORDER[s] || [''])[0]) + ' ' + esc(lab(o.kind, o.pickup, s, ask, reply, billNow)) + '</b><small>' + esc(o.name) + ' · ' + new Date(o.at).toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'long' }) + '</small></div>';
         /* فاتورة: المبلغ اللي المحل كتبه لازم توافق عليه الأول (خالد 2026-11-09). agreed: undefined = المبلغ منك انت | '' = مستني | yes / no (مربوطة بالمبلغ) */
@@ -814,7 +956,7 @@
             + (t.total ? '<div class="tot"><span>' + (o.pay === 'cash' && !o.pickup && o.kind === 'order' ? 'هتدفع للمندوب' : 'الإجمالي') + '</span><span>' + money(t.total) + '</span></div>' : '') + '</div>';
         }
         html += '<div class="cta">' + (waLink() ? '<a class="btn bw" target="_blank" rel="noopener" href="' + esc(waLink('بخصوص طلب W-' + o.no)) + '">💬 كلّم المحل</a>' : '') + (s === 'new' ? '<button class="btn bs" id="cancel">✕ الغي الطلب</button>' : s === 'done' && o.kind === 'order' && waLink() ? '<a class="btn bs" target="_blank" rel="noopener" href="' + esc(waLink('عايز أرجّع حاجة من طلب W-' + o.no + '. السبب: ')) + '">↩ عايز أرجّع حاجة</a>' : '') + '</div>';
-        shell(html, '#/orders', true); if (QUIET) { QUIET = false; window.scrollTo({ top: y, behavior: 'instant' }); }
+        shell(html, '#/me', true); if (QUIET) { QUIET = false; window.scrollTo({ top: y, behavior: 'instant' }); }
         var cp = app.querySelector('[data-copy]'); if (cp) cp.onclick = function () { copy(cp.dataset.copy); toast('اتنسخ ✓', 'ok'); };
         var pf = document.getElementById('pf'); if (pf) pf.onchange = function () {
           var f = pf.files && pf.files[0]; if (!f) return; var lb = pf.parentNode; lb.classList.add('busy'); lb.lastChild.nodeValue = ' بنرفع الصورة...';
@@ -887,6 +1029,8 @@
       case 'cart': return cartPage();
       case 'checkout': return checkout();
       case 'orders': return ordersPage();
+      case 'me': return mePage(q.get('t') || 'orders');
+      case 'privacy': return privacyPage();
       case 'o': return trackPage(seg[1] || '', q.get('new') === '1');
       case 'svc': return svcPage();
       case 'bill': return billPage();
