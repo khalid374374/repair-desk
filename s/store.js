@@ -25,13 +25,14 @@
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j.status = r.status; return j; }); })
       .catch(function () { return { error: 'مفيش نت. جرّب تاني.', status: 0 }; });
   }
-  function waLink(text) { var n = String((C && C.shop && (C.shop.wa || C.shop.phone)) || '').replace(/\D/g, ''); if (/^01\d{9}$/.test(n)) n = '2' + n; return n ? 'https://wa.me/' + n + (text ? '?text=' + encodeURIComponent(text) : '') : ''; }
+  function waLink(text) { var n = String((C && C.shop && (C.shop.wa || C.shop.phone)) || '').replace(/[٠-٩]/g, function (c) { return String(c.charCodeAt(0) - 0x660); }).replace(/\D/g, '').replace(/^00/, ''); if (/^01\d{9}$/.test(n)) n = '2' + n; /* 2026-11-17: "0020…" كان بيعمل لينك واتساب بايظ */ return n ? 'https://wa.me/' + n + (text ? '?text=' + encodeURIComponent(text) : '') : ''; }
   var WA_SVG = '<svg viewBox="0 0 32 32" fill="currentColor"><path d="M16 3C9 3 3.3 8.6 3.3 15.6c0 2.4.7 4.7 1.9 6.7L3.2 29l6.9-1.8c1.9 1 4 1.6 6 1.6 7 0 12.7-5.7 12.7-12.6S23 3 16 3zm0 23.1c-1.9 0-3.8-.5-5.4-1.5l-.4-.2-4.1 1.1 1.1-4-.3-.4c-1.1-1.7-1.6-3.6-1.6-5.5C5.3 9.8 10.1 5.1 16 5.1s10.7 4.7 10.7 10.5S21.9 26.1 16 26.1zm5.9-7.8c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1c-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-1.9-1.8-2.2s0-.5.1-.6l.5-.6c.2-.2.2-.3.3-.6.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4s-1.2 1.1-1.2 2.8 1.2 3.2 1.4 3.5c.2.2 2.4 3.6 5.8 5.1.8.3 1.4.5 1.9.7.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.5.3-.8.3-1.4.2-1.5-.1-.2-.3-.3-.6-.4z"/></svg>';
 
   /* ---------- الأسعار والعروض ---------- */
   function offOn(p) { var o = p && p.off; if (!o || !(+o.pr > 0)) return false; var now = Date.now(); return (!o.from || Date.parse(o.from) <= now) && (!o.to || Date.parse(o.to) >= now); }
   function eff(p) { var on = offOn(p), pr = on ? +p.off.pr : +p.pr || 0, was = on ? (+p.was || +p.pr) : +p.was || 0; return { pr: pr, was: was > pr ? was : 0, end: on && p.off.to ? p.off.to : '', pct: was > pr ? Math.round((1 - pr / was) * 100) : 0 }; }
-  function avail(p) { return p && Number.isFinite(+p.q) && +p.q >= 0 ? +p.q : 99; }
+  function limMsg(p) { var raw = p && Number.isFinite(+p.q) && +p.q >= 0 ? +p.q : 99; return raw > 20 ? 'أقصى حاجة 20 قطعة من الصنف في الطلب' : p.hq ? 'مش متاح أكتر من كده' : 'المتاح ' + avail(p) + ' بس'; }
+  function avail(p) { return Math.min(20, p && Number.isFinite(+p.q) && +p.q >= 0 ? +p.q : 99); }   // 20 = أقصى كمية للصنف في الطلب الواحد على السيرفر
   function cdHTML(end, small) { return '<span class="cd" data-end="' + esc(end) + '">' + (small ? '' : '') + '</span>'; }
   function tickTimers() {
     document.querySelectorAll('[data-end]').forEach(function (el) {
@@ -54,7 +55,7 @@
     var p = P[id]; if (!p) return; add = (add || []).slice().sort();
     var c = cart(), k = id + '|' + add.join(','), ex = c.filter(function (x) { return x.k === k; })[0];
     var have = c.filter(function (x) { return x.id === id; }).reduce(function (a, x) { return a + x.q; }, 0);
-    if (have + q > avail(p)) return toast('المتاح ' + avail(p) + ' بس', 'bad');
+    if (have + q > avail(p)) return toast(limMsg(p), 'bad');
     if (ex) ex.q += q; else c.push({ k: k, id: id, q: q, add: add });
     setCart(c); toast('✓ اتضاف للسلة', 'ok');
     document.querySelectorAll('.bdg[data-cart]').forEach(function (b) { b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); });
@@ -66,7 +67,9 @@
     var h = C && C.shop && C.shop.hours; if (!h || !h.from || !h.to) return true;
     var t = new Date(), m = t.getHours() * 60 + t.getMinutes(), f = h.from.split(':'), e = h.to.split(':');
     var a = +f[0] * 60 + +(f[1] || 0), b = +e[0] * 60 + +(e[1] || 0); if (b === 0) b = 1440;
-    if ((h.off || []).indexOf(t.getDay()) >= 0) return false;
+    // 2026-11-17: لو المحل بيقفل بعد نص الليل (6 م – 2 ص)، الساعة 1 الصبح لسه وردية امبارح: الإجازة بتتحسب على امبارح مش النهارده
+    var day = a > b && m < b ? (t.getDay() + 6) % 7 : t.getDay();
+    if ((h.off || []).indexOf(day) >= 0) return false;
     return a <= b ? m >= a && m < b : m >= a || m < b;
   }
   function hoursTxt() { var h = C.shop.hours; if (!h || !h.from) return ''; var f = function (s) { var p = s.split(':'), H = +p[0] % 24, mm = p[1] && p[1] !== '00' ? ':' + p[1] : ''; return (H % 12 || 12) + mm + (H < 12 ? ' ص' : ' م'); }; return f(h.from) + ' – ' + f(h.to); }
@@ -121,7 +124,7 @@
   function cardHTML(p, i) {
     var e = eff(p), q = avail(p), so = q <= 0;
     return '<div class="pc' + (so ? ' soldout' : '') + '" data-p="' + esc(p.id) + '" style="animation-delay:' + Math.min(i || 0, 12) * 30 + 'ms">'
-      + (e.pct && !so ? '<span class="tag off">−' + e.pct + '%</span>' : so ? '<span class="tag low">خلص</span>' : q <= 2 ? '<span class="tag low">فاضل ' + q + '</span>' : '')
+      + (e.pct && !so ? '<span class="tag off">−' + e.pct + '%</span>' : so ? '<span class="tag low">خلص</span>' : q <= 2 && !p.hq ? '<span class="tag low">فاضل ' + q + '</span>' : '')
       + (p.st === 'new' ? '<span class="tag new">جديد متبرشم</span>' : p.st === 'used' ? '<span class="tag used">مستعمل</span>' : isFresh(p) ? '<span class="tag new">لسه واصل</span>' : p.sw ? '<span class="tag war">تبديل ' + esc(p.sw) + ' أيام</span>' : '')
       + '<div class="img">' + pic(p) + '</div><div class="nm">' + esc(p.n) + '</div>' + (revOf(p.id) ? '<div class="cr">★ <b class="num">' + revOf(p.id).a + '</b> <span class="num">(' + revOf(p.id).n + ')</span></div>' : '')
       + '<div class="pr">' + (p.ask ? '<span class="ask">💬 اسأل على السعر</span>' : so ? '<span class="out">هيتوفر قريب</span>' : '<strong class="num">' + fm(e.pr) + '</strong>' + (e.was ? '<s class="num">' + fm(e.was) + '</s>' : '')) + '</div>'
@@ -333,7 +336,7 @@
       + '<div class="pb"><h1>' + esc(p.n) + '</h1><div class="sub">' + esc([p.b, (catOf(p.c) || {}).n, (p.m || []).slice(0, 3).join('، ')].filter(Boolean).join(' · ')) + '</div>' + revLine(p.id)
       + (p.ask ? '<span class="ask" style="font-size:14px;padding:6px 14px">💬 اسأل على السعر</span>' : '<div class="bigpr"><strong>' + money(e.pr) + '</strong>' + (e.was ? '<s class="num">' + fm(e.was) + '</s><span class="save">وفّر <span class="num">' + fm(e.was - e.pr) + '</span></span>' : '') + '</div>')
       + (e.end && !p.ask ? '<div class="timer"><span>⏳ العرض بيخلص بعد</span><span data-end="' + esc(e.end) + '"></span></div>' : '')
-      + (so ? '<div class="timer" style="background:var(--badbg);color:var(--badc)"><span>😕 خلص من المحل</span><span>بلّغني لما يرجع ↓</span></div>' : q <= 3 ? '<div class="timer"><span>🔥 فاضل <span class="num">' + q + '</span> بس</span></div>' : '')
+      + (so ? '<div class="timer" style="background:var(--badbg);color:var(--badc)"><span>😕 خلص من المحل</span><span>بلّغني لما يرجع ↓</span></div>' : q <= 3 && !p.hq ? '<div class="timer"><span>🔥 فاضل <span class="num">' + q + '</span> بس</span></div>' : '')
       + (specs.length ? '<div class="feat">' + specs.map(function (s) { return '<span><em>' + s[0] + '</em>' + esc(s[1]) + '</span>'; }).join('') + '</div>' : '')
       + '<div class="feat">' + (p.w ? '<span><em>🛡</em>ضمان ' + esc(p.w) + '</span>' : '') + (p.sw ? '<span><em>🔁</em>تبديل ' + esc(p.sw) + ' أيام</span>' : '') + '<span><em>🚚</em>' + (delFreeTxt() || 'توصيل لحد البيت') + '</span>' + (C.del && C.del.pickup !== false ? '<span><em>🏪</em>أو استلم من المحل</span>' : '') + '</div>'
       + (p.d ? '<div class="desc">' + esc(p.d) + '</div>' : '') + revSection(p.id)
@@ -437,7 +440,20 @@
   function delFreeTxt() { var d = C.del || {}, z = (d.zones || [])[0]; if (z && !(+z.fee)) return 'توصيل ببلاش لحد ' + z.km + ' كم'; if (+d.freeOver) return 'ببلاش فوق ' + fm(d.freeOver); return ''; }
   function copy(t) { try { navigator.clipboard.writeText(t); } catch (e) { var a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); } }
 
+  /* عيب اتلقى 2026-11-17: لو الكمية قلّت أو المنتج خلص بعد ما العميل حطه في السلة، السلة كانت بتسيبه يكمّل والسيرفر يرفض الطلب في الآخر.
+     دلوقتي السلة بتتظبط على المتاح لوحدها وبتقوله */
+  function fitCart() {
+    var c = ls('cart') || [], used = {}, changed = false;
+    c = c.filter(function (x) {
+      var p = P[x.id]; if (!p || p.ask) return true;   // cart() بيخبّيهم أصلًا
+      var left = avail(p) - (used[x.id] || 0); if (left <= 0) { changed = true; return false; }
+      if (x.q > left) { x.q = left; changed = true; } used[x.id] = (used[x.id] || 0) + x.q; return true;
+    });
+    if (changed) { setCart(c); FIT = true; } return changed;
+  }
+  var FIT = false;
   function cartPage() {
+    fitCart(); var fixedQ = FIT; FIT = false;
     var c = cart();
     if (!c.length) return shell(barHTML('🛒 السلة') + '<div class="empty"><div class="e">🛒</div><b>السلة فاضية</b><p>شوف العروض والمنتجات وضيف اللي يعجبك.</p><button class="btn b1" data-go="#/">تسوّق دلوقتي</button></div>', '#/cart');
     var sub = c.reduce(function (a, x) { return a + lineTotal(x); }, 0);
@@ -446,11 +462,12 @@
       var p = P[x.id], adds = (x.add || []).map(function (i) { return (p.add || [])[i]; }).filter(Boolean);
       return '<div class="ci"><div class="im" data-p="' + esc(p.id) + '">' + pic(p) + '</div><div class="t"><b>' + esc(p.n) + '</b>' + (adds.length ? '<small>+ ' + esc(adds.map(function (a) { return a.n; }).join('، ')) + '</small>' : '') + '<strong>' + money(lineTotal(x)) + '</strong></div><span class="qty"><button data-k="' + esc(x.k) + '" data-d="-1">' + (x.q === 1 ? '🗑' : '−') + '</button><b class="num">' + x.q + '</b><button data-k="' + esc(x.k) + '" data-d="1">+</button></span></div>';
     }).join('') + '</div>';
+    if (fixedQ) html += '<div class="banner warn">⚠ فيه حاجات خلصت أو الكمية المتاحة منها قلّت، فالسلة اتظبطت على المتاح.</div>';
     var d = C.del || {}; if (+d.freeOver && sub < +d.freeOver) html += '<div class="banner info">🚚 ضيف بـ ' + money(d.freeOver - sub) + ' كمان والتوصيل يبقى ببلاش</div>';
     html += '</div><div class="side"><div class="box sum"><div><span>المجموع</span><span>' + money(sub) + '</span></div><div><span>التوصيل</span><span>بيتحسب في الخطوة الجاية</span></div></div>';
     html += '<div class="cta"><button class="btn b1" data-go="#/checkout">كمّل الطلب · <span class="num">' + fm(sub) + '</span></button></div></div>';
     shell(html, '#/cart', true);
-    app.querySelectorAll('[data-d]').forEach(function (b) { b.onclick = function () { var cc = cart(), x = cc.filter(function (y) { return y.k === b.dataset.k; })[0]; if (!x) return; var nq = x.q + +b.dataset.d; if (nq > 0 && nq + cc.filter(function (y) { return y.id === x.id && y !== x; }).reduce(function (a, y) { return a + y.q; }, 0) > avail(P[x.id])) return toast('المتاح ' + avail(P[x.id]) + ' بس', 'bad'); if (nq <= 0) cc.splice(cc.indexOf(x), 1); else x.q = nq; setCart(cc); cartPage(); }; });
+    app.querySelectorAll('[data-d]').forEach(function (b) { b.onclick = function () { var cc = cart(), x = cc.filter(function (y) { return y.k === b.dataset.k; })[0]; if (!x) return; var nq = x.q + +b.dataset.d; if (nq > 0 && nq + cc.filter(function (y) { return y.id === x.id && y !== x; }).reduce(function (a, y) { return a + y.q; }, 0) > avail(P[x.id])) return toast(limMsg(P[x.id]), 'bad'); if (nq <= 0) cc.splice(cc.indexOf(x), 1); else x.q = nq; setCart(cc); cartPage(); }; });
   }
 
   /* ---------- إتمام الطلب (منتجات / فاتورة / صيانة / مش لاقي / بدّل) ---------- */
@@ -608,6 +625,7 @@
     });
   }
   function checkout() {
+    if (fitCart()) return go('#/cart');   // الكمية اتغيّرت: يرجع السلة ويشوف الرسالة
     var c = cart(); if (!c.length) return go('#/cart');
     var sub = c.reduce(function (a, x) { return a + lineTotal(x); }, 0), d = C.del || {}, canPick = d.pickup !== false, pickup = !!(me().pickup && canPick), loc = null, getLoc = null;
     var html = barHTML('إتمام الطلب') + '<div class="main"><div class="box"><div class="seg" id="mode"><button type="button" data-m="del" class="' + (pickup ? '' : 'on') + '">🚚 توصيل</button>' + (canPick ? '<button type="button" data-m="pick" class="' + (pickup ? 'on' : '') + '">🏪 هستلم من المحل</button>' : '') + '</div>'
