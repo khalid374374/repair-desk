@@ -534,3 +534,21 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
 .rt-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; } .rt-n { font-size: 13.5px; font-weight: 800; }
 
 .vf-off { margin: 10px 0 2px; padding: 10px 12px; border-radius: 12px; background: var(--warnbg); color: var(--warnc); font-size: 12.5px; font-weight: 800; line-height: 1.7; text-align: start; }   /* البرنامج في المحل مقفول (خالد 2026-11-16) */
+
+/* ===== متجر واحد لكل الفروع (خالد 2026-11-18، فكرة 1): "📍 فرع X ▾" في الراس والقايمة من تحت ===== */
+.hd .nm small .brc { display: flex; width: max-content; align-items: center; gap: 4px; margin: 4px 0 3px; padding: 3px 11px; border-radius: 99px; border: 1px solid #ffffff40; background: #ffffff24; color: #fff; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; max-width: 100%; overflow: hidden; }
+.hd .nm small .brc b { display: inline; font-size: inherit; color: inherit; font-weight: 900; }
+.hd .nm small .brc:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.sheet .brh { margin: 0 0 2px; font-size: 17px; font-weight: 900; color: var(--ink); }
+.sheet .brp { margin: 0 0 12px; color: var(--mut); font-size: 12.5px; }
+.brls { display: flex; flex-direction: column; gap: 8px; max-height: 60vh; overflow-y: auto; }
+.brl { display: flex; align-items: center; gap: 10px; width: 100%; text-align: start; padding: 10px 12px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); font: inherit; cursor: pointer; }
+.brl.on { border-color: var(--ac-fill); background: var(--soft); }
+.brl .bi { width: 38px; height: 38px; border-radius: 12px; background: var(--soft); display: grid; place-items: center; font-size: 18px; flex: none; }
+.brl.on .bi { background: var(--card); }
+.brl .bx { flex: 1; min-width: 0; } .brl .bx b { display: block; font-size: 14.5px; font-weight: 900; } .brl .bx b i { font-style: normal; color: var(--ac-tx); }
+.brl .bx small { display: block; color: var(--mut); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brl .bs { flex: none; font-size: 11px; font-weight: 800; border-radius: 99px; padding: 2px 9px; background: var(--okbg); color: var(--okc); }
+.brl .bs.c { background: var(--badbg); color: var(--badc); }
+.brl:focus-visible { outline: 2px solid var(--ac-fill); outline-offset: 2px; }
+.hd .nm small.hbr { display: block; } .hd .nm small.hbr .dot { display: inline-block; vertical-align: middle; margin-inline-end: 5px; }

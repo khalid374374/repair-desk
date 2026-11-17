@@ -7,7 +7,7 @@
   var KEY = 'sb_publishable_y11CnpnNLb6qIx00LVUHJQ_BzzQNXim';   // مفتاح عام (نفس اللي في t.html)
   var app = document.getElementById('app');
   var activeDealId = '', dealCampaign = null;
-  var slug = '', C = null, P = {}, deferredInstall = null, timers = [], pollT = 0, trackLoad = null;
+  var slug = '', C = null, P = {}, deferredInstall = null, timers = [], pollT = 0, trackLoad = null, BR = null;   // BR: فروع المحل (branches.json) لو المتجر واحد لكل الفروع
 
   /* ---------- أدوات ---------- */
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
@@ -63,8 +63,8 @@
   function badge() { var n = cartCount(); document.querySelectorAll('.bdg[data-cart]').forEach(function (b) { b.textContent = n; b.hidden = !n; }); }
 
   /* ---------- مواعيد الشغل ---------- */
-  function openNow() {
-    var h = C && C.shop && C.shop.hours; if (!h || !h.from || !h.to) return true;
+  function openNow(hh) {
+    var h = hh !== undefined ? hh : C && C.shop && C.shop.hours; if (!h || !h.from || !h.to) return true;
     var t = new Date(), m = t.getHours() * 60 + t.getMinutes(), f = h.from.split(':'), e = h.to.split(':');
     var a = +f[0] * 60 + +(f[1] || 0), b = +e[0] * 60 + +(e[1] || 0); if (b === 0) b = 1440;
     // 2026-11-17: لو المحل بيقفل بعد نص الليل (6 م – 2 ص)، الساعة 1 الصبح لسه وردية امبارح: الإجازة بتتحسب على امبارح مش النهارده
@@ -84,7 +84,8 @@
       + (!dk && waLink() ? '<a class="wa" href="' + esc(waLink('السلام عليكم، عندي سؤال')) + '" target="_blank" rel="noopener" aria-label="واتساب">' + WA_SVG + '</a>' : '');
   }
   function barHTML(t, sub, back) { return '<div class="bar"><button class="bk" data-back="' + esc(back || '') + '" aria-label="رجوع">→</button><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; }
-  function logoHTML() { return C.shop.logo ? '<img src="' + esc(img(C.shop.logo)) + '" alt="">' : esc(C.shop.ic || '🔧'); }
+  // فروع: اللوجو من فولدر الفرع الرئيسي (C.shop._lg = "<slug>/i/<اسم>")
+  function logoHTML() { var u = C.shop._lg ? ST + C.shop._lg.split('/').map(encodeURIComponent).join('/') : C.shop.logo ? img(C.shop.logo) : ''; return u ? '<img src="' + esc(u) + '" alt="">' : esc(C.shop.ic || '🔧'); }
   /* QUIET (خالد 2026-11-09: "الموقع بيفضل يعمل ريفرش"): الرسم اللي جاي من تحديث في الخلفية (الكتالوج اتغيّر، حالة الطلب اتغيّرت، عرض خلص) بيتعمل
      من غير حركة الدخول ومن غير ما الصفحة ترجع لفوق. الحركة للتنقّل اللي العميل عمله بس */
   var QUIET = false;
@@ -186,7 +187,7 @@
     if (preferredIndex > 0) dealSlides.unshift(dealSlides.splice(preferredIndex, 1)[0]);
     var newOnes = visible().filter(function (p) { return isFresh(p) && avail(p) > 0; }).slice(0, 6);
     var s = C.svc || {}, opn = openNow();
-    var html = '<header class="hd"><div class="r1"><div class="logo">' + logoHTML() + '</div><div class="nm"><b>' + esc(C.shop.name) + '</b><small><span class="dot' + (opn ? '' : ' off') + '"></span>' + (C.shop.area ? esc(C.shop.area) + ' · ' : '') + (opn ? 'مفتوح' + (hoursTxt() ? ' لحد ' + esc(hoursTxt().split('–')[1].trim()) : '') : 'مقفول دلوقتي') + '</small></div>'
+    var html = '<header class="hd"><div class="r1"><div class="logo">' + logoHTML() + '</div><div class="nm"><b>' + esc(C.shop.name) + '</b><small' + (brCur() ? ' class="hbr"' : '') + '>' + (brCur() ? '<button type="button" class="brc" data-br aria-haspopup="dialog">📍 فرع <b>' + esc(brCur().n) + '</b> ▾</button> ' : '') + '<span class="dot' + (opn ? '' : ' off') + '"></span>' + (C.shop.area && !brCur() ? esc(C.shop.area) + ' · ' : '') + (opn ? 'مفتوح' + (hoursTxt() ? ' لحد ' + esc(hoursTxt().split('–')[1].trim()) : '') : 'مقفول دلوقتي') + '</small></div>'
       + '<div class="ic"><button data-go="#/orders" aria-label="طلباتي">📦</button><button data-go="#/cart" aria-label="السلة">🛒<i class="bdg" data-cart hidden></i></button></div></div>'
       + '<form class="srch" id="sf"><span>🔍</span><input id="sq" type="search" enterkeyhint="search" placeholder="دوّر على موبايل، جراب، اسكرينة..." autocomplete="off"></form></header>';
     if (!opn) html += '<div class="banner warn">🌙 المحل مقفول دلوقتي (' + esc(hoursTxt()) + '). اطلب عادي وطلبك هيتجهز أول ما نفتح.</div>';
@@ -1168,9 +1169,10 @@
     var ac = C.shop && /^#[0-9a-f]{6}$/i.test(C.shop.ac || '') ? C.shop.ac : '#2b7be0';
     var v = accentVars(ac); for (var k in v) document.documentElement.style.setProperty(k, v[k]);
     document.title = C.shop.name || 'المتجر';
-    document.getElementById('mf').href = ST + slug + '/manifest.json';
+    // فروع: التثبيت بشكل الرئيسي ولينكه (ولينك الرئيسي بيفتح الفرع اللي العميل اختاره)
+    document.getElementById('mf').href = ST + ((brCur() && BR.main) || slug) + '/manifest.json';
     // نفس PNG المربعة للمتجر المثبّت على iOS ولأيقونة التبويب؛ اللوجو الخام يفضل لواجهة المتجر فقط.
-    var installIcon = C.shop.i192 ? img(C.shop.i192) : ST + 'icon-192.png';
+    var installIcon = C.shop._i192 ? ST + C.shop._i192.split('/').map(encodeURIComponent).join('/') : C.shop.i192 ? img(C.shop.i192) : ST + 'icon-192.png';
     var ati = document.getElementById('ati'), fav = document.getElementById('fav');
     if (ati && ati.href !== installIcon) ati.href = installIcon;
     if (fav && fav.href !== installIcon) fav.href = installIcon;
@@ -1181,7 +1183,60 @@
       .then(function (j) { var txt = JSON.stringify(j), same = txt === loadCat.sig; loadCat.sig = txt; set(j); try { localStorage.setItem('rds_cat_' + slug, txt); } catch (e) {} if (quiet && !same) refresh(); })
       .catch(function (st) { if (C) return; var old = null; try { old = JSON.parse(localStorage.getItem('rds_cat_' + slug)); } catch (e) {} if (old) { set(old); render(); toast('مفيش نت — بتشوف آخر نسخة', 'bad'); } else fail(st === 400 || st === 404 ? 'المتجر ده مش موجود' : 'مفيش نت. جرّب تاني.'); });
   }
-  function set(j) { C = j; C.shop = C.shop || {}; P = {}; (C.p || []).forEach(function (p) { P[p.id] = p; }); theme(); }
+  function set(j) { C = j; C.shop = C.shop || {}; P = {}; (C.p || []).forEach(function (p) { P[p.id] = p; }); brand(); theme(); }
+
+  /* ---------- متجر واحد لكل الفروع (خالد 2026-11-18، فكرة 1) ----------
+     branches.json جنب الكتالوج (السيرفر بيكتبه لو الفرع الرئيسي مشغّل "متجر واحد"): الفروع وشكل الرئيسي.
+     الراس فيه "📍 فرع X ▾" والقايمة من تحت؛ أول زيارة بتفتح لوحدها، والفرع بيتفتكر لكل محل (rds_brpick_<الرئيسي>). كل فرع بمنتجاته وسلته وطلباته (نفس المفاتيح بالـ slug) */
+  function brCur() { return BR && BR.list && BR.list.length > 1 ? BR.list.filter(function (x) { return x.s === slug; })[0] || null : null; }
+  function brand() {
+    if (!C || !brCur() || !BR.brand) return;
+    var b = BR.brand;
+    if (b.name) C.shop.name = b.name; if (b.ac) C.shop.ac = b.ac; if (b.ic) C.shop.ic = b.ic; if (b.tag) C.shop.tag = b.tag;
+    C.shop._lg = b.logo || ''; C.shop._i192 = b.i192 || '';
+  }
+  var brKey = function () { return 'rds_brpick_' + (BR && BR.main || ''); };
+  function brLoad() {
+    var k = 'rds_br_' + slug, want = slug;
+    try { var old = JSON.parse(localStorage.getItem(k) || 'null'); if (old && !BR) { BR = old; if (C) { brand(); theme(); refresh(); } } } catch (e) {}
+    return fetch(ST + encodeURIComponent(slug) + '/branches.json?t=' + Math.floor(Date.now() / 60000), { cache: 'no-cache' })
+      .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return undefined; })
+      .then(function (j) {
+        if (want !== slug || j === undefined) return;   // من غير نت: آخر نسخة
+        var before = JSON.stringify(BR); BR = j && j.list && j.list.length > 1 ? j : null;
+        try { if (BR) localStorage.setItem(k, JSON.stringify(BR)); else localStorage.removeItem(k); } catch (e) {}
+        if (JSON.stringify(BR) !== before && C) { var c0 = C; loadCat.sig = ''; set(JSON.parse(localStorage.getItem('rds_cat_' + slug) || 'null') || c0); refresh(); }
+        if (!brCur()) return;
+        var pick = null; try { pick = localStorage.getItem(brKey()); } catch (e) {}
+        var inList = function (s) { return BR.list.some(function (x) { return x.s === s; }); };
+        // فتح لينك الرئيسي وكان اختار فرع تاني قبل كده: نروح لفرعه على طول (مش في صفحة طلب)
+        if (pick && pick !== slug && slug === BR.main && inList(pick) && !/^#\/(o|t|orders)\b/.test(location.hash)) return brGo(pick, true);
+        // أول زيارة: القايمة بتفتح لوحدها في الرئيسية
+        if (!pick && (!location.hash || location.hash === '#/' || location.hash === '#')) { try { localStorage.setItem(brKey(), slug); } catch (e) {} brSheet(); }
+      });
+  }
+  function brSheet() {
+    if (!brCur() || document.querySelector('.sheet')) return;
+    var rows = BR.list.map(function (x) {
+      var op = openNow(x.h || null), sub = [x.a, x.ad].filter(Boolean).join(' · ');
+      return '<button type="button" class="brl' + (x.s === slug ? ' on' : '') + '" data-brs="' + esc(x.s) + '"><span class="bi">🏬</span><span class="bx"><b>' + esc(x.n) + (x.s === slug ? ' <i>✓</i>' : '') + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span><span class="bs' + (op ? '' : ' c') + '">' + (op ? 'مفتوح' : 'مقفول دلوقتي') + '</span></button>';
+    }).join('');
+    sheet('<h3 class="brh">اختار الفرع</h3><p class="brp">المنتجات والأسعار والتوصيل من الفرع اللي تختاره</p><div class="brls">' + rows + '</div>');
+    document.querySelectorAll('.sheet [data-brs]').forEach(function (b) { b.onclick = function () { var s = b.getAttribute('data-brs'); var bg = document.querySelector('.sheet-bg'), sh = document.querySelector('.sheet'); if (bg) bg.remove(); if (sh) sh.remove(); brGo(s); }; });
+  }
+  function brGo(s, quiet) {
+    s = String(s || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+    try { localStorage.setItem(brKey(), s); } catch (e) {}
+    if (!s || s === slug) return;
+    var name = ((BR && BR.list.filter(function (x) { return x.s === s; })[0]) || {}).n || '';
+    slug = s;
+    try { localStorage.setItem('rds_last', slug); var u = new URL(location.href); u.searchParams.set('s', slug); history.replaceState(history.state, '', u.pathname + u.search + (/^#\/(p|c|cat)\b/.test(location.hash) ? '#/' : location.hash)); } catch (e) {}
+    loadCat.sig = ''; var cached = null; try { cached = JSON.parse(localStorage.getItem('rds_cat_' + slug)); } catch (e) {}
+    if (cached) { set(cached); render(); loadCat(true); } else loadCat().then(function () { if (C) render(); });
+    brLoad();
+    if (!quiet && name) toast('اتنقلت لفرع ' + name);
+  }
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-br]'); if (b) { e.preventDefault(); brSheet(); } });
   function fail(t) { app.className = ''; app.innerHTML = '<div class="closed"><div class="e">🛍</div><b>' + esc(t) + '</b><p>اتأكد من اللينك أو جرّب تاني بعد شوية.</p><button class="btn b1" style="margin-top:14px" onclick="location.reload()">جرّب تاني</button></div>'; }
   function boot() {
     var qs = new URLSearchParams(location.search), host = location.hostname;
@@ -1196,6 +1251,7 @@
       ls('visits', (+(ls('visits') || 0)) + 1);
       var cached = null; try { cached = JSON.parse(localStorage.getItem('rds_cat_' + slug)); } catch (e) {}
       if (cached) { loadCat.sig = JSON.stringify(cached); set(cached); render(); loadCat(true); } else loadCat().then(function () { if (C) render(); });
+      brLoad();
     });
     if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(function () {});
   }
