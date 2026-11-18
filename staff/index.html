@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="color-scheme" content="dark light">
+<title>Repair Desk - الموظف</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="الموظف">
+<meta name="theme-color" content="#0b1222">
+<link rel="stylesheet" href="app.css">
+<script src="web.js"></script>
+</head>
+<body>
+<!-- تطبيق المندوب (خالد 2026-11-08، التطبيق التالت): طلباته بالترتيب، الخريطة، اتصال/واتساب للعميل، "استلمت الطلب" / "اتسلّم" / "سلّمت الفلوس".
+     الربط والسيرفر في link.js، والشاشات في app.js، و#demo = بيانات وهمية (demo.js). -->
+<header class="top">
+  <div class="me"><span class="av" id="h-av">م</span><div><b id="h-name">…</b><small id="h-sub">…</small></div></div>
+  <div class="top-r"><span class="live" id="h-live">● متوصّل</span></div>
+</header>
+<main id="main"></main>
+<div id="sheet-bg" hidden></div>
+<section id="sheet" hidden></section>
+<section id="pair" hidden>
+  <div class="pair-in">
+    <div class="pair-logo">👷</div>
+    <h2>اربط بالمحل</h2>
+    <p>اطلب من صاحب المحل كود موبايلك: <b>الوردية ← ⏰ الحضور ← ⚙ ← 📱 اربط موبايله</b> (للمندوب: إعدادات المتجر ← المناديب)، وامسح الكود.</p>
+    <video id="pair-video" playsinline muted hidden></video>
+    <button class="btn" id="pair-scan">📷 امسح الكود</button>
+    <div class="or">أو اكتب الكود</div>
+    <div class="row2"><input id="pair-code" maxlength="12" autocomplete="off" spellcheck="false" placeholder="ABCD2345" dir="ltr"><button class="btn sm" id="pair-go">اربط</button></div>
+    <div class="err" id="pair-err"></div>
+  </div>
+</section>
+<script src="version.js"></script>
+<script src="vendor/jsQR.js"></script>
+<script src="demo.js"></script>
+<script src="att.js"></script>
+<script src="app.js"></script>
+<script src="link.js"></script>
+</body>
+</html>

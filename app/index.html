@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<title>Repair Desk</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Repair Desk">
+<meta name="theme-color" content="#0b1222">
+<link rel="stylesheet" href="app.css">
+<script src="web.js"></script>
+</head>
+<body>
+<!-- تطبيق صاحب المحل (خالد، 2026-10-29): قراية بس. الشكل من promo/mobile-mockup.html.
+     البيانات من الكاشير (link.js): ربط بـ QR مرة واحدة، وبعدين تحديث لحظي. #demo = بيانات تجريبية (data.js). -->
+<header class="top">
+  <div><b id="h-title">الرئيسية</b><small id="h-sub">…</small></div>
+  <div class="top-r"><span class="live off" id="h-live">● بيتوصّل</span><button id="h-bell" aria-label="الإشعارات والطلبات">🔔<i id="h-bell-n" hidden></i></button><button id="h-menu" aria-label="الإعدادات">⋮</button></div>
+</header>
+<div class="br-bar" id="br-bar" hidden></div>
+<main id="views">
+  <section class="view on" data-v="home"></section>
+  <section class="view" data-v="shift"></section>
+  <section class="view" data-v="repair"></section>
+  <section class="view" data-v="store"></section>
+  <section class="view" data-v="stock"></section>
+  <section class="view" data-v="reports"></section>
+</main>
+<nav class="tabs" id="tabs">
+  <button data-v="home" class="on"><b>🏠</b>الرئيسية</button>
+  <button data-v="shift"><b>🏪</b>الوردية</button>
+  <button data-v="repair"><b>🛠</b>الصيانة</button>
+  <button data-v="store" hidden><b>🛒</b>المتجر</button>
+  <button data-v="stock"><b>📦</b>المخزن</button>
+  <button data-v="reports"><b>📊</b>التقارير</button>
+</nav>
+<div class="sheet-bg" id="sheet-bg" hidden></div>
+<div class="sheet" id="sheet" hidden></div>
+
+<!-- شاشة الربط: أول مرة، أو لما الكاشير يفصل الموبايل -->
+<section id="pair" hidden>
+  <div class="pair-in">
+    <div class="pair-logo">🔗</div>
+    <h2>اربط بالكاشير</h2>
+    <p>على الكاشير: <b>الإعدادات ← 📱 موبايل صاحب المحل ← اعمل كود ربط</b>، وامسح الكود اللي هيظهر.</p>
+    <video id="pair-video" playsinline muted hidden></video>
+    <button class="pair-btn" id="pair-scan">📷 امسح الكود</button>
+    <div class="pair-or">أو اكتب الكود</div>
+    <div class="pair-row"><input id="pair-code" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD2345" dir="ltr"><button class="pair-btn sm" id="pair-go">اربط</button></div>
+    <div class="pair-err" id="pair-err"></div>
+    <button class="pair-link" id="pair-back" type="button" hidden>↩ رجوع للفرع اللي كنت فيه</button>
+    <!-- اتفصل وانت برّه المحل: ادخل بحساب المحل (نفس اليوزر والباسورد بتوع الكاشير) -->
+    <button class="pair-link" id="acct-open" type="button">🔑 مش في المحل؟ ادخل بحساب المحل</button>
+    <div class="acct" id="acct" hidden>
+      <input id="acct-user" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="اليوزر أو الإيميل" dir="ltr">
+      <input id="acct-pass" type="password" autocomplete="current-password" placeholder="الباسورد" dir="ltr">
+      <button class="pair-btn" id="acct-go" type="button">ادخل</button>
+      <small>الموبايلات التانية بيجيلها إشعار إن موبايل جديد اتربط.</small>
+    </div>
+  </div>
+</section>
+<script src="version.js"></script>
+<script src="theme.js"></script>
+<script src="vendor/jsQR.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script src="actions.js"></script>
+<script src="storeorders.js"></script>
+<script src="extras.js"></script>
+<script src="vendor/zxing.min.js"></script>
+<script src="scan.js"></script>
+<script src="stock.js"></script>
+<script src="vendor/fflate.min.js"></script>
+<script src="fulldata.js"></script>
+<script src="storetab.js"></script>
+<script src="branches.js"></script>
+<script src="link.js"></script>
+<script src="lock.js"></script>
+<script src="settings.js"></script>
+</body>
+</html>
