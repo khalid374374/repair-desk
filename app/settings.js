@@ -71,6 +71,7 @@
     document.querySelectorAll('[data-brgo]').forEach(b => b.onclick = () => window.Branches && Branches.switchTo(+b.dataset.brgo));
     $('#m-bradd').onclick = () => window.Branches && Branches.startAdd();
     const brrm = $('#m-brrm'); if (brrm) brrm.onclick = async () => { if (!confirm('تشيل الفرع ده من الموبايل؟')) return; if (window.AppLock && !(await AppLock.confirm('علشان تشيل الفرع'))) return; Branches.removeCurrent(); };
+    if (window.RD_WEB) { const b = $('#m-upd'); b.querySelector('b').textContent = 'حدّث للنسخة الأخيرة'; $('#m-upd-s').textContent = 'نسخة الآيفون بتتحدّث لوحدها، والزرار ده بيجيبها دلوقتي'; b.onclick = async () => { $('#m-upd-s').textContent = 'بيحمّل...'; try { const g = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); if (g) await g.update(); } catch (e) {} location.reload(); }; } else
     $('#m-upd').onclick = async () => { const s = $('#m-upd-s'); s.textContent = 'بيدوّر...'; const r = window.OwnerLink ? await OwnerLink.checkUpdate(true) : {}; s.textContent = r.update ? `فيه نسخة جديدة ${r.update}: زرار التحديث فوق` : r.latest ? `عندك آخر نسخة (${window.APP_VER})` : (r.error || ''); };
     $('#m-unlink').onclick = async () => { if (!confirm('تفصل الموبايل ده من الكاشير؟')) return; if (window.AppLock && !(await AppLock.confirm('علشان تفصل الموبايل'))) return; history.back(); if (window.OwnerLink) OwnerLink.forget(); };   // البصمة الأول علشان مايتفصلش بالغلط
   }

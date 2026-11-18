@@ -16,10 +16,12 @@ window.DEMO = {
 // تطبيق الموظف (2026-11-18): الحضور للمندوب، وموظف من غير طلبات (#demo-emp)
 (function () {
   const d = new Date(), at = (h, m) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m || 0).getTime(), ds = x => { const y = new Date(Date.now() - x * 864e5); return y.getFullYear() + '-' + String(y.getMonth() + 1).padStart(2, '0') + '-' + String(y.getDate()).padStart(2, '0'); };
-  const att = (rec) => ({ on: true, phone: true, wifi: ['aa:bb:cc:11:22:33'], gps: true, wins: [{ d: ds(0), id: 'm', name: 'صباحي', ic: '☀️', from: '10:00', to: '18:00', start: at(10), end: at(18) }], st: rec ? rec.kind : 'wait', rec, greenMin: 10,
+  // وردية التجربة حوالين الساعة دلوقتي (كانت 10 لـ 6 ثابتة، فبالليل كانت بتقول "مفيش وردية" والاختبار بيقع)
+  const H0 = Math.max(0, d.getHours() - 1), hh = h => String(h % 24).padStart(2, '0') + ':00';
+  const att = (rec) => ({ on: true, phone: true, wifi: ['aa:bb:cc:11:22:33'], gps: true, wins: [{ d: ds(0), id: 'm', name: 'صباحي', ic: '☀️', from: hh(H0), to: hh(H0 + 8), start: at(H0), end: at(H0) + 8 * 3600e3 }], st: rec ? rec.kind : 'wait', rec, greenMin: 10,
     counts: { green: 12, redOpen: 1, redCleared: 2, blackOpen: 0 }, next: { kind: 'late', need: 3, have: 1 },
     list: [{ d: ds(1), kind: 'green', min: 9, state: 'used' }, { d: ds(2), kind: 'late', min: 14, state: 'open', reason: 'المواصلات' }, { d: ds(5), kind: 'leave', min: 0, state: '' }],
     leaves: [{ d: ds(-3), reason: 'فرح أخويا', status: 'pending' }] });
-  window.DEMO.kind = 'courier'; window.DEMO.att = att({ d: ds(0), in: at(9, 58), out: 0, kind: 'ok', min: 0, via: 'gps', flag: '' });
+  window.DEMO.kind = 'courier'; window.DEMO.att = att({ d: ds(0), in: at(H0) - 2 * 60000, out: 0, kind: 'ok', min: 0, via: 'gps', flag: '' });
   window.DEMO_EMP = { v: 1, kind: 'emp', name: 'أحمد', shop: 'الأمل فون', at: Date.now() - 30000, att: att(null) };
 })();

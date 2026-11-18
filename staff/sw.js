@@ -1,6 +1,6 @@
 /* service worker لنسخة الويب (mobile/web/build.js بيحط الإصدار والملفات). الصفحة نفسها من النت الأول (علشان التحديث يوصل)، والباقي من الكاش،
    والسيرفر (Supabase) مابيعديش من هنا. وكمان الإشعارات (Web Push): بيعرضها، والدوسة بتفتح التطبيق. */
-const V = 'staff-a01bae2b1f', FILES = ["./","app.css","app.js","att.js","demo.js","icon-192.png","index.html","link.js","manifest.webmanifest","vendor/jsQR.js","version.js","web.js"];
+const V = 'staff-736cbfd596', FILES = ["./","app.css","app.js","att.js","demo.js","icon-192.png","index.html","link.js","manifest.webmanifest","vendor/jsQR.js","version.js","web.js"];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(FILES)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {

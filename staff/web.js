@@ -4,6 +4,8 @@
      مفيش حاجة بتروح للسيرفر) و PIN من 4 أرقام احتياطي (متخزن بصمة sha256 بس). أي فتح محتاج دوسة (Safari مابيسمحش بـ Face ID من غير دوسة).
    - الإشعارات (Web Push، iOS 16.4+ بعد "أضف للشاشة الرئيسية"): RdWebPush.subscribe() → link.js بيبعته للسيرفر. */
 (function () {
+  // مايتفتحش جوه إطار (iframe) في موقع تاني يخدع الواحد يدوس حاجات (المراجعة 2026-11-18). GitHub Pages مابيبعتش X-Frame-Options فبنعملها هنا
+  if (window.top !== window.self) { try { window.top.location.replace(window.self.location.href); } catch (e) { document.documentElement.innerHTML = ''; } return; }
   window.RD_WEB = true;
   document.documentElement.classList.add('rd-web');
   const standalone = () => (window.navigator.standalone === true) || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);

@@ -617,6 +617,7 @@
         toast(r.error || 'الطلب ماتبعتش، جرّب تاني', 'bad');
         var f = { addr: 'ca', loc: 'locw', coupon: 'cpn', dev: 'rd', acct: 'ba', text: 'wt' }[r.field]; var el = f && document.getElementById(f); if (el) { if (el.classList.contains('in')) { el.classList.add('bad'); el.focus(); } else el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
         if (r.stale) loadCat(true);
+        if (r.priceChanged) setTimeout(function () { go('#/cart'); }, 1200);   // يشوف الأسعار الجديدة في السلة
         return null;
       }
       var list = ls('orders') || []; list.unshift({ trk: r.trk, no: r.no, at: Date.now(), kind: body.kind, total: r.totals && r.totals.total }); ls('orders', list.slice(0, 40));
@@ -651,7 +652,7 @@
       var q = delQuote(sub, loc, pickup);
       if (!pickup && q.need) { document.getElementById('locw').scrollIntoView({ behavior: 'smooth', block: 'center' }); return toast('حدد مكانك على الخريطة علشان المندوب', 'bad'); }
       if (!pickup && q.out) return toast('مكانك برّه منطقة التوصيل. ممكن تستلم من المحل.', 'bad');
-      submitOrder({ kind: 'order', pay: payVal(), coupon: document.getElementById('cpn').value.trim(), items: c.map(function (x) { return { id: x.id, q: x.q, add: x.add }; }),
+      submitOrder({ kind: 'order', pay: payVal(), coupon: document.getElementById('cpn').value.trim(), exp: Math.round(sub * 100) / 100, items: c.map(function (x) { return { id: x.id, q: x.q, add: x.add }; }),   // exp: السيرفر يرفض لو السعر زاد من غير ما يعرف
         cust: { name: cu.name, phone: cu.phone, addr: cu.addr, lat: loc && loc.lat, lng: loc && loc.lng, pickup: pickup, notes: document.getElementById('cnote').value.trim() } }, this).then(function (r) { if (r) setCart([]); });
     };
   }

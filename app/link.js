@@ -71,7 +71,7 @@
     if (code.length < 6) { $('#pair-err').textContent = 'الكود ناقص'; return; }
     stopScan(); $('#pair-go').disabled = true; $('#pair-err').textContent = '';
     try {
-      const name = (navigator.userAgent.match(/;\s*([^;)]+)\s+Build/) || [])[1] || 'موبايل';
+      const ua = navigator.userAgent, name = (ua.match(/;\s*([^;)]+)\s+Build/) || [])[1] || (/iPhone/.test(ua) ? 'آيفون' : /iPad/.test(ua) ? 'آيباد' : 'موبايل');   // الآيفون مالوش Build (كان بيظهر موبايل في قايمة الكاشير)
       const r = await gw({ action: 'mobile-pair', code, name: name.slice(0, 40) });
       if (r.error) { $('#pair-err').textContent = r.error; return; }
       store.set('rdo_token', r.token); store.set('rdo_chan', r.chan);
@@ -87,7 +87,7 @@
     if (!user || !pass) { $('#pair-err').textContent = 'اكتب اليوزر والباسورد'; return; }
     stopScan(); $('#acct-go').disabled = true; $('#pair-err').textContent = '';
     try {
-      const name = (navigator.userAgent.match(/;\s*([^;)]+)\s+Build/) || [])[1] || 'موبايل';
+      const ua = navigator.userAgent, name = (ua.match(/;\s*([^;)]+)\s+Build/) || [])[1] || (/iPhone/.test(ua) ? 'آيفون' : /iPad/.test(ua) ? 'آيباد' : 'موبايل');   // الآيفون مالوش Build (كان بيظهر موبايل في قايمة الكاشير)
       const r = await gw({ action: 'mobile-login', username: user, password: pass, name: name.slice(0, 40) });
       if (r.error) { $('#pair-err').textContent = r.error; return; }
       $('#acct-pass').value = '';

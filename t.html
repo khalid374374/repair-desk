@@ -50,6 +50,8 @@
   .ok-row { display: flex; gap: 10px; align-items: flex-start; margin: 12px 0; font-size: 14.5px; font-weight: 700; cursor: pointer; } .ok-row input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--gr); flex: none; }
   .btns { display: flex; gap: 10px; } .btns button { flex: 1; font: inherit; font-weight: 800; font-size: 16px; padding: 12px; border-radius: 14px; border: 0; cursor: pointer; }
   .b-go { background: var(--gr); color: #fff; } .b-go:disabled { opacity: .45; cursor: not-allowed; } .b-clr { background: color-mix(in srgb, var(--line) 70%, var(--card)); color: var(--ink); flex: 0 0 auto !important; padding-inline: 18px !important; }
+  .sg-re { background: #fff4e5; color: #8a4b00; border: 1px solid #f3c88a; border-radius: 12px; padding: 10px 12px; font-weight: 700; font-size: 14px; line-height: 1.6; margin-bottom: 12px; }
+  @media (prefers-color-scheme: dark) { .sg-re { background: #3a2a12; color: #ffd28f; border-color: #6b4a1a; } }
   .sg-err { color: var(--rd); font-weight: 700; font-size: 14px; min-height: 20px; margin-top: 8px; text-align: center; }
   .sg-done { text-align: center; padding: 6px 0; } .sg-done b { display: block; font-size: 19px; color: var(--gr); font-weight: 900; } .sg-done span { color: var(--mut); font-size: 14px; }
 </style>
@@ -74,10 +76,25 @@
   var k = (location.hash || '').replace(/^#/, '').trim();
   function fail(t) { $('card').innerHTML = '<div class="msg">' + h(t) + '</div>'; }
   if (!/^[A-Za-z0-9]{16}$/.test(k)) return fail('الرابط ناقص. امسح الـ QR اللي على الإيصال تاني.');
-  fetch(GW, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: KEY }, body: JSON.stringify({ action: 'track-get', k: k }) })
+  /* بتتحدّث لوحدها في الخلفية (خالد 2026-11-18): كل 30 ثانية والصفحة قدامه (دقيقتين بعد ما يتسلّم أو يترفض)، وأول ما يرجع لها.
+     مابيتغيّرش حاجة على الشاشة إلا لو البيانات اتغيّرت، ولوحة التوقيع مابتترسمش من جديد وهو بيوقّع.
+     لو التحديث فشل (نت) الصفحة بتفضل زي ما هي من غير رسالة */
+  var shown = '', timer = null, done = false;
+  function load(quiet) {
+    return fetch(GW, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: KEY }, body: JSON.stringify({ action: 'track-get', k: k }) })
     .then(function (r) { return r.json().catch(function () { return {}; }); })
     .then(function (j) {
-      if (!j || !j.ok || !j.data) return fail((j && j.error) || 'مش قادرين نجيب حالة الجهاز دلوقتي. جرّب كمان شوية.');
+      if (!j || !j.ok || !j.data) { if (quiet) return; return fail((j && j.error) || 'مش قادرين نجيب حالة الجهاز دلوقتي. جرّب كمان شوية.'); }
+      var sig = JSON.stringify([j.data, j.at, j.signed || null, j.resign || null]);
+      if (sig === shown) return; shown = sig;
+      render(j);
+    })
+    .catch(function () { if (!quiet) fail('مفيش نت، أو السيرفر مش متاح. جرّب تاني.'); });
+  }
+  function next() { clearTimeout(timer); if (document.visibilityState === 'visible') timer = setTimeout(function () { load(true).then(next, next); }, done ? 120000 : 30000); }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') load(true).then(next, next); else clearTimeout(timer); });
+  load(false).then(next, next);
+  function render(j) {
       var d = j.data, st = d.st || 'waiting', step = STEPS.map(function (x) { return x[0]; }), color = '#2f7cf6';
       STEPS.forEach(function (x) { if (x[0] === st) color = x[2]; }); if (st === 'rejected') color = '#d6455f';
       if (d.s) { $('shop').textContent = d.s; document.title = 'حالة جهازك — ' + d.s; }
@@ -96,14 +113,14 @@
         + '<div class="now">' + h(n[0]) + '<small>' + h(n[1]) + '</small></div>' + list
         + (info.length ? '<div class="info">' + info.map(function (x) { return '<div><span>' + h(x[0]) + '</span><b>' + h(x[1]) + '</b></div>'; }).join('') + '</div>' : '');
       if (j.at) { var t = new Date(j.at); if (!isNaN(t)) $('foot').textContent = 'آخر تحديث: ' + t.toLocaleString('ar-EG', { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }); }
-      if (d.rc && typeof d.rc === 'object') receipt(d, j.signed);
-    })
-    .catch(function () { fail('مفيش نت، أو السيرفر مش متاح. جرّب تاني.'); });
+      done = st === 'picked' || st === 'rejected';
+      if (d.rc && typeof d.rc === 'object') receipt(d, j.signed, j.resign); else { $('rc').hidden = true; $('sg').hidden = true; }
+  }
 
   // ===== الإيصال كامل زي الورق =====
   function money(v, cur) { var n = Number(v) || 0; return '<span class="num">' + h(n.toLocaleString('en-US', { maximumFractionDigits: 2 })) + '</span>' + (cur ? ' ' + h(cur) : ''); }
   function whenAr(at) { var t = new Date(at); return isNaN(t) ? '' : t.toLocaleString('ar-EG', { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }); }
-  function receipt(d, signed) {
+  function receipt(d, signed, resign) {
     var r = d.rc, c = r.cur || '', rows = [];
     if (r.cn) rows.push(['اسم العميل', h(r.cn)]);
     if (r.din) rows.push(['تاريخ الاستلام', '<span class="num">' + h(disp(r.din)) + '</span>']);
@@ -113,20 +130,24 @@
       + '<div class="rw tot"><span>قيمة التصليح</span><b>' + money(r.pr, c) + '</b></div>'
       + '<div class="rw"><span>المدفوع</span><b>' + money(r.pd, c) + '</b></div>'
       + (r.wv > 0 ? '<div class="rw"><span>خصم</span><b>' + money(r.wv, c) + '</b></div>' : '')
-      + '<div class="rw ' + (r.rem > 0 ? 'due' : '') + '"><span>' + (r.rem > 0 ? 'الباقي' : 'الحساب') + '</span><b>' + (r.rem > 0 ? money(r.rem, c) : 'خالص ✓') + '</b></div>'
+      + '<div class="rw ' + (r.rem > 0 ? 'due' : '') + '"><span>' + (r.rem > 0 ? 'الباقي' : r.rem < 0 ? 'ليك عند المحل' : 'الحساب') + '</span><b>' + (r.rem > 0 ? money(r.rem, c) : r.rem < 0 ? money(-r.rem, c) : 'خالص ✓') + '</b></div>'
       + (r.war > 0 ? '<div class="rw"><span>الضمان</span><b>' + h(r.war) + ' يوم</b></div>' : '')
       + (r.acc && r.acc.length ? '<div class="rw"><span>استلمنا معاه</span><b>' + h(r.acc.join('، ')) + '</b></div>' : '')
       + (r.cd && r.cd.length ? '<div class="rw"><span>حالة الجهاز</span><b>' + h(r.cd.join('، ')) + '</b></div>' : '')
       + (r.tm ? '<div class="tm">📜 ' + h(r.tm) + '</div>' : '')
       + (r.ph || r.ad ? '<div class="ph">' + (r.ad ? h(r.ad) : '') + (r.ph && r.ad ? '<br>' : '') + (r.ph ? '📞 <a dir="ltr" href="tel:' + h(String(r.ph).replace(/[^\d+]/g, '')) + '">' + h(r.ph) + '</a>' : '') + '</div>' : '');
     $('rc').innerHTML = html; $('rc').hidden = false;
-    if (d.sg === 1) signBox(signed);
+    // لوحة التوقيع: بتترسم من جديد بس لو حالتها اتغيّرت (وقّع / مطلوب يوقّع تاني)، علشان التحديث في الخلفية مايمسحش اللي بيرسمه
+    var key = d.sg === 1 ? (signed ? 's:' + signed : resign ? 'r:' + resign : 'n') : '';
+    if (key !== sgKey) { sgKey = key; if (key) signBox(signed, resign); else $('sg').hidden = true; }
   }
-  // ===== التوقيع: مرة واحدة، والسيرفر مابيقبلش توقيع تاني =====
-  function signBox(signed) {
+  // ===== التوقيع: مرة واحدة، والسيرفر مابيقبلش توقيع تاني إلا لو المحل غيّر الإيصال بعده (resign) =====
+  var sgKey = null;
+  function signBox(signed, resign) {
     var box = $('sg'); box.hidden = false;
     if (signed) { box.innerHTML = '<div class="sg-done"><b>✍️ وقّعت على الإيصال</b><span>' + h(whenAr(signed)) + '</span></div>'; return; }
-    box.innerHTML = '<h2>✍️ وقّع على الإيصال</h2><p>بصباعك جوه المربع. توقيعك بيوصل المحل على طول، ومش هتقدر تغيّره بعد كده.</p>'
+    box.innerHTML = (resign ? '<div class="sg-re">⚠ المحل عدّل الإيصال بعد ما وقّعت (' + h(whenAr(resign)) + '). راجعه فوق، ولو موافق وقّع تاني.</div>' : '')
+      + '<h2>✍️ وقّع على الإيصال</h2><p>بصباعك جوه المربع. توقيعك بيوصل المحل على طول، ومش هتقدر تغيّره بعد كده.</p>'
       + '<div class="pad" id="pad"><canvas id="cv" width="600" height="200"></canvas><em>وقّع هنا</em></div>'
       + '<label class="ok-row"><input type="checkbox" id="agree"><span>قريت الإيصال' + ($('rc').querySelector('.tm') ? ' والشروط' : '') + ' وموافق عليهم</span></label>'
       + '<div class="btns"><button class="b-clr" id="clr" type="button">امسح</button><button class="b-go" id="go" type="button" disabled>✓ وقّع</button></div><div class="sg-err" id="err"></div>';
@@ -145,7 +166,7 @@
       if (url.length > 78000) { var s = document.createElement('canvas'); s.width = 360; s.height = 120; s.getContext('2d').drawImage(cv, 0, 0, 360, 120); url = s.toDataURL('image/png'); }
       fetch(GW, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: KEY }, body: JSON.stringify({ action: 'track-sign', k: k, sig: url }) })
         .then(function (r) { return r.json().catch(function () { return {}; }); })
-        .then(function (j) { if (j && (j.ok || j.signed)) return signBox(j.signed || new Date().toISOString()); $('err').textContent = (j && j.error) || 'ماعرفناش نبعت التوقيع. جرّب تاني.'; upd(); })
+        .then(function (j) { if (j && (j.ok || j.signed)) { var at = j.signed || new Date().toISOString(); sgKey = 's:' + at; return signBox(at); } $('err').textContent = (j && j.error) || 'ماعرفناش نبعت التوقيع. جرّب تاني.'; upd(); })
         .catch(function () { $('err').textContent = 'مفيش نت. جرّب تاني.'; upd(); });
     };
   }
