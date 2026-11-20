@@ -9,6 +9,7 @@
   const GRP = { ph: '📱 موبايلات', prot: '🛡 حماية', power: '⚡ شحن', audio: '🎧 صوت', wear: '⌚ ساعات', pc: '💻 كمبيوتر', misc: '💾 وحدات تخزين', adp: '🔀 محولات', batt: '🔋 بطاريات', other: '📦 أخرى', part: '🔩 قطع غيار' };
   let tab = 'orders', col = 'new', pf = 'all', pq = '';
   const sent = window.__spSent = window.__spSent || {};   // تعديل منتج اتبعت ومستني الكاشير
+  const sentOp = {}, doneP = {}, sentW = {};   // رقم الطلب ← المنتج، والمنتجات اللي الكاشير سجّلها ومستنية البيانات الجديدة
   const P = () => { const f = window.Owner && Owner.full && Owner.full(); return f && f.store ? f.store : null; };
   const S = () => (window.OwnerStore ? OwnerStore.S() : null);
   const offOn = w => !!(w && w.off && w.off.pr > 0 && (!w.off.to || (/^\d{4}-\d{2}-\d{2}$/.test(w.off.to) ? new Date(w.off.to + 'T23:59:59').getTime() : Date.parse(w.off.to)) >= Date.now()) && (!w.off.from || Date.parse(w.off.from) <= Date.now()));
@@ -102,7 +103,7 @@
   async function submit(x, w, label) {
     const r = await OwnerLink.submit({ kind: 'store', act: 'item', id: x.id, w }, label || ('🛍 ' + ((x.web && x.web.n) || x.name)));
     if (r.error) { Owner.toast(r.error, true); return false; }
-    sent[x.id] = Date.now(); Owner.toast('📤 اتبعت للكاشير'); Owner.repaint(); return true;
+    sent[x.id] = Date.now(); if (r.id) sentOp[r.id] = x.id; sentW[x.id] = w; Owner.toast('📤 اتبعت للكاشير'); Owner.repaint(); return true;
   }
   function dealSheet(x) {
     const w = x.web || {}, pr = w.pr || x.price || 0, on = offOn(w);
@@ -195,7 +196,12 @@
     if (e.target.closest('[data-imadd]') && EDIT && !EDIT.busy) return $('#ed-file').click();
     const op = e.target.closest('[data-sopen]'); if (op && !op.disabled) { const on = op.dataset.sopen === '1'; const r = await OwnerLink.submit({ kind: 'store', act: 'open', on }, on ? '🟢 افتح المتجر' : '🔴 اقفل المتجر'); if (r.error) Owner.toast(r.error, true); else Owner.toast('📤 اتبعت للكاشير'); return; }
     const u = e.target.closest('[data-surl]'); if (u) { const p = P(), url = 'https://khalid374374.github.io/repair-desk/s/?s=' + encodeURIComponent(p.slug);
-      if (u.dataset.surl === 'share' && navigator.share) { try { await navigator.share({ title: 'المتجر', url }); } catch (er) {} return; }
+      // "ابعته": قايمة المشاركة بتاعة أندرويد (RdNative.share، من 1.15.x) وإلا navigator.share (الآيفون/الويب)، والنسخ آخر حل (كان بينسخ بس على أندرويد)
+      if (u.dataset.surl === 'share') {
+        const N = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.RdNative;
+        if (N && N.share) { try { await N.share({ title: 'المتجر', text: (p.name ? p.name + '\n' : '') + url }); return; } catch (er) {} }
+        if (navigator.share) { try { await navigator.share({ title: 'المتجر', url }); } catch (er) {} return; }
+      }
       try { await navigator.clipboard.writeText(url); Owner.toast('📋 اتنسخ'); } catch (er) { Owner.toast(url); } return; }
   });
   // السعر: بيتبعت لما تخلّص كتابة (change)، والسعر لازم يبقى أكبر من سعر العرض
@@ -209,6 +215,13 @@
   });
   document.addEventListener('input', e => { if (e.target && e.target.id === 'sp-q') { pq = e.target.value; Owner.repaint(); } });
   // الكاشير نفّذ: المنتج اتغيّر في البيانات الجاية، فنشيل "مستني" بعد ما الجزء الجديد يوصل
-  window.addEventListener('owner:data', () => { for (const k of Object.keys(sent)) if (Date.now() - sent[k] > 20000) delete sent[k]; });
+  // الكاشير خلّص: الفشل بيشيل "مستني" على طول (والسعر بيرجع زي ما كان)، والنجاح بيشيلها أول ما البيانات الجديدة توصل
+  window.addEventListener('owner:op', e => { const d = e.detail || {}, pid = sentOp[d.id]; if (!pid) return; delete sentOp[d.id]; if (d.status === 'done') doneP[pid] = 1; else { delete sent[pid]; Owner.repaint(); } });
+  // البيانات الكاملة (جزء المتجر) هي اللي فيها التعديل، والملخص لوحده مش كفاية (اتقاس على تليفون خالد: "مستني" فضلت لحد الملخص اللي بعده)
+  const clearSent = () => { for (const k of Object.keys(sent)) if ((doneP[k] && landed(k)) || Date.now() - sent[k] > 60000) { delete sent[k]; delete doneP[k]; delete sentW[k]; } };
+  window.addEventListener('owner:data', clearSent); window.addEventListener('owner:full', clearSent);
+  window.addEventListener('owner:op', () => setTimeout(() => { const n = Object.keys(sent).length; clearSent(); if (Object.keys(sent).length !== n) Owner.repaint(); }, 0));   // البيانات الجديدة ممكن تكون وصلت قبل رد الكاشير
+  // البيانات اللي وصلت فيها التعديل فعلًا (الملخص ممكن يوصل قبل جزء المتجر بثانية: من غيرها السعر القديم كان هيبان لحظة)
+  function landed(id) { const x = prodOf(id), w = sentW[id]; if (!x || !w) return true; const cur = x.web || {}, v = (o, k) => k === 'off' ? ((o.off && +o.off.pr) || 0) : k === 'pr' ? (+o.pr || 0) : k === 'n' ? String(o.n || '').trim() : !!o[k]; return ['pr', 'on', 'n', 'ask', 'hq', 'off'].every(k => !(k in w) || v(cur, k) === v(w, k)); }   // الحاجات اللي بتبان بس (الكاشير بينضّف الباقي)
   window.OwnerStoreTab = { view, _sent: sent, _revs: () => RV };
 })();

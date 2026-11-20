@@ -321,7 +321,7 @@
   function paint(v, dir, quiet) {
     const el = $(`.view[data-v="${v}"]`), html = VIEWS[v]();
     // دخول الصفحة من ناحية التبويب: بـ animate بدل ما نشيل الكلاس ونرجّعه (ده كان بيعمل layout إجباري للصفحة كلها في نفس اللحظة)
-    if (dir && !document.body.classList.contains('still')) el.animate([{ opacity: 0, transform: `translateX(${dir === 'in-l' ? -26 : 26}px)` }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    if (dir && !document.body.classList.contains('still')) el.animate([{ opacity: 0, transform: `translateX(${dir === 'in-l' ? -26 : 26}px)` }, { opacity: 1, transform: 'none' }], { duration: window.RdSpring ? 420 : 320, easing: window.RdSpring || 'cubic-bezier(.2,.8,.2,1)' });
     if (quiet && painted[v] && !el.querySelector('.sk')) {
       const t = document.createElement('div'); t.innerHTML = html; settle(t); syncKids(el, t);
       if (painted[v] === 'warm') { painted[v] = true; if (dir) animateNumbers(el); }   // اتجهّز مستخبي: أول زيارة الأرقام بتعدّ زي الأول
@@ -385,7 +385,7 @@
     const b = sh.getBoundingClientRect(), a = from ? from.getBoundingClientRect() : { left: b.left, top: b.bottom, width: b.width, height: 40 };
     heroFrom = from && !still ? a : null;
     const tr = `translate(${a.left + a.width / 2 - (b.left + b.width / 2)}px, ${a.top + a.height / 2 - (b.top + b.height / 2)}px) scale(${a.width / b.width}, ${a.height / b.height})`;
-    if (!still) sh.animate([{ transform: tr, opacity: .4 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.9,.25,1.05)' });
+    if (!still) sh.animate([{ transform: tr, opacity: .4 }, { transform: 'none', opacity: 1 }], { duration: window.RdSpring ? 520 : 420, easing: window.RdSpring || 'cubic-bezier(.2,.9,.25,1.05)' });   // سوستة (motion2.js) لو المتصفح بيفهمها
     requestAnimationFrame(() => bg.classList.add('on'));
     const x = $('#sh-x'); if (x) x.onclick = () => history.back();
     history.pushState({ sheet: 1 }, '');
@@ -567,7 +567,7 @@
   try { const AppP = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.App; if (AppP) AppP.addListener('backButton', onBack); } catch (e) {}
   window.Owner = {
     back: onBack,
-    setFull: (p, st) => { FULL = p && Object.keys(p).length ? p : null; FULLST = st || ''; storeTabShow(); if (D && $('#sheet').hidden) paint(cur, null, true); },
+    setFull: (p, st) => { FULL = p && Object.keys(p).length ? p : null; FULLST = st || ''; storeTabShow(); try { window.dispatchEvent(new Event('owner:full')); } catch (e) {} if (D && $('#sheet').hidden) paint(cur, null, true); },   // owner:full قبل الرسم: تبويب المتجر يشيل "مستني" في نفس الرسمة
     full: () => FULL,
     load, skeleton, openSheet, closeSheet: () => { if (!$('#sheet').hidden) history.back(); },
     data: () => D, repaint: () => { if (D && $('#sheet').hidden) paint(cur, null, true); }, go,

@@ -6,7 +6,7 @@
   var SB = 'https://sgqscttmkhmiqyjsuvio.supabase.co', GW = SB + '/functions/v1/gateway', ST = SB + '/storage/v1/object/public/store/';
   var KEY = 'sb_publishable_y11CnpnNLb6qIx00LVUHJQ_BzzQNXim';   // مفتاح عام (نفس اللي في t.html)
   var app = document.getElementById('app');
-  var activeDealId = '', dealCampaign = null;
+  var activeDealId = '', dealCampaign = null, dealAuto = 0;   // dealAuto: مؤقت البانر اللي بيقلب لوحده
   var slug = '', C = null, P = {}, deferredInstall = null, timers = [], pollT = 0, trackLoad = null, BR = null;   // BR: فروع المحل (branches.json) لو المتجر واحد لكل الفروع
 
   /* ---------- أدوات ---------- */
@@ -216,6 +216,7 @@
     var refit = function () { fitDeal(dealBanner && dealBanner.querySelector('b')); };
     refit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
     var dealDots = [].slice.call(app.querySelectorAll('[data-deal-index]'));
+    if (dealAuto) { clearInterval(dealAuto); dealAuto = 0; }
     if (dealBanner && dealSlides.length) {
       var dealIndex = 0, swipeX = null, swallowClick = false, dealMotionTimer = 0;
       dotWin(dealDots, 0);
@@ -273,6 +274,18 @@
           setTimeout(function () { swallowClick = false; }, 0);
         });
         dealBanner.addEventListener('pointercancel', function () { swipeX = null; });
+        // بيقلب لوحده كل 5 ثواني (خالد 2026-11-20: "البانر مش بيتحرك لوحده يوريني باقي العروض")؛
+        // بيقف والماوس عليه أو وانت بتلمسه أو الزرار عليه focus أو الصفحة مش قدامك، وبيبدأ العدّ من الأول بعد أي سحب/دوسة
+        var held = false, lastMove = Date.now(), hold = function (v) { return function () { held = v; lastMove = Date.now(); }; };
+        dealStage.addEventListener('pointerenter', hold(true)); dealStage.addEventListener('pointerleave', hold(false));
+        dealStage.addEventListener('focusin', hold(true)); dealStage.addEventListener('focusout', hold(false));
+        dealStage.addEventListener('touchstart', hold(true), { passive: true }); dealStage.addEventListener('touchend', hold(false), { passive: true });
+        dealDots.forEach(function (b) { b.addEventListener('click', function () { lastMove = Date.now(); }); });
+        dealAuto = setInterval(function () {
+          if (!dealBanner.isConnected) { clearInterval(dealAuto); dealAuto = 0; return; }
+          if (held || document.hidden || Date.now() - lastMove < 5000) return;
+          lastMove = Date.now(); showDeal(dealIndex + 1, 1);
+        }, 1000);
         dealBanner.addEventListener('click', function (e) {
           if (!swallowClick) return;
           e.preventDefault(); e.stopImmediatePropagation(); swallowClick = false;
@@ -1146,7 +1159,9 @@
     var p = e.target.closest('[data-p]'); if (p && !e.target.closest('a')) return go('#/p/' + encodeURIComponent(p.dataset.p));
     var b = e.target.closest('[data-back]'); if (b) { if (history.length > 1 && !b.dataset.back) history.back(); else go(b.dataset.back || '#/'); }
   });
-  document.addEventListener('visibilitychange', function () { if (!document.hidden && /^#\/o\//.test(location.hash) && trackLoad) trackLoad(); if (!document.hidden && C && Date.now() - (loadCat.at || 0) > 120000) loadCat(true); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && /^#\/o\//.test(location.hash) && trackLoad) trackLoad(); if (!document.hidden && C && Date.now() - (loadCat.at || 0) > 45000) loadCat(true); });
+  // الصفحة مفتوحة: الكتالوج بيتقري تاني كل 45 ثانية وهي قدامك، والشاشة بتتحدّث بس لو حاجة اتغيّرت (خالد 2026-11-20: "أي تعديل بياخد وقت عشان يظهر على الموقع")
+  setInterval(function () { if (!document.hidden && C && slug && Date.now() - (loadCat.at || 0) > 44000) loadCat(true); }, 15000);
 
   /* ---------- التحميل ---------- */
   /* لون المحل (خالد 2026-11-13: "الالوان اللي في اعدادات المتجر مش بتغير في الوان الموقع" / "الالوان مش مبينه الكلام"):
@@ -1184,7 +1199,7 @@
   }
   function loadCat(quiet) {
     loadCat.at = Date.now(); loadRev();
-    return fetch(ST + encodeURIComponent(slug) + '/catalog.json?t=' + Math.floor(Date.now() / 30000), { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw r.status; return r.json(); })
+    return fetch(ST + encodeURIComponent(slug) + '/catalog.json?t=' + Math.floor(Date.now() / 5000), { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw r.status; return r.json(); })
       .then(function (j) { var txt = JSON.stringify(j), same = txt === loadCat.sig; loadCat.sig = txt; set(j); try { localStorage.setItem('rds_cat_' + slug, txt); } catch (e) {} if (quiet && !same) refresh(); })
       .catch(function (st) { if (C) return; var old = null; try { old = JSON.parse(localStorage.getItem('rds_cat_' + slug)); } catch (e) {} if (old) { set(old); render(); toast('مفيش نت — بتشوف آخر نسخة', 'bad'); } else fail(st === 400 || st === 404 ? 'المتجر ده مش موجود' : 'مفيش نت. جرّب تاني.'); });
   }

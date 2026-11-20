@@ -51,7 +51,7 @@
       want = true;
       ws = new WebSocket(SB.replace('https', 'wss') + '/realtime/v1/websocket?apikey=' + encodeURIComponent(KEY) + '&vsn=1.0.0');
       ws.onopen = () => { retry = 0; send('realtime:' + chan, 'phx_join', { config: { broadcast: { self: false }, presence: { key: '' }, private: false } }); hb = setInterval(() => send('phoenix', 'heartbeat', {}), 25000); Owner.setLive(true); };
-      ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (e) { return; } if (m.event === 'broadcast' && m.payload && m.payload.event === 'changed') refresh(); };
+      ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (e) { return; } if (m.event === 'broadcast' && m.payload && m.payload.event === 'changed') refresh(); };   // refresh بيسأل عن الطلبات المستنية كمان (checkOps)
       ws.onclose = () => { clearInterval(hb); ws = null; Owner.setLive(false); if (want) { reT = setTimeout(connect, Math.min(30000, 1000 * Math.pow(2, retry++))); } };
       ws.onerror = () => { try { ws && ws.close(); } catch (e) {} };
     }
@@ -145,7 +145,11 @@
     if (r.gone) { forget('الكاشير فصل الموبايل ده. اربطه تاني.'); return { error: r.error }; }
     if (r.error) return { error: r.net ? 'مفيش نت. جرّب تاني.' : r.error };
     pendSave(pendList().concat([{ id: r.id, kind: op.kind, label: String(label || '').slice(0, 60), at: Date.now(), status: 'pending' }]));
-    return { ok: true };
+    // الكاشير بيسجّل في ثانية أو اتنين: نسأل بسرعة الأول بدل ما نستنى الـ 15 ثانية (خالد 2026-11-20: "بيقولي مستني الكاشير وبتاخد وقت")
+    // لايف (خالد 2026-11-20: "مينفعش يبقى زي اللايف ويوفّر حمل على السيرفر"): الكاشير لما يخلّص بيبعت إشارة "changed" على القناة،
+    // والموبايل بيسأل ساعتها بس. لو القناة واقعة: نسأل بسرعة كام مرة بدلها
+    if (!rt.live()) [2000, 5000, 10000].forEach(ms => setTimeout(checkOps, ms));
+    return { ok: true, id: r.id };
   }
   let checking = false;
   async function checkOps() {
@@ -160,13 +164,15 @@
         const p = all.find(q => q.id === x.id); if (!p || x.status === 'pending') continue;
         changed = true;
         if (p.kind === 'find') { all = all.filter(q => q.id !== x.id); if (window.OwnerExtras) OwnerExtras.found(p.label, x.status === 'done' ? x.result : { error: (x.result && x.result.error) || 'الكاشير رفض' }); continue; }   // البحث في الأقدم: مالوش toast
+        try { window.dispatchEvent(new CustomEvent('owner:op', { detail: { id: x.id, status: x.status } })); } catch (e) {}   // storetab: يشيل "مستني الكاشير"
         if (x.status === 'done') { all = all.filter(q => q.id !== x.id); Owner.toast('✅ الكاشير سجّل ' + p.label + (x.result && x.result.receiptNo && p.kind === 'intake' ? ' — إيصال #' + x.result.receiptNo : x.result && x.result.receiptNo && p.kind === 'sell' ? ' — فاتورة ' + x.result.receiptNo : '') + (p.kind === 'count' && x.result && x.result.short ? ' — فيه ' + x.result.short + ' صنف ناقص' : '')); }
         else { p.status = 'failed'; p.error = (x.result && x.result.error) || 'الكاشير رفض الطلب'; Owner.toast('⚠ ' + p.label + ': ' + p.error, true); }
       }
       if (changed) { pendSave(all); Owner.repaint(); }
     } finally { checking = false; }
   }
-  setInterval(() => { if (document.visibilityState === 'visible') checkOps(); }, 15000);
+  let lastChk = 0; const chk0 = checkOps;
+  setInterval(() => { if (document.visibilityState !== 'visible') return; if (rt.live() && Date.now() - lastChk < 60000) return; lastChk = Date.now(); chk0(); }, 15000);   // لايف: احتياطي كل دقيقة بس، من غيره كل 15 ثانية
 
   /* ---------- الإشعارات (Firebase FCM، الخطة المجانية) ----------
      بعد الربط: بنطلب إذن الإشعارات، وعنوان الموبايل عند Firebase (token) بيتبعت للسيرفر (push-token).
@@ -235,6 +241,6 @@
     if (!r.error && window.Branches) { const L = Branches.list(), c = Branches.cur(); for (let i = 0; i < L.length; i++) if (i !== c && L[i].rdo_token) { try { await gw({ action: 'push-prefs', mtoken: L[i].rdo_token, prefs }); } catch (e) {} } }
     return r.error ? { error: r.net ? 'مفيش نت. جرّب تاني.' : r.error } : { ok: true };
   }
-  window.OwnerLink = { call: body => gw({ ...body, mtoken: store.get('rdo_token') }), refresh, setupPush, webPush: () => setupWebPush(true), pushPrefs, forget: () => forget(''), checkUpdate, submit, checkOps, pending: pendList, dropPending: id => { pendSave(pendList().filter(p => p.id !== id)); }, _pair: pair, _login: loginAcct, _newer: newer };
+  window.OwnerLink = { checkOps, call: body => gw({ ...body, mtoken: store.get('rdo_token') }), refresh, setupPush, webPush: () => setupWebPush(true), pushPrefs, forget: () => forget(''), checkUpdate, submit, checkOps, pending: pendList, dropPending: id => { pendSave(pendList().filter(p => p.id !== id)); }, _pair: pair, _login: loginAcct, _newer: newer };
   boot();
 })();
