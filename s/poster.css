@@ -1,0 +1,57 @@
+/* بانر العروض كبوستر (poster.js): نفس الملف في المتجر والكاشير (معاينة الإعدادات). الألوان من --pa / --pb.
+   كل المقاسات جوه البوستر (الخط، المنتج، الستيكر، التايمر) بنسبة من عرض البوستر نفسه (cqw)، فبيبان صح في البوكس الصغير
+   في الإعدادات وفي المعاينة وعلى الموبايل والكمبيوتر (خالد 2026-11-20: "الإيموجي مش في مكانه ولا هنا ولا في الموقع").
+   الطول نسبة ثابتة من العرض (360 × 236) لحد 262px. من غير cqw (متصفحات قديمة): المقاسات بالـ px اللي قبلها */
+.pst { container: pst / inline-size; position: relative; display: block; width: 100%; aspect-ratio: 360 / 236; max-height: 262px; min-height: 0; height: auto; padding: clamp(8px, 4.4%, 20px) clamp(10px, 5%, 28px); border: 0; border-radius: 26px; overflow: hidden; isolation: isolate; color: #fff; text-align: start; font: inherit; cursor: pointer; background: linear-gradient(135deg, var(--pa), var(--pb)); box-shadow: none; }
+@supports not (aspect-ratio: 1) { .pst { height: 236px; } }
+/* المتجر: .deal فيه ألوان وظل وطول بـ !important (store.css): البوستر بيشيلهم (ومفيش لون ورا البانر — خالد: "ورا البانر في لون خلفية مش عايزه") */
+.deal.pst { display: block; padding: clamp(8px, 4.4%, 20px) clamp(10px, 5%, 28px); min-height: 0; background: linear-gradient(135deg, var(--pa), var(--pb)) !important; box-shadow: none !important; }
+.deal.pst::after { content: none; }
+.deal-stage:has(> .deal.pst) { background: none; box-shadow: none; }
+.pst .pst-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.pst .pst-copy { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; height: 100%; max-width: 58%; gap: 3px; gap: clamp(1px, .8cqw, 5px); }
+.pst .pst-sub, .deal.pst .pst-sub { font-size: 12px; font-size: clamp(5px, 3.3cqw, 14px); font-weight: 800; opacity: .95; color: #fff; }
+.pst .pst-h, .deal.pst .pst-h { display: block; margin: 0; min-height: 0; font-size: 21px; font-size: clamp(5px, 5.8cqw, 27px); line-height: 1.35; padding-bottom: 2px; font-weight: 900; text-shadow: 0 2px 12px #0003; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; padding-bottom: .18em; flex-shrink: 0; }   /* flex-shrink 0: من غيره العنوان كان بيتضغط لصفر لو العمود اتملى (اختفى على الكمبيوتر). سطرين بالكتير (اسم طويل كان بيركب على السعر)، والمسافة تحت علشان ذيل الياء */   /* ذيل الياء بينزل تحت السطر: من غير قص */
+.pst .pst-pr { display: flex; align-items: baseline; gap: 8px; gap: 2cqw; flex-wrap: wrap; margin-top: auto; }
+.pst .pst-pr strong { font-size: 22px; font-size: clamp(5px, 6.1cqw, 28px); font-weight: 900; } .pst .pst-pr s { opacity: .78; font-size: 13px; font-size: clamp(5px, 3.6cqw, 15px); }
+.pst .pst-cta { margin-top: 6px; margin-top: clamp(2px, 1.6cqw, 8px); background: #fff; color: var(--pa); font-weight: 900; font-size: 13px; font-size: clamp(5px, 3.6cqw, 15px); padding: .55em 1.15em; border-radius: 99px; box-shadow: 0 6px 16px #0003; white-space: nowrap; }
+/* المنتج: إيموجي أو صورة، في النص الشمال من البوستر */
+.pst .pst-prod { position: absolute; left: 4%; top: 22%; width: 36%; height: 62%; z-index: 1; display: grid; place-items: center; font-size: 84px; font-size: 22cqw; line-height: 1; filter: drop-shadow(0 16px 16px #0005); }
+.pst .pst-prod.im img { width: 100%; height: 100%; object-fit: cover; border-radius: 18px; border: 4px solid #ffffffd9; transform: rotate(-6deg); }
+/* الستيكر: دايرة، الكلمة صغيرة فوق والرقم كبير تحت */
+.pst .pst-stk { position: absolute; left: 3%; top: 4%; z-index: 3; width: 72px; height: 72px; width: 20cqw; height: 20cqw; font-size: 12px; font-size: 3.3cqw; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; background: #ffd23f; color: #9e1b16; text-align: center; line-height: 1.05; white-space: nowrap; transform: rotate(-12deg); box-shadow: 0 6px 14px #0004, inset 0 0 0 3px #ffffff66; }
+.pst .pst-stk small, .deal.pst .pst-stk small { font-size: .95em; font-weight: 800; color: inherit; opacity: .9; }
+.pst .pst-stk b, .deal.pst .pst-stk b { display: block; min-height: 0; margin: 0; font-size: 1.6em; font-weight: 900; -webkit-line-clamp: unset; overflow: visible; }   /* store.css: .deal b بيكبّر أي b */
+.pst .pst-stk.lg b, .deal.pst .pst-stk.lg b { font-size: 1.2em; }   /* مبلغ طويل (1,500 ج) */
+/* التايمر جوه عمود الكلام، تحت السعر وفوق الزرار */
+.pst .pst-tm { display: block; font-size: 11px; font-size: clamp(5px, 3cqw, 13px); margin-top: 2px; }
+.pst .pst-tm .cd, .deal.pst .pst-tm .cd { margin: 0; gap: 4px; gap: 1cqw; }
+.pst .pst-tm .cd span, .deal.pst .pst-tm .cd span { min-width: 0; padding: .2em .55em .1em; font-size: 1.1em; border: 0; box-shadow: none; }
+.pst .pst-tm .cd em, .deal.pst .pst-tm .cd em { font-size: .75em; }
+/* فكرة 1: شرايط مايلة بتتحرك + المنتج بيطفو + الستيكر بينطّ */
+.pst-p1 .pst-bg { inset: -40%; background: repeating-linear-gradient(115deg, #ffffff16 0 22px, transparent 22px 60px); animation: pstSlide 9s linear infinite; }
+.pst-p1 .pst-prod { animation: pstFloat 3.4s ease-in-out infinite; }
+.pst-p1 .pst-stk { animation: pstPop 2.6s ease-in-out infinite; }
+/* فكرة 2: نقط + نجمة صفرا لافّة ورا المنتج، والستيكر تحت */
+.pst-p2 .pst-bg { background: radial-gradient(circle at 25% 30%, #ffffff30, transparent 55%), radial-gradient(#ffffff26 1.4px, transparent 1.6px) 0 0 / 14px 14px; }
+.pst-p2 .pst-burst { position: absolute; left: 2%; top: 10%; width: 42%; aspect-ratio: 1; z-index: 0; animation: pstSpin 14s linear infinite; }
+.pst-p2 .pst-burst path { fill: #ffd23f; opacity: .92; }
+.pst-p2 .pst-prod { animation: pstFloat 3.4s ease-in-out infinite; }
+.pst-p2 .pst-stk { background: #e53950; color: #fff; top: auto; bottom: 5%; box-shadow: 0 6px 14px #0004, inset 0 0 0 3px #ffffff40; }
+/* فكرة 3: كشّاف نور بيتحرك + لمعة على العنوان */
+.pst-p3 .pst-bg { background: radial-gradient(120% 90% at 18% 100%, #f0753b55, transparent 60%); }
+.pst-p3 .pst-beam { position: absolute; left: 2%; top: -30%; width: 44%; height: 160%; z-index: 0; background: conic-gradient(from 180deg at 50% 0%, transparent 40%, #ffffff30 50%, transparent 60%); filter: blur(6px); transform-origin: 50% 0; animation: pstBeam 4s ease-in-out infinite alternate; pointer-events: none; }
+.pst-p3 .pst-h, .deal.pst-p3 .pst-h { background: linear-gradient(100deg, #fff 30%, #ffd9a8 45%, #fff 60%); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; animation: pstShine 3.2s linear infinite; }
+.pst-p3 .pst-prod { animation: pstFloat 3.4s ease-in-out infinite; }
+.pst-p3 .pst-cta { background: linear-gradient(135deg, #f0753b, #e53950); color: #fff; }
+.pst-p3 .pst-stk { background: linear-gradient(135deg, #f0753b, #e53950); color: #fff; }
+@keyframes pstSlide { to { transform: translateX(120px); } }
+@keyframes pstFloat { 50% { transform: translateY(-6%) rotate(-3deg); } }
+@keyframes pstPop { 0%, 70%, 100% { transform: rotate(-12deg) scale(1); } 80% { transform: rotate(-6deg) scale(1.1); } 90% { transform: rotate(-14deg) scale(.97); } }
+@keyframes pstSpin { to { transform: rotate(360deg); } }
+@keyframes pstBeam { from { transform: rotate(-12deg); } to { transform: rotate(14deg); } }
+@keyframes pstShine { to { background-position: -250% 0; } }
+.pst.pst-still *, .pst.pst-still .pst-bg { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .pst *, .pst .pst-bg { animation: none !important; } }
+/* بوستر عريض (الكمبيوتر): المنتج أكبر شوية والكلام أعرض، والمقاسات بحد أقصى (من فوق) */
+@container pst (min-width: 700px) { .pst .pst-h, .deal.pst .pst-h { -webkit-line-clamp: 1; } .pst .pst-prod { left: 8%; width: 28%; top: 10%; height: 80%; font-size: 150px; } .pst .pst-copy { max-width: 55%; } .pst .pst-stk { left: 4%; width: 92px; height: 92px; font-size: 15px; } }

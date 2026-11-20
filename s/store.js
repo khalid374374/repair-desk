@@ -133,8 +133,11 @@
   }
   function isFresh(p) { return !!(p.fresh || p.new); }   // p.new = كاشير قديم (قبل 2.39)
   function gridHTML(list) { return list.length ? '<div class="grid">' + list.map(cardHTML).join('') + '</div>' : '<div class="empty"><div class="e">🔍</div><b>مفيش حاجة هنا</b><p>جرّب قسم تاني، أو قولّنا انت عايز إيه وهنجيبهولك.</p><button class="btn b1" data-go="#/wish">🤔 قولّنا عايز إيه</button></div>'; }
+  // بانر العروض كبوستر (خالد 2026-11-20): الشكل من إعدادات المتجر في الكاشير (C.bn، poster.js)، والكارت القديم لو مفيش
+  var poster = function () { return window.RdPoster && C.bn && window.RdPoster.on(C.bn); };
   function dealContent(p) {
     var e = eff(p);
+    if (poster()) return window.RdPoster.html(C.bn, { name: p.n, pic: pic(p, true), img: !!(p.img && p.img[0]), price: money(e.pr), was: e.was ? '<span class="num">' + fm(e.was) + '</span>' : '', pct: e.pct || 0, save: e.was && e.was > e.pr ? money(e.was - e.pr) : '', timer: e.end ? cdHTML(e.end) : '', sub: C.dealT || '' });
     return '<div class="di">' + pic(p, true) + '</div><div class="deal-copy"><small>⚡ ' + (C.dealT ? esc(C.dealT) : 'عرض لفترة محدودة') + '</small><b>' + esc(p.n) + '</b>'
       + '<div class="deal-money"><span class="pr">' + money(e.pr) + '</span>' + (e.was ? '<s class="num">' + fm(e.was) + '</s>' : '') + '</div>'
       + '<div class="deal-timer">' + (e.end ? cdHTML(e.end) : '') + '</div></div>';
@@ -150,7 +153,8 @@
     b.style.display = '-webkit-box'; b.style.webkitLineClamp = String(Math.max(2, Math.floor(H / (f * 1.35))));
   }
   function dealSlideHTML(p, index, total) {
-    return '<button type="button" class="deal" data-p="' + esc(p.id) + '" data-deal-banner aria-live="polite" aria-label="العرض ' + (index + 1) + ' من ' + total + ': ' + esc(p.n) + '">' + dealContent(p) + '</button>';
+    var pa = poster() ? window.RdPoster.attrs(C.bn, (C.shop || {}).ac) : { cls: '', style: '' };
+    return '<button type="button" class="deal' + pa.cls + '"' + (pa.style ? ' style="' + esc(pa.style) + '"' : '') + ' data-p="' + esc(p.id) + '" data-deal-banner aria-live="polite" aria-label="العرض ' + (index + 1) + ' من ' + total + ': ' + esc(p.n) + '">' + dealContent(p) + '</button>';
   }
   /* خالد 2026-11-16: العروض الكتير كانت بتعمل صفين نقط. دلوقتي صف واحد، 5 نقط بالكتير بتتزحلق مع العرض، واللي على الطرف أصغر لو فيه عروض بعدها */
   var DOT_MAX = 5;
