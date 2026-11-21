@@ -608,8 +608,6 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
 @media (min-width: 700px) { .deal.psb { aspect-ratio: auto; height: 340px; } .deal.psb img { object-fit: contain; } }
 @media (min-width: 1100px) { .deal.psb { height: 420px; } }
 .deal.psb.fit img { object-fit: contain; } .deal.psb.fit::before { content: none; }   /* صورة مش بالمقاس المقترح: كاملة، وورها نفسها متغبّشة (psb-bg) */
-/* صور المنتجات زي أمازون (خالد 2026-11-21: "شوف أمازون بيتعامل ازاي"): الصورة كاملة على أبيض بهامش، من غير قص ولا ميلان،
-   في الكروت والبانر والسلة والمعرض. (صور المنتجات أغلبها على أبيض، فالأبيض بيبان امتداد للصورة) */
-.pc .img img, .sc .img img, .deal .di img, .ci .im img, .lbx-th img { object-fit: contain !important; background: #fff; padding: 7%; box-sizing: border-box; }
-.gal .track > div > img { background: #fff; }
-.pc .img.fit::before, .sc .img.fit::before, .deal .di.fit::before, .ci .im.fit::before { content: none; }
+/* صور الكروت (خالد 2026-11-21، بعد تجربة الأبيض: "الصورة تبقى كاملة، مش محتاجة خلفية بيضا"): الصورة بتملى مكانها كله،
+   واللي شكلها بعيد عن المربع (كيبورد عريض) بتبان كاملة وورها نفسها متغبّشة (.fit من store.js) — من غير أبيض في الغامق */
+.pc .img.fit img, .sc .img.fit img, .deal .di.fit img, .ci .im.fit img { padding: 0 !important; }
