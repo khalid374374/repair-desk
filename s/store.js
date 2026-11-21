@@ -52,13 +52,14 @@
   function cartCount() { return cart().reduce(function (a, x) { return a + x.q; }, 0); }
   function lineTotal(x) { var p = P[x.id], e = eff(p); return x.q * (e.pr + (x.add || []).reduce(function (a, i) { return a + (+((p.add || [])[i] || {}).p || 0); }, 0)); }
   function addToCart(id, q, add) {
-    var p = P[id]; if (!p) return; add = (add || []).slice().sort();
+    var p = P[id]; if (!p) return; var quiet = !!(add && add.quiet); add = (add || []).slice().sort();
     var c = cart(), k = id + '|' + add.join(','), ex = c.filter(function (x) { return x.k === k; })[0];
     var have = c.filter(function (x) { return x.id === id; }).reduce(function (a, x) { return a + x.q; }, 0);
-    if (have + q > avail(p)) return toast(limMsg(p), 'bad');
+    if (have + q > avail(p)) { toast(limMsg(p), 'bad'); return false; }
     if (ex) ex.q += q; else c.push({ k: k, id: id, q: q, add: add });
-    setCart(c); toast('✓ اتضاف للسلة', 'ok');
+    setCart(c); if (!quiet) toast('✓ اتضاف للسلة', 'ok');
     document.querySelectorAll('.bdg[data-cart]').forEach(function (b) { b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); });
+    return true;
   }
   function badge() { var n = cartCount(); document.querySelectorAll('.bdg[data-cart]').forEach(function (b) { b.textContent = n; b.hidden = !n; }); }
 
@@ -100,6 +101,15 @@
       im.addEventListener('load', off, { once: true }); im.addEventListener('error', off, { once: true });
     });
   }
+  /* صورة شكلها مش قريب من المربع (كيبورد عريض، سلك طويل) كانت بتتقص في الكروت والبانر (خالد 2026-11-21: "شكلها مش حلو").
+     دلوقتي بتبان كاملة، وورها نفس الصورة متغبّشة تملى المكان. الصور اللي قريبة من شكل المربع زي ما هي */
+  document.addEventListener('load', function (e) {
+    var im = e.target; if (!im || im.tagName !== 'IMG' || !im.naturalWidth) return;
+    var box = im.closest('.pc .img, .sc .img, .deal .di, .pst-prod.im, .ci .im, .deal.psb'); if (!box) return;
+    var bw = box.clientWidth || 1, bh = box.clientHeight || 1, k = (im.naturalWidth / im.naturalHeight) / (bw / bh);
+    var off = k > 1.3 || k < 0.72; box.classList.toggle('fit', off);   // toggle: البانر بيبدّل الصورة جوه نفس الزرار
+    if (off) box.style.setProperty('--fitbg', 'url("' + im.currentSrc.replace(/"/g, '%22') + '")');
+  }, true);
   // صفحات فيها خانات العميل بيكتب فيها: ماتترسمش من تاني من ورا ضهره (كان بيمسح اللي كتبه)
   function onForm() { return /^#\/(checkout|bill|repair|wish|trade)/.test(location.hash) || !!(document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)); }
   function refresh() { if (!C || onForm() || document.querySelector('.sheet')) return; var y = window.scrollY; QUIET = true; try { render(); } finally { QUIET = false; } window.scrollTo({ top: y, behavior: 'instant' }); }
@@ -136,6 +146,7 @@
   // بانر العروض كبوستر (خالد 2026-11-20): الشكل من إعدادات المتجر في الكاشير (C.bn، poster.js)، والكارت القديم لو مفيش
   var poster = function () { return window.RdPoster && C.bn && window.RdPoster.on(C.bn); };
   function dealContent(p) {
+    if (p._ps) { var u = ST + slug + '/i/' + encodeURIComponent(p._ps.im); return '<span class="psb-bg" style="background-image:url(&quot;' + esc(u) + '&quot;)"></span><img src="' + esc(u) + '" alt="" decoding="async">'; }
     var e = eff(p);
     if (poster()) return window.RdPoster.html(C.bn, { name: p.n, pic: pic(p, true), img: !!(p.img && p.img[0]), price: money(e.pr), was: e.was ? '<span class="num">' + fm(e.was) + '</span>' : '', pct: e.pct || 0, save: e.was && e.was > e.pr ? money(e.was - e.pr) : '', timer: e.end ? cdHTML(e.end) : '', sub: C.dealT || '' });
     return '<div class="di">' + pic(p, true) + '</div><div class="deal-copy"><small>⚡ ' + (C.dealT ? esc(C.dealT) : 'عرض لفترة محدودة') + '</small><b>' + esc(p.n) + '</b>'
@@ -153,6 +164,7 @@
     b.style.display = '-webkit-box'; b.style.webkitLineClamp = String(Math.max(2, Math.floor(H / (f * 1.35))));
   }
   function dealSlideHTML(p, index, total) {
+    if (p._ps) return '<button type="button" class="deal psb" data-go="' + esc(window.RdPoster.goOf(p._ps)) + '" data-deal-banner aria-live="polite" aria-label="إعلان ' + (index + 1) + ' من ' + total + '">' + dealContent(p) + '</button>';
     var pa = poster() ? window.RdPoster.attrs(C.bn, (C.shop || {}).ac) : { cls: '', style: '' };
     return '<button type="button" class="deal' + pa.cls + '"' + (pa.style ? ' style="' + esc(pa.style) + '"' : '') + ' data-p="' + esc(p.id) + '" data-deal-banner aria-live="polite" aria-label="العرض ' + (index + 1) + ' من ' + total + ': ' + esc(p.n) + '">' + dealContent(p) + '</button>';
   }
@@ -186,7 +198,10 @@
     var cats = (C.cats || []).filter(function (c) { return visible().some(function (p) { return p.c === c.id; }); });
     var offs = sortList(visible(), 'off').filter(function (p) { return avail(p) > 0; });
     if (dealCampaign !== (C.deal || '')) { dealCampaign = C.deal || ''; activeDealId = ''; }
-    var dealSlides = offs.filter(function (p) { return eff(p).end; }), preferredDeal = activeDealId || C.deal;   // خالد 2026-11-16: البانر للعروض اللي ليها مدة بس؛ اللي من غير مدة بتفضل بخصمها في مكانها وفي "العروض"
+    var dealSlides = offs.filter(function (p) { return eff(p).end; }), preferredDeal = activeDealId || C.deal;
+    // بوستر صورة من المحل (خالد 2026-11-21): الصور مكان عروض البانر، والدوسة بتفتح المنتج/القسم/العروض
+    var psList = window.RdPoster && C.bn && window.RdPoster.imgs ? window.RdPoster.imgs(C.bn) : [];
+    if (psList.length) dealSlides = psList.map(function (x, i) { return { id: '_ps' + i, _ps: x, n: 'إعلان ' + (i + 1) }; });   // خالد 2026-11-16: البانر للعروض اللي ليها مدة بس؛ اللي من غير مدة بتفضل بخصمها في مكانها وفي "العروض"
     var preferredIndex = dealSlides.findIndex(function (p) { return p.id === preferredDeal; });
     if (preferredIndex > 0) dealSlides.unshift(dealSlides.splice(preferredIndex, 1)[0]);
     var newOnes = visible().filter(function (p) { return isFresh(p) && avail(p) > 0; }).slice(0, 6);
@@ -200,7 +215,7 @@
       + (offs.length ? '<button class="chip" data-go="#/c/_off"><span style="--c1:#d6455f;--c2:#f0753b">🔥</span>العروض</button>' : '')
       + '<button class="chip" data-go="#/svc"><span style="--c1:#e48b07;--c2:#ffc35c">🛠</span>الخدمات</button></div>';
     if (dealSlides.length) {
-      html += '<div class="sec"><b>🔥 عروض لفترة محدودة</b><button data-go="#/c/_off">الكل ←</button></div>';
+      html += psList.length ? '<div class="ps-gap"></div>' : '<div class="sec"><b>🔥 عروض لفترة محدودة</b><button data-go="#/c/_off">الكل ←</button></div>';
       var dealNav = dealSlides.length > 1
         ? '<button type="button" class="deal-nav prev" data-deal-step="-1" aria-label="العرض السابق">←</button><button type="button" class="deal-nav next" data-deal-step="1" aria-label="العرض التالي">→</button>'
         : '';
@@ -244,7 +259,7 @@
         dealIndex = nextIndex;
         var p = dealSlides[dealIndex];
         activeDealId = p.id;
-        dealBanner.dataset.p = p.id;
+        if (p._ps) { delete dealBanner.dataset.p; dealBanner.dataset.go = window.RdPoster.goOf(p._ps); } else { delete dealBanner.dataset.go; dealBanner.dataset.p = p.id; }
         dealBanner.setAttribute('aria-label', 'العرض ' + (dealIndex + 1) + ' من ' + dealSlides.length + ': ' + p.n);
         dealBanner.innerHTML = dealContent(p); refit();
         if (!reduced) {
@@ -342,6 +357,25 @@
   function norm(s) { return String(s || '').toLowerCase().replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, ' ').trim(); }
   function search(q) { var w = norm(q).split(' ').filter(Boolean); return visible().filter(function (p) { var t = norm([p.n, p.b, p.s, (p.m || []).join(' '), (catOf(p.c) || {}).n, p.d].join(' ')); return w.every(function (x) { return t.indexOf(x) >= 0; }); }); }
 
+  /* منتجات مشابهة تحت صفحة المنتج، صف بيتسحب للشمال زي أمازون (خالد 2026-11-21). نفس القسم والنوع والماركة وكلام في الاسم وسعر قريب */
+  function similar(p) {
+    var words = norm(p.n).split(' ').filter(function (w) { return w.length >= 3; }), pr = eff(p).pr || 0;
+    return visible().filter(function (x) { return x.id !== p.id; }).map(function (x) {
+      var sc = (x.c === p.c ? 3 : 0) + (p.s && x.s === p.s ? 3 : 0) + (p.b && x.b && norm(x.b) === norm(p.b) ? 2 : 0), xn = norm(x.n), xp = eff(x).pr || 0, k = 0;
+      words.forEach(function (w) { if (k < 3 && xn.indexOf(w) >= 0) { sc++; k++; } });
+      if (pr && xp && xp >= pr / 2 && xp <= pr * 2) sc++;
+      return { x: x, sc: sc - (avail(x) <= 0 ? 2 : 0) };
+    }).filter(function (o) { return o.sc >= 3; }).sort(function (a, b) { return b.sc - a.sc; }).slice(0, 12).map(function (o) { return o.x; });
+  }
+  function simHTML(p) {
+    var list = similar(p); if (list.length < 2) return '';
+    return '<div class="simw"><div class="sec"><b>ممكن يعجبك كمان</b></div><div class="sim">' + list.map(function (x) {
+      var e = eff(x), so = avail(x) <= 0;
+      return '<div class="sc' + (so ? ' soldout' : '') + '" data-p="' + esc(x.id) + '"><div class="img">' + pic(x) + '</div>' + (e.pct && !so ? '<span class="sc-off">−' + e.pct + '%</span>' : '')
+        + '<div class="nm">' + esc(x.n) + '</div><div class="pr">' + (x.ask ? '<span class="ask">💬 اسأل</span>' : so ? '<span class="out">هيتوفر قريب</span>' : '<strong class="num">' + fm(e.pr) + '</strong>' + (e.was ? '<s class="num">' + fm(e.was) + '</s>' : '')) + '</div>'
+        + (!x.ask && !so && !(x.add && x.add.length) ? '<button class="sc-add" data-add="' + esc(x.id) + '" aria-label="ضيف للسلة">+</button>' : '') + '</div>';
+    }).join('') + '</div></div>';
+  }
   function product(id) {
     var p = P[id]; if (!p) return go('#/');
     var e = eff(p), q = avail(p), so = q <= 0, sel = [], n = 1;
@@ -361,16 +395,24 @@
       + (p.d ? '<div class="desc">' + esc(p.d) + '</div>' : '') + revSection(p.id)
       + (!p.ask && !so && (p.add || []).length ? '<div class="addon"><b>➕ ضيف معاه</b>' + p.add.map(function (a, i) { return '<label><span><input type="checkbox" data-ai="' + i + '"><i class="ck">✓</i>' + esc(a.n) + '</span><span class="num">+ ' + fm(a.p) + '</span></label>'; }).join('') + '</div>' : '')
       + (!p.ask && !so ? '<div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0"><b style="font-weight:900">الكمية</b><span class="qty"><button data-q="-1">−</button><b class="num" id="pq">1</b><button data-q="1">+</button></span></div>' : '')
-      + '</div>';
+      + simHTML(p) + '</div>';
     var waTxt = 'السلام عليكم، عايز أسأل على: ' + p.n + ' — ' + location.href;
     html += '<div class="cta">' + (waLink() ? '<a class="btn bw" href="' + esc(waLink(waTxt)) + '" target="_blank" rel="noopener" aria-label="اسأل على واتساب">' + WA_SVG.replace('<svg', '<svg style="width:22px;height:22px"') + '</a>' : '')
-      + (p.ask ? '<a class="btn b1" href="' + esc(waLink(waTxt)) + '" target="_blank" rel="noopener">💬 اسأل على السعر</a>' : so ? '<button class="btn b1" id="notify">🔔 بلّغني لما يتوفر</button>' : '<button class="btn b1" id="buy">🛒 ضيف <span id="pn" class="num"></span>للسلة · <span id="ptot" class="num"></span></button>') + '</div>';
+      + (p.ask ? '<a class="btn b1" href="' + esc(waLink(waTxt)) + '" target="_blank" rel="noopener">💬 اسأل على السعر</a>' : so ? '<button class="btn b1" id="notify">🔔 بلّغني لما يتوفر</button>' : '<button class="btn bs" id="buy"><span>🛒 ضيف <span id="pn" class="num"></span>للسلة</span></button><button class="btn b1" id="buynow"><span>⚡ اشتري · <span id="ptot" class="num"></span></span></button>') + '</div>';
     shell(html, '', true);
     var upd = function () { var t = n * (e.pr + sel.reduce(function (a, i) { return a + (+p.add[i].p || 0); }, 0)); var el = document.getElementById('ptot'); if (el) el.textContent = fm(t); var pn = document.getElementById('pn'); if (pn) pn.textContent = n > 1 ? n + ' ' : ''; };   // "ضيف 2 للسلة · 12,820": المبلغ مايتلخبطش مع سعر القطعة (مراجعة 2026-11-21)
     upd();
     app.querySelectorAll('[data-ai]').forEach(function (c) { c.onchange = function () { var i = +c.dataset.ai; sel = c.checked ? sel.concat(i) : sel.filter(function (x) { return x !== i; }); upd(); }; });
     app.querySelectorAll('[data-q]').forEach(function (b) { b.onclick = function () { n = Math.max(1, Math.min(Math.min(20, q), n + +b.dataset.q)); document.getElementById('pq').textContent = n; upd(); }; });
     var buy = document.getElementById('buy'); if (buy) buy.onclick = function () { addToCart(p.id, n, sel); };
+    // "اشتري" (خالد 2026-11-21: "للعميل اللي داخل عايز حاجة معينة، توفير خطوات"): على طول لإتمام الطلب. لو نفس الحاجة في السلة مابتتضافش تاني
+    var bn = document.getElementById('buynow'); if (bn) bn.onclick = function () {
+      // ذكي (خالد 2026-11-21): لو في السلة حاجات تانية بيفتح السلة يشوف كله، ولو الحاجة دي بس على طول لإتمام الطلب
+      var k = p.id + '|' + sel.slice().sort().join(','), inC = cart().filter(function (x) { return x.k === k; })[0], others = cart().some(function (x) { return x.k !== k; });
+      var to = others ? '#/cart' : '#/checkout';
+      if (inC) { if (inC.q < n) { var c = cart(); c.forEach(function (x) { if (x.k === k) x.q = Math.min(n, avail(p)); }); setCart(c); } return go(to); }
+      var a = sel.slice(); a.quiet = !others; if (addToCart(p.id, n, a)) go(to);
+    };
     var nt = document.getElementById('notify'); if (nt) nt.onclick = function () { go('#/wish?p=' + encodeURIComponent(p.id)); };
     var tr = app.querySelector('.gal .track'), dots = app.querySelectorAll('.gal .dots i');
     if (tr && dots.length) tr.onscroll = function () { var i = Math.round(Math.abs(tr.scrollLeft) / tr.clientWidth); dots.forEach(function (d, k) { d.classList.toggle('on', k === i); }); };

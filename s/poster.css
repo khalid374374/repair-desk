@@ -24,7 +24,7 @@
 .pst .pst-stk b, .deal.pst .pst-stk b { display: block; min-height: 0; margin: 0; font-size: 1.6em; font-weight: 900; -webkit-line-clamp: unset; overflow: visible; }   /* store.css: .deal b بيكبّر أي b */
 .pst .pst-stk.lg b, .deal.pst .pst-stk.lg b { font-size: 1.2em; }   /* مبلغ طويل (1,500 ج) */
 /* التايمر جوه عمود الكلام، تحت السعر وفوق الزرار */
-.pst .pst-tm { display: block; font-size: 11px; font-size: clamp(5px, 3cqw, 13px); margin-top: 2px; }
+.pst .pst-tm { display: block; font-size: 13px; font-size: clamp(6px, 3.8cqw, 16px); margin-top: 3px; }   /* أكبر (خالد 2026-11-21: "نكبر التايمر") */
 .pst .pst-tm .cd, .deal.pst .pst-tm .cd { margin: 0; gap: 4px; gap: 1cqw; }
 .pst .pst-tm .cd span, .deal.pst .pst-tm .cd span { min-width: 0; padding: .2em .55em .1em; font-size: 1.1em; border: 0; box-shadow: none; }
 .pst .pst-tm .cd em, .deal.pst .pst-tm .cd em { font-size: .75em; }
@@ -54,4 +54,4 @@
 .pst.pst-still *, .pst.pst-still .pst-bg { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .pst *, .pst .pst-bg { animation: none !important; } }
 /* بوستر عريض (الكمبيوتر): المنتج أكبر شوية والكلام أعرض، والمقاسات بحد أقصى (من فوق) */
-@container pst (min-width: 700px) { .pst .pst-h, .deal.pst .pst-h { -webkit-line-clamp: 1; } .pst .pst-prod { left: 8%; width: 28%; top: 10%; height: 80%; font-size: 150px; } .pst .pst-copy { max-width: 55%; } .pst .pst-stk { left: 4%; width: 92px; height: 92px; font-size: 15px; } }
+@container pst (min-width: 700px) { .pst .pst-h, .deal.pst .pst-h { -webkit-line-clamp: 1; } .pst .pst-prod { left: 8%; width: 28%; top: 10%; height: 80%; font-size: 150px; } .pst .pst-copy { max-width: 55%; } .pst .pst-stk { left: 4%; width: 92px; height: 92px; font-size: 15px; } .pst .pst-tm { font-size: 13px; } }
