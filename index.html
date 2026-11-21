@@ -222,6 +222,13 @@
     .rv, .up { opacity: 1; transform: none; }
     .toast-fly { opacity: 1; transform: none; }
   }
+  /* مراجعة التصميم (2026-11-21): العنوان أصغر والصورة أكبر على الكمبيوتر، وعلى الموبايل لينك واحد فوق وصورة الموبايل */
+  .hero h1 { font-size: clamp(28px, 3.6vw, 40px); }
+  @media (min-width: 861px) { .hero-in { grid-template-columns: 1fr 1.15fr; } }
+  @media (max-width: 700px) {
+    .navl a { display: none; } .navl a[href="#downloads"] { display: inline-flex; padding: 7px 14px; border-radius: 99px; background: #ffffff1f; border: 1px solid #ffffff33; opacity: 1; }
+    .shot-wrap { max-width: 300px; margin: 0 auto; } .shot-hero { transform: none; }
+  }
 </style>
 </head>
 <body>
@@ -245,7 +252,7 @@
         <small class="note up" style="--d:.36s">ويندوز 10 و 11 · موبايل أندرويد وآيفون · عربي وإنجليزي · بيتحدّث لوحده</small>
       </div>
       <div class="shot-wrap"><div class="shot-float">
-        <img class="shot-hero" src="img/home.jpg" alt="الصفحة الرئيسية في برنامج الصيانة" width="1400" height="744">
+        <picture><source media="(max-width: 700px)" srcset="img/m-home.jpg"><img class="shot-hero" src="img/home.jpg" alt="الصفحة الرئيسية في برنامج الصيانة" width="1400" height="744"></picture>
         <div class="sheen"></div>
         <div class="toast-fly t1" aria-hidden="true"><i>📲</i> تحويل 500 ج على فودافون كاش <b>✓ اتسجل</b></div>
         <div class="toast-fly t2" aria-hidden="true"><i>🔒</i> الوردية اتقفلت: <b>زيادة 120</b></div>
@@ -472,7 +479,7 @@
   addEventListener('scroll', () => { const h = document.documentElement; prog.style.transform = 'scaleX(' + (h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight)) + ')'; }, { passive: true });
 
   // الحاجات بتطلع وانت نازل
-  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12, rootMargin: '0px 0px -30px 0px' });
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: 0, rootMargin: '0px 0px -40px 0px' });
   document.querySelectorAll('.rv').forEach(el => io.observe(el));
 
   // إشعارات بتطلع على صورة البرنامج واحدة ورا التانية

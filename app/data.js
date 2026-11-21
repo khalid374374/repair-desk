@@ -49,7 +49,7 @@ window.DEMO = {
     ['s5', 'كابل تايب سي', 22, 60, 25, 'acc', '20000005', 5, 'كابل'], ['s6', 'شاشة A10 اوليد', 2, 0, 520, 'part', '20000006', 2, ''],
     ['s7', 'بطارية ايفون 11', 4, 0, 380, 'part', '20000007', 1, ''], ['s8', 'سوكت شحن تايب سي', 18, 0, 25, 'part', '20000008', 5, ''],
   ], people: [['p1', 'أحمد شلبي'], ['p2', 'عم سيد']] },
-  cur: { no: 4, from: 'امبارح 9:00 ص', repairNet: 820, repairN: 3, fees: 385, accSales: 410, accN: 6, total: 1615 },
+  cur: { no: 4, from: 'امبارح 9:00 ص', repairNet: 820, repairN: 3, fees: 385, accSales: 410, accN: 6, total: 1615, sales: 795, goal: 1500, notes: [{ txt: 'محمد هيعدّي ياخد الشاحن (مدفوع)', by: 'علي', t: Date.now() - 3600e3 }] },
   closings: [{ no: 3, by: 'علي', day: 'السبت', diff: 125 }, { no: 2, by: 'خالد', day: 'الجمعة', diff: 0 }, { no: 1, by: 'علي', day: 'الخميس', diff: -60 }],
   aging: 3, owes: [{ name: 'أحمد شلبي', amt: 5500 }, { name: 'عم سيد', amt: 750 }], tickOwe: [{ id: 'k151', no: 151, dev: 'Samsung A51', customer: 'هاني', rem: 500, dd: '' }],
   weekPrev: 6100, cc: '20',   // المقارنات (2026-11-07)

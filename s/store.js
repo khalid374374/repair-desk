@@ -353,8 +353,9 @@
       + '<div class="fl"><button data-back aria-label="رجوع">→</button><span class="fl-r"><button data-fav aria-label="المفضلة" class="' + (isFav(p.id) ? 'on' : '') + '">' + (isFav(p.id) ? '❤️' : '🤍') + '</button><button data-share aria-label="شارك">↗</button></span></div></div>'
       + '<div class="pb"><h1>' + esc(p.n) + '</h1><div class="sub">' + esc([p.b, (catOf(p.c) || {}).n, (p.m || []).slice(0, 3).join('، ')].filter(Boolean).join(' · ')) + '</div>' + revLine(p.id)
       + (p.ask ? '<span class="ask" style="font-size:14px;padding:6px 14px">💬 اسأل على السعر</span>' : '<div class="bigpr"><strong>' + money(e.pr) + '</strong>' + (e.was ? '<s class="num">' + fm(e.was) + '</s><span class="save">وفّر <span class="num">' + fm(e.was - e.pr) + '</span></span>' : '') + '</div>')
-      + (e.end && !p.ask ? '<div class="timer"><span>⏳ العرض بيخلص بعد</span><span data-end="' + esc(e.end) + '"></span></div>' : '')
-      + (so ? '<div class="timer" style="background:var(--badbg);color:var(--badc)"><span>😕 خلص من المحل</span><span>بلّغني لما يرجع ↓</span></div>' : q <= 3 && !p.hq ? '<div class="timer"><span>🔥 فاضل <span class="num">' + q + '</span> بس</span></div>' : '')
+      // العرض والكمية القليلة في سطر واحد (كانوا كارتين أصفر ورا بعض، مراجعة التصميم 2026-11-21)
+      + (so ? '<div class="timer" style="background:var(--badbg);color:var(--badc)"><span>😕 خلص من المحل</span><span>بلّغني لما يرجع ↓</span></div>'
+        : (e.end && !p.ask) || (q <= 3 && !p.hq) ? '<div class="timer">' + (e.end && !p.ask ? '<span>⏳ العرض بيخلص بعد <b data-end="' + esc(e.end) + '"></b></span>' : '') + (q <= 3 && !p.hq ? '<span class="tm-low">🔥 فاضل <span class="num">' + q + '</span> بس</span>' : '') + '</div>' : '')
       + (specs.length ? '<div class="feat">' + specs.map(function (s) { return '<span><em>' + s[0] + '</em>' + esc(s[1]) + '</span>'; }).join('') + '</div>' : '')
       + '<div class="feat">' + (p.w ? '<span><em>🛡</em>ضمان ' + esc(p.w) + '</span>' : '') + (p.sw ? '<span><em>🔁</em>تبديل ' + esc(p.sw) + ' أيام</span>' : '') + '<span><em>🚚</em>' + (delFreeTxt() || 'توصيل لحد البيت') + '</span>' + (C.del && C.del.pickup !== false ? '<span><em>🏪</em>أو استلم من المحل</span>' : '') + '</div>'
       + (p.d ? '<div class="desc">' + esc(p.d) + '</div>' : '') + revSection(p.id)
@@ -363,9 +364,9 @@
       + '</div>';
     var waTxt = 'السلام عليكم، عايز أسأل على: ' + p.n + ' — ' + location.href;
     html += '<div class="cta">' + (waLink() ? '<a class="btn bw" href="' + esc(waLink(waTxt)) + '" target="_blank" rel="noopener" aria-label="اسأل على واتساب">' + WA_SVG.replace('<svg', '<svg style="width:22px;height:22px"') + '</a>' : '')
-      + (p.ask ? '<a class="btn b1" href="' + esc(waLink(waTxt)) + '" target="_blank" rel="noopener">💬 اسأل على السعر</a>' : so ? '<button class="btn b1" id="notify">🔔 بلّغني لما يتوفر</button>' : '<button class="btn b1" id="buy">🛒 ضيف للسلة · <span id="ptot" class="num"></span></button>') + '</div>';
+      + (p.ask ? '<a class="btn b1" href="' + esc(waLink(waTxt)) + '" target="_blank" rel="noopener">💬 اسأل على السعر</a>' : so ? '<button class="btn b1" id="notify">🔔 بلّغني لما يتوفر</button>' : '<button class="btn b1" id="buy">🛒 ضيف <span id="pn" class="num"></span>للسلة · <span id="ptot" class="num"></span></button>') + '</div>';
     shell(html, '', true);
-    var upd = function () { var t = n * (e.pr + sel.reduce(function (a, i) { return a + (+p.add[i].p || 0); }, 0)); var el = document.getElementById('ptot'); if (el) el.textContent = fm(t); };
+    var upd = function () { var t = n * (e.pr + sel.reduce(function (a, i) { return a + (+p.add[i].p || 0); }, 0)); var el = document.getElementById('ptot'); if (el) el.textContent = fm(t); var pn = document.getElementById('pn'); if (pn) pn.textContent = n > 1 ? n + ' ' : ''; };   // "ضيف 2 للسلة · 12,820": المبلغ مايتلخبطش مع سعر القطعة (مراجعة 2026-11-21)
     upd();
     app.querySelectorAll('[data-ai]').forEach(function (c) { c.onchange = function () { var i = +c.dataset.ai; sel = c.checked ? sel.concat(i) : sel.filter(function (x) { return x !== i; }); upd(); }; });
     app.querySelectorAll('[data-q]').forEach(function (b) { b.onclick = function () { n = Math.max(1, Math.min(Math.min(20, q), n + +b.dataset.q)); document.getElementById('pq').textContent = n; upd(); }; });
@@ -570,43 +571,69 @@
   var digits10 = function (p) { return String(p || '').replace(/[٠-٩]/g, function (c) { return String(c.charCodeAt(0) - 0x660); }).replace(/\D/g, '').slice(-10); };
   function needVf(body) { return !!C.vf && ((body.kind === 'order' && body.pay === 'cash') || (body.kind === 'repair' && body.repair && body.repair.mode === 'home')); }
   function vfSaved(phone) { var v = ls('vf'); return v && v.tok && digits10(v.phone) === digits10(phone) && Date.parse(v.until) > Date.now() ? v.tok : ''; }
+  /* المحل هو اللي بيبعت الكود على واتساب والعميل بيكتبه (خالد 2026-11-21: "إحنا اللي نبعت الكود للعميل وهو يدخله").
+     العميل الجديد اللي عمره ما كلّم المحل كان رقمه مابيبانش في رسالته فماكانش بيدخل. خانة لكل رقم (أفكار تطبيق وصلة): الأرقام العربي واللصق
+     بيتوزّعوا لوحدهم، Backspace بيرجع، وآخر رقم بيأكد لوحده، وعدّاد قبل "ابعت تاني" */
   function verifyPhone(phone, opts) {
     opts = opts || {};
     return new Promise(function (done) {
-      var finished = false, id = '', code = '', pollT = null, skipT = null, sheet = null, dim = null, live = true;
-      var end = function (tok) { if (finished) return; finished = true; clearInterval(pollT); clearTimeout(skipT); document.removeEventListener('visibilitychange', onVis); if (sheet) { sheet.classList.remove('on'); dim.classList.remove('on'); setTimeout(function () { sheet.remove(); dim.remove(); }, 260); } done(tok === null ? null : (tok || '')); };
-      var waUrl = function () { return 'https://wa.me/' + C.vf + '?text=' + encodeURIComponent('كود تأكيد طلبي من ' + (C.shop.name || 'المحل') + ': ' + code); };
-      var poll = function () {
-        if (!id || finished) return;
-        gw({ action: 'store-vcheck', id: id }).then(function (r) {
-          if (finished || !r || !r.ok) return;
-          if (r.state === 'ok' && r.tok) { ls('vf', { phone: r.phone || phone, tok: r.tok, until: r.until }); paint('ok'); setTimeout(function () { end(r.tok); }, 900); }
-          else if (r.state === 'gone') paint('gone');
-        });
+      var finished = false, id = '', sheet = null, dim = null, cdT = null, skipT = null, busy = false;
+      var end = function (tok) { if (finished) return; finished = true; clearInterval(cdT); clearTimeout(skipT); if (sheet) { sheet.classList.remove('on'); dim.classList.remove('on'); setTimeout(function () { sheet.remove(); dim.remove(); }, 260); } done(tok === null ? null : (tok || '')); };
+      var B = function () { return sheet.querySelector('.vf-b'); };
+      var skipBtn = function (show) { return '<button class="vf-skip" id="vf-skip"' + (show ? '' : ' hidden') + '>' + (opts.login ? 'مش دلوقتي' : 'الكود مش واصل؟ كمّل والمحل هيكلمك يأكد') + '</button>'; };
+      var bindSkip = function () { var k = sheet.querySelector('#vf-skip'); if (k) k.onclick = function () { end(''); }; };
+      var paintMsg = function (h, sub, again) {
+        B().innerHTML = '<h3>' + h + '</h3><div class="vf-sub">' + sub + '</div>' + (again ? '<button class="btn bg" id="vf-again">🔄 ابعتلي كود جديد</button>' : '') + skipBtn(true);
+        var a = sheet.querySelector('#vf-again'); if (a) a.onclick = start; bindSkip();
       };
-      var onVis = function () { if (!document.hidden) poll(); };   // رجع من واتساب: نسأل على طول
-      var paint = function (st) {
-        var b = sheet.querySelector('.vf-b');
-        if (st === 'ok') { b.innerHTML = '<div class="vf-ok">✓</div><h3>' + (opts.login ? 'دخلت ✓' : 'رقمك اتأكد') + '</h3><div class="vf-sub">مش هتحتاجها تاني من الموبايل ده</div>'; return; }
-        if (st === 'gone') { b.innerHTML = '<h3>⏱ الكود خلص</h3><div class="vf-sub">ابدأ تاني، أو كمّل والمحل هيكلمك يأكد</div><button class="btn bg" id="vf-again">🔄 كود جديد</button><button class="vf-skip" id="vf-skip">كمّل من غير تأكيد</button>';
-          b.querySelector('#vf-again').onclick = start; b.querySelector('#vf-skip').onclick = function () { end(''); }; return; }
-        var wait = st === 'wait';
-        b.innerHTML = '<h3>' + (wait ? '⏳ مستنيين رسالتك' : opts.login ? '📲 ادخل بكود واتساب' : '📲 خطوة أخيرة: أكّد رقمك') + '</h3><div class="vf-sub">' + (wait ? (opts.login ? 'لو بعتّها، هتدخل في ثواني' : 'لو بعتّها، الطلب هيتأكد في ثواني') : 'مرة واحدة بس من الموبايل ده · <span class="num">' + esc(phone) + '</span>') + '</div>'
-          + (wait ? '<div class="vf-code num">' + esc(code) + '</div>' : '<ol class="vf-steps"><li><i>1</i>دوس الزرار الأخضر، واتساب هيفتح لوحده</li><li><i>2</i>الرسالة جاهزة فيها الكود، دوس إرسال</li><li><i>3</i>' + (opts.login ? 'ارجع هنا، هتدخل لوحدك' : 'ارجع هنا، الطلب هيتأكد لوحده') + '</li></ol>')
-          + '<a class="btn ' + (wait ? 'bs' : 'vf-wa') + '" id="vf-go" href="' + esc(waUrl()) + '" target="_blank" rel="noopener">💬 ' + (wait ? 'افتح واتساب تاني' : 'افتح واتساب وابعت الكود') + '</a>'
-          + (wait ? '<div class="vf-wait"><span class="vf-sp"></span>بنستنى الرسالة توصل المحل...</div>' : '<div class="vf-note">الكود: <b class="num">' + esc(code) + '</b></div>')
-          + (live ? '' : '<div class="vf-off">⚠️ البرنامج في المحل مقفول دلوقتي، فالتأكيد هيتم أول ما المحل يفتح. ' + (opts.login ? 'تقدر تطلب عادي من غير حساب.' : 'تقدر تكمّل والمحل هيكلمك يأكد.') + '</div>')
-          + '<button class="vf-skip" id="vf-skip"' + ((wait && skipT === -1) || !live ? '' : ' hidden') + '>' + (opts.login ? 'مش دلوقتي' : 'مش عندك واتساب على الرقم ده؟ كمّل والمحل هيكلمك يأكد') + '</button>';
-        b.querySelector('#vf-go').onclick = function () { if (!wait) setTimeout(function () { paint('wait'); }, 400); if (skipT !== -1 && !skipT) skipT = setTimeout(function () { skipT = -1; var s = sheet.querySelector('#vf-skip'); if (s) s.hidden = false; }, window.__vfSkipMs || 25000); };
-        b.querySelector('#vf-skip').onclick = function () { end(''); };
+      var paintOk = function () { B().innerHTML = '<div class="vf-ok">✓</div><h3>' + (opts.login ? 'دخلت ✓' : 'رقمك اتأكد') + '</h3><div class="vf-sub">مش هتحتاجها تاني من الموبايل ده</div>'; };
+      var paintCode = function () {
+        B().innerHTML = '<h3>' + (opts.login ? '📲 ادخل بكود واتساب' : '📲 خطوة أخيرة: أكّد رقمك') + '</h3>'
+          + '<div class="vf-sub">بعتنالك كود على واتساب على رقم <b class="num" dir="ltr">' + esc(phone) + '</b></div>'
+          + '<div class="vf-otp" dir="ltr">' + [0, 1, 2, 3].map(function (k) { return '<input class="num" inputmode="numeric" autocomplete="' + (k ? 'off' : 'one-time-code') + '" maxlength="4" aria-label="رقم ' + (k + 1) + '">'; }).join('') + '</div>'
+          + '<div class="vf-err" id="vf-err" role="alert"></div>'
+          + '<div class="vf-wait" id="vf-busy" hidden><span class="vf-sp"></span>بنتأكد...</div>'
+          + '<button class="vf-re" id="vf-re" disabled>ابعت الكود تاني بعد <span class="num" id="vf-cd">0:45</span></button>'
+          + skipBtn(false);
+        var ins = [].slice.call(sheet.querySelectorAll('.vf-otp input')), err = sheet.querySelector('#vf-err');
+        var digits = function (t) { return String(t || '').replace(/[٠-٩]/g, function (c) { return String(c.charCodeAt(0) - 0x660); }).replace(/\D/g, ''); };
+        var submit = function (c) {
+          busy = true; sheet.querySelector('#vf-busy').hidden = false; ins.forEach(function (x) { x.disabled = true; });
+          gw({ action: 'store-vtype', id: id, code: c }).then(function (r) {
+            busy = false; if (finished) return;
+            if (r && r.ok && r.tok) { clearInterval(cdT); ls('vf', { phone: r.phone || phone, tok: r.tok, until: r.until }); paintOk(); setTimeout(function () { end(r.tok); }, 900); return; }
+            if (r && r.again) { clearInterval(cdT); return paintMsg('⏱ ' + esc(r.error || 'الكود خلص'), 'اطلب كود جديد، أو كمّل والمحل هيكلمك يأكد', true); }
+            sheet.querySelector('#vf-busy').hidden = true; ins.forEach(function (x) { x.disabled = false; x.value = ''; }); ins[0].focus();
+            var o = sheet.querySelector('.vf-otp'); o.classList.remove('bad'); void o.offsetWidth; o.classList.add('bad');
+            err.textContent = (r && r.error ? r.error : 'مفيش نت. جرّب تاني') + (r && r.left != null ? ' · فاضلك ' + r.left + (r.left === 1 ? ' محاولة' : ' محاولات') : '');
+          });
+        };
+        var check = function () { var c = ins.map(function (x) { return x.value; }).join(''); if (c.length === 4 && !busy) submit(c); };
+        var fill = function (from, t) { var d = digits(t); for (var k = 0; k < d.length && from + k < 4; k++) ins[from + k].value = d[k]; ins[Math.min(3, from + d.length)].focus(); check(); };
+        ins.forEach(function (x, k) {
+          x.oninput = function () { var v = digits(x.value); if (v.length > 1) { x.value = ''; fill(k, v); return; } x.value = v; err.textContent = ''; sheet.querySelector('.vf-otp').classList.remove('bad'); if (v && k < 3) ins[k + 1].focus(); check(); };
+          x.onkeydown = function (e) { if (e.key === 'Backspace' && !x.value && k > 0) { ins[k - 1].value = ''; ins[k - 1].focus(); e.preventDefault(); } };
+          x.onpaste = function (e) { var t = (e.clipboardData || window.clipboardData).getData('text'); if (digits(t)) { e.preventDefault(); fill(k, t); } };
+          x.onfocus = function () { x.select(); };
+        });
+        setTimeout(function () { if (!finished && ins[0]) ins[0].focus(); }, 300);
+        // عدّاد "ابعت تاني" (45 ثانية)، وزرار "كمّل من غير تأكيد" بعد 25 ثانية
+        var left = 45, re = sheet.querySelector('#vf-re');
+        clearInterval(cdT); cdT = setInterval(function () { left--; var cd = sheet.querySelector('#vf-cd'); if (left <= 0) { clearInterval(cdT); re.disabled = false; re.textContent = '🔄 ابعت الكود تاني'; } else if (cd) cd.textContent = '0:' + String(left).padStart(2, '0'); }, 1000);
+        re.onclick = function () { if (!re.disabled) start(); };
+        clearTimeout(skipT); skipT = setTimeout(function () { var k = sheet.querySelector('#vf-skip'); if (k) k.hidden = false; }, window.__vfSkipMs || 25000);
+        bindSkip();
       };
       var start = function () {
-        sheet.querySelector('.vf-b').innerHTML = '<div class="vf-wait"><span class="vf-sp"></span>لحظة...</div>';
-        gw({ action: 'store-vstart', slug: slug, phone: phone }).then(function (r) {
+        clearInterval(cdT);
+        B().innerHTML = '<div class="vf-wait"><span class="vf-sp"></span>بنبعتلك الكود على واتساب...</div>';
+        gw({ action: 'store-vstart', slug: slug, phone: phone, send: true }).then(function (r) {
           if (finished) return;
-          if (!r.ok) { if (r.field === 'phone') { toast(r.error, 'bad'); return end(null); } return end(''); }   // التأكيد مش متاح (السيرفر/حد المحاولات): الطلب يدخل بعلامة "مش متأكد"، مانوقفش العميل
-          id = r.id; code = r.code; skipT = 0; live = r.live !== false; paint('start');
-          clearInterval(pollT); pollT = setInterval(poll, 3000);
+          if (r && r.ok) { id = r.id; return paintCode(); }
+          if (r && r.field === 'phone') { toast(r.error, 'bad'); return end(null); }
+          if (r && r.closed) return paintMsg('🕘 المحل مقفول دلوقتي', esc(r.error) + (opts.login ? '' : ' تقدر تكمّل والمحل هيكلمك يأكد.'), false);
+          if (r && r.error && /محاولات|ضغط/.test(r.error)) return paintMsg('⏳ استنى شوية', esc(r.error), false);
+          end('');   // التأكيد مش متاح (السيرفر): الطلب يدخل بعلامة "مش متأكد"، مانوقفش العميل
         });
       };
       dim = document.createElement('div'); dim.className = 'vf-dim'; dim.onclick = function () { end(null); };
@@ -615,7 +642,6 @@
       sheet.querySelector('.vf-x').onclick = function () { end(null); };
       document.body.appendChild(dim); document.body.appendChild(sheet);
       requestAnimationFrame(function () { dim.classList.add('on'); sheet.classList.add('on'); });
-      document.addEventListener('visibilitychange', onVis);
       start();
     });
   }
@@ -867,7 +893,7 @@
     if (tab === 'addr') return meAddrs(box, A);
     return meSettings(box, A);
   }
-  function orderRow(o) { return '<div class="ol" data-go="#/o/' + esc(o.trk) + '"><span style="font-size:24px">' + ({ order: '🛒', bill: '🧾', repair: '🛠', wish: '🤔' }[o.kind] || '🛒') + '</span><div class="t"><b><span class="num">W-' + esc(o.no) + '</span>' + (o.first ? ' · ' + esc(o.first) : '') + '</b><small>' + new Date(o.at).toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'long' }) + (o.total ? ' · ' + fm(o.total) + ' ' + esc(cur()) : '') + '</small></div><span class="pill" data-st="' + esc(o.trk) + '">' + (o.status ? esc(lab(o.kind, false, o.status)) : '…') + '</span></div>'; }
+  function orderRow(o) { return '<div class="ol" data-go="#/o/' + esc(o.trk) + '"><span style="font-size:24px">' + ({ order: '🛒', bill: '🧾', repair: '🛠', wish: '🤔' }[o.kind] || '🛒') + '</span><div class="t"><b>' + (o.first ? esc(o.first) + (o.n > 1 ? ' <span class="ol-more">+' + (o.n - 1) + '</span>' : '') : '<span class="num">W-' + esc(o.no) + '</span>') + '</b><small>' + (o.first ? '<span class="num">W-' + esc(o.no) + '</span> · ' : '') + new Date(o.at).toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'long' }) + (o.total ? ' · ' + fm(o.total) + ' ' + esc(cur()) : '') + '</small></div><span class="pill" data-st="' + esc(o.trk) + '">' + (o.status ? esc(lab(o.kind, false, o.status)) : '…') + '</span></div>'; }
   function pillCls(s) { return 'pill ' + (s === 'cancel' || s === 'ret' ? 'bad' : s === 'done' || s === 'paid' ? 'ok' : 'wait'); }
   function meOrders(box, A) {
     var local = ls('orders') || [];

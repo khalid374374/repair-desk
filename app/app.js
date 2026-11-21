@@ -53,6 +53,13 @@
   const hm = t => { try { return new Date(t).toLocaleTimeString('ar-EG-u-nu-latn', { hour: 'numeric', minute: '2-digit' }); } catch (e) { return ''; } };
   const shGroups = es => { const known = SH_GROUPS.map(g => g[0]); return [...SH_GROUPS.map(([k, ic, t]) => [k, ic, t, es.filter(e => e.kind === k)]), ['etc', '📦', 'حركات تانية', es.filter(e => !known.includes(e.kind))]].filter(g => g[3].length); };
   const entryOut = e => (e.kind === 'rep' ? e.dir === 'out' : SH_OUT[e.kind] || (e.kind === 'found' && e.amt < 0));
+  // مبيعات الوردية والهدف + ملاحظات للي هيستلم (من الكاشير، 2026-11-21)
+  function goalCard() {
+    const c = D && D.cur; if (!c || c.sales == null) return '';
+    const g = c.goal || 0, p = g ? Math.min(100, Math.round(c.sales / g * 100)) : 0;
+    const notes = (c.notes || []).length ? `<div class="lbl" style="margin-top:12px">📝 ملاحظات للي هيستلم</div>${c.notes.map(n => `<div class="al"><i>●</i><div>${esc(n.txt)}<small>${esc(n.by || '')}${n.t ? ' · ' + hm(n.t) : ''}</small></div></div>`).join('')}` : '';
+    return `<div class="card goal-card"><div class="lbl">🎯 مبيعات الوردية</div><div class="row"><span>${g ? `${p}% من الهدف` : 'من غير هدف'}</span><b>${fmt(c.sales)}${g ? ` <small class="lbl">/ ${fmt(g)}</small>` : ''}</b></div>${g ? `<div class="gbar"><u style="width:${p}%"></u></div>` : ''}${notes}</div>`;
+  }
   function shiftNow(F) {
     const s = F.shift; if (!s) return '<div class="card"><div class="empty">مفيش وردية مفتوحة على الكاشير</div></div>';
     const who = s.holder || s.who || '';
@@ -199,10 +206,10 @@
     if (F) {
       const seg = [['now', 'دلوقتي'], ['hist', 'الورديات'], ['month', 'الشهر'], ['ppl', 'الناس']];
       return `<div class="seg s4">${seg.map(([k, n]) => `<button class="${shiftTab === k ? 'on' : ''}" data-sht="${k}">${n}</button>`).join('')}</div>`
-        + (shiftTab === 'now' ? shiftNow(F) : shiftTab === 'hist' ? shiftHist() : shiftTab === 'month' ? shiftMonth() : shiftPeople());
+        + (shiftTab === 'now' ? goalCard() + shiftNow(F) : shiftTab === 'hist' ? shiftHist() : shiftTab === 'month' ? shiftMonth() : shiftPeople());
     }
     const hint = FULLST === 'rekey' ? '<div class="card sh-hint">🔐 الكاشير غيّر مفتاح التشفير: اربط الموبايل تاني بالـ QR علشان تشوف الوردية كاملة</div>' : '';
-    return hint + shiftOld();
+    return hint + goalCard() + shiftOld();
   }
   function shiftOld() {
     const lineCol = p => (p > 75 ? 'var(--rd)' : p > 50 ? 'var(--or)' : 'var(--gr)');   // نفس ألوان البرنامج: لحد 50 أخضر، 51–75 برتقالي، فوق 75 أحمر
@@ -438,7 +445,8 @@
   function paintLive() {
     const el = $('#h-live'); if (!D) { el.textContent = live ? '● متوصّل' : '● بيتوصّل'; el.classList.toggle('off', !live); return; }
     const on = Date.now() - (+D.at || 0) < ONLINE_MS;
-    el.textContent = on ? (live ? '● لايف' : '● الكاشير شغال') : '● الكاشير مقفول'; el.classList.toggle('off', !on);
+    // كلمة واحدة في كل حتة (كانت "لايف" مرة و"الكاشير شغال" مرة، مراجعة 2026-11-21)؛ الاتصال اللحظي = النقطة بتنبض
+    el.textContent = on ? '● الكاشير شغال' : '● الكاشير مقفول'; el.classList.toggle('off', !on); el.classList.toggle('pulse', on && live);
     $('#h-sub').textContent = 'آخر تحديث: ' + ago(+D.at || Date.now());
   }
   /* 🔔 الإشعارات والطلبات (خالد 2026-11-01): كل الإشعارات اللي وصلت (كاملة، من snap.notes) + طلبات الموظفين + التحويلات اللي ماتسجلتش.
@@ -575,7 +583,7 @@
     // نسخة جديدة من التطبيق: زرار في الراس بيفتح ملف التثبيت
     showUpdate: j => {
       if ($('#h-upd')) return;
-      const b = document.createElement('button'); b.id = 'h-upd'; b.className = 'upd'; b.textContent = '⬆ تحديث ' + j.version;
+      const b = document.createElement('button'); b.id = 'h-upd'; b.className = 'upd'; b.textContent = '⬆ تحديث'; b.title = 'نسخة ' + j.version;   // من غير رقم النسخة: كان بيزحم الراس ويكسر "الكاشير شغال" سطرين (مراجعة 2026-11-21)
       b.onclick = () => { if (confirm('فيه نسخة جديدة (' + j.version + ')' + (j.notes ? ':\n' + j.notes : '') + '\n\nهتنزل في المتصفح، وبعدين دوس عليها وثبّتها.')) location.href = j.url; };
       $('.top-r').prepend(b);
     },

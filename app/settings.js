@@ -19,7 +19,7 @@
     return `<button class="x" id="sh-x">✕</button><h3>⋮ الإعدادات</h3>
       <div class="st-sec">🎨 المظهر</div>
       <div class="card">${row('زي الكاشير', 'الثيم والوضع والزجاج من إعدادات البرنامج على الكمبيوتر', sw('s-follow', f))}
-        <div id="s-own"${f ? ' class="dim"' : ''}>
+        <div id="s-own"${f ? ' class="dim"' : ''}><div class="st-dimhint"${f ? '' : ' hidden'}>🔒 بتمشي زي الكاشير. اقفل "زي الكاشير" فوق علشان تغيّرها</div>
         <div class="st-row col"><b>الوضع</b><div class="seg st-seg" id="s-mode">${[['light', '☀️ فاتح'], ['dark', '🌙 غامق'], ['black', '⚫ أسود']].map(([v, l]) => `<button type="button" data-v="${v}" class="${c.mode === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
         <div class="st-row col"><b>لون الثيم</b><div class="st-themes" id="s-theme">${(window.Look ? Look.THEMES : []).map(t => { const p = Look.palette(t[0], 'dark'); return `<button type="button" data-v="${t[0]}" class="${c.theme === t[0] ? 'on' : ''}" title="${esc(t[1])}"><i style="background:linear-gradient(135deg,${p.g1},${p.g2})"></i><small>${esc(t[1])}</small></button>`; }).join('')}</div></div>
         ${row('Liquid Glass', 'كروت زجاجية شفافة فوق خلفية متدرجة', sw('s-glass', !!c.glass))}
@@ -48,7 +48,7 @@
   function toggle(id, fn) { const el = $(id); if (!el) return; el.onclick = async () => { const on = !el.classList.contains('on'); const ok = await fn(on); if (ok === false) return; el.classList.toggle('on', on); el.setAttribute('aria-checked', on); }; }
   function bind() {
     $('#sh-x').onclick = () => history.back();
-    const ownOn = () => { const f = Look.own().follow; $('#s-own').classList.toggle('dim', f !== false); };
+    const ownOn = () => { const f = Look.own().follow; $('#s-own').classList.toggle('dim', f !== false); const h = document.querySelector('#s-own .st-dimhint'); if (h) h.hidden = f === false; };
     if (window.Look) {
       toggle('#s-follow', on => { const cur = Look.current(); Look.setOwn(on ? { follow: true } : { follow: false, theme: cur.theme, mode: cur.mode, glass: cur.glass, still: cur.still }); ownOn(); });
       seg('#s-mode', v => { Look.setOwn({ follow: false, mode: v }); $('#s-follow').classList.remove('on'); ownOn(); });

@@ -1,6 +1,6 @@
 /* service worker لنسخة الويب (mobile/web/build.js بيحط الإصدار والملفات). الصفحة نفسها من النت الأول (علشان التحديث يوصل)، والباقي من الكاش،
    والسيرفر (Supabase) مابيعديش من هنا. وكمان الإشعارات (Web Push): بيعرضها، والدوسة بتفتح التطبيق. */
-const V = 'app-89149470ae', FILES = ["./","actions.js","app.css","app.js","branches.js","data.js","extras.js","fastfmt.js","fulldata.js","icon-192.png","index.html","link.js","lock.js","manifest.webmanifest","motion2.js","scan.js","settings.js","stock.js","storeorders.js","storetab.js","theme.js","vendor/fflate.LICENSE","vendor/fflate.min.js","vendor/jsQR.js","vendor/zxing.min.js","version.js","web.js"];
+const V = 'app-bd64e90769', FILES = ["./","actions.js","app.css","app.js","branches.js","data.js","extras.js","fastfmt.js","fulldata.js","icon-192.png","index.html","link.js","lock.js","manifest.webmanifest","motion2.js","scan.js","settings.js","stock.js","storeorders.js","storetab.js","theme.js","vendor/fflate.LICENSE","vendor/fflate.min.js","vendor/jsQR.js","vendor/zxing.min.js","version.js","web.js"];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(FILES)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
