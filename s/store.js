@@ -123,10 +123,36 @@
   function starsHTML(a, big) { return '<span class="stars' + (big ? ' big' : '') + '" style="--v:' + Math.max(0, Math.min(100, a / 5 * 100)) + '%" aria-label="' + a + ' من 5">★★★★★</span>'; }
   function loadRev() {
     return fetch(ST + encodeURIComponent(slug) + '/reviews.json?t=' + Math.floor(Date.now() / 60000), { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) { var had = JSON.stringify(REV); REV = j && j.p ? j : { p: {} }; if (JSON.stringify(REV) !== had && /^#\/(p\/|$|c\/|q\/)/.test(location.hash || '#/')) refresh(); }).catch(function () {});
+      .then(function (j) { var had = JSON.stringify(REV); REV = j && j.p ? j : { p: {} }; if (JSON.stringify(REV) !== had && /^#\/(p\/|$|c\/|q\/|reviews)/.test(location.hash || '#/')) refresh(); }).catch(function () {});
   }
   function revLine(id) { var r = revOf(id); return r ? '<button type="button" class="rate" data-rev>' + starsHTML(r.a) + ' <b class="num">' + r.a + '</b> <span>(<span class="num">' + r.n + '</span> ' + (r.n > 10 ? 'تقييم' : r.n > 2 ? 'تقييمات' : 'تقييم') + ')</span></button>' : ''; }
   function revCard(x) { return '<div class="rv"><div class="rv-h"><b>' + esc(x.n || 'عميل') + ' <small>✓ اشترى من المحل</small></b>' + starsHTML(x.s) + '</div>' + (x.t ? '<p>' + esc(x.t) + '</p>' : '') + '<small class="rv-d">' + new Date(x.at).toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' }) + '</small>' + (x.rp ? '<div class="rv-rp"><b>💬 رد المحل</b>' + esc(x.rp) + '</div>' : '') + '</div>'; }
+  /* ===== تقييم المحل كله (خالد 2026-11-21): المتوسط والتوزيع والمميزات وآراء الزباين، في الرئيسية وصفحة #/reviews ===== */
+  var SHOP_TAGS = [['resp', '👍 تعامل محترم'], ['fast', '⚡ سرعة'], ['price', '💰 أسعار كويسة'], ['del', '🛵 التوصيل'], ['fix', '🔧 جودة الصيانة'], ['pack', '📦 التغليف']];
+  var KIND_N = { order: 'طلب من المتجر', repair: 'صيانة', bill: 'دفع فاتورة', trade: 'بدّل موبايله', ask: 'استشارة' };
+  function shopRev() { var x = REV && REV.p && REV.p._shop; return x && x.n ? x : null; }
+  function tagN(k) { var t = SHOP_TAGS.filter(function (x) { return x[0] === k; })[0]; return t ? t[1] : ''; }
+  function shopSum(r, side) {
+    var d = r.d || [0, 0, 0, 0, 0], g = r.g || {}, mx = Math.max.apply(null, d.concat([1]));
+    var tags = SHOP_TAGS.filter(function (t) { return g[t[0]]; }).sort(function (a, b) { return g[b[0]] - g[a[0]]; });
+    return '<div class="sr-sum' + (side ? ' side' : '') + '"><div class="sr-big"><b class="num">' + r.a + '</b>' + starsHTML(r.a, true) + '<small>من <span class="num">' + r.n + '</span> تقييم · كلهم عملا فعلًا</small></div>'
+      + '<div class="sr-bars">' + d.map(function (n, i) { return '<div><span class="num">' + (5 - i) + '</span><u><i style="width:' + Math.round(n / mx * 100) + '%"></i></u><small class="num">' + n + '</small></div>'; }).join('') + '</div></div>'
+      + (tags.length ? '<div class="sr-tags">' + tags.map(function (t) { return '<span>' + t[1] + ' <b class="num">' + g[t[0]] + '</b></span>'; }).join('') + '</div>' : '');
+  }
+  function shopCard(x) {
+    return '<div class="rv"><div class="rv-h"><b>' + esc(x.n || 'عميل') + ' <small>✓ عميل فعلًا' + (KIND_N[x.k] ? ' (' + KIND_N[x.k] + ')' : '') + '</small></b>' + starsHTML(x.s) + '</div>'
+      + ((x.g || []).length ? '<div class="sr-mini">' + x.g.map(function (k) { return '<span>' + tagN(k) + '</span>'; }).join('') + '</div>' : '')
+      + (x.t ? '<p>' + esc(x.t) + '</p>' : '') + '<small class="rv-d">' + new Date(x.at).toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' }) + '</small>' + (x.rp ? '<div class="rv-rp"><b>💬 رد المحل</b>' + esc(x.rp) + '</div>' : '') + '</div>';
+  }
+  function shopRevHome() {
+    var r = shopRev(); if (!r) return '';
+    return '<div class="sec" id="shoprev"><b>⭐ آراء الزباين في المحل</b><button data-go="#/reviews">الكل ←</button></div><div class="sr-home">' + shopSum(r) + r.r.slice(0, 2).map(shopCard).join('') + '</div>';
+  }
+  function reviewsPage() {
+    var r = shopRev();
+    if (!r) return shell(barHTML('⭐ آراء الزباين') + '<div class="empty"><div class="e">⭐</div><b>لسه مفيش تقييمات</b><p>بعد ما طلبك يوصلك تقدر تقيّم المحل من صفحة متابعة الطلب.</p></div>', '');
+    shell(barHTML('⭐ آراء الزباين في ' + esc(C.shop.name || 'المحل')) + '<div class="sr-page"><div class="sr-col">' + shopSum(r, true) + '</div><div class="sr-list">' + r.r.map(shopCard).join('') + '</div></div>', '');
+  }
   function revSection(id) {
     var r = revOf(id); if (!r) return '';
     return '<div class="revs" id="revs"><h4>⭐ آراء العملا</h4><div class="rv-sum">' + '<b class="num">' + r.a + '</b><span>' + starsHTML(r.a, true) + '<small><span class="num">' + r.n + '</span> عميل اشتروه وقيّموه</small></span></div>'
@@ -137,10 +163,17 @@
     return '<div class="pc' + (so ? ' soldout' : '') + '" data-p="' + esc(p.id) + '" style="animation-delay:' + Math.min(i || 0, 12) * 30 + 'ms">'
       + (e.pct && !so ? '<span class="tag off">−' + e.pct + '%</span>' : so ? '<span class="tag low">خلص</span>' : q <= 2 && !p.hq ? '<span class="tag low">فاضل ' + q + '</span>' : '')
       + (p.st === 'new' ? '<span class="tag new">جديد متبرشم</span>' : p.st === 'used' ? '<span class="tag used">مستعمل</span>' : isFresh(p) ? '<span class="tag new">لسه واصل</span>' : p.sw ? '<span class="tag war">تبديل ' + esc(p.sw) + ' أيام</span>' : '')
-      + '<div class="img">' + pic(p) + '</div><div class="nm">' + esc(p.n) + '</div>' + (revOf(p.id) ? '<div class="cr">★ <b class="num">' + revOf(p.id).a + '</b> <span class="num">(' + revOf(p.id).n + ')</span></div>' : '')
+      + '<div class="img">' + pic(p) + '</div><div class="nm">' + esc(p.n) + '</div>' + dropTag(p) + (revOf(p.id) ? '<div class="cr">★ <b class="num">' + revOf(p.id).a + '</b> <span class="num">(' + revOf(p.id).n + ')</span></div>' : '')
       + '<div class="pr">' + (p.ask ? '<span class="ask">💬 اسأل على السعر</span>' : so ? '<span class="out">هيتوفر قريب</span>' : '<strong class="num">' + fm(e.pr) + '</strong>' + (e.was ? '<s class="num">' + fm(e.was) + '</s>' : '')) + '</div>'
       + (!p.ask && !so && !(p.add && p.add.length) ? '<button class="add" data-add="' + esc(p.id) + '" aria-label="ضيف للسلة">+</button>' : '') + '</div>';
   }
+  function dropTag(p) {
+    var fp = ls('favpr') || {}, was = +fp[p.id], now = eff(p).pr;
+    return was > 0 && now > 0 && now < was && isFav(p.id) ? '<div class="drop">⬇ نزل <span class="num">' + fm(was - now) + '</span> من ساعة ما حطيته في المفضلة</div>' : '';
+  }
+  // شوفته قبل كده (آخر 12 منتج اتفتحوا على الجهاز ده)
+  function seenAdd(id) { var l = (ls('seen') || []).filter(function (x) { return x !== id; }); l.unshift(id); ls('seen', l.slice(0, 12)); }
+  function seenList() { return (ls('seen') || []).map(function (id) { return P[id]; }).filter(function (p) { return p && !p.hide; }); }
   function isFresh(p) { return !!(p.fresh || p.new); }   // p.new = كاشير قديم (قبل 2.39)
   function gridHTML(list) { return list.length ? '<div class="grid">' + list.map(cardHTML).join('') + '</div>' : '<div class="empty"><div class="e">🔍</div><b>مفيش حاجة هنا</b><p>جرّب قسم تاني، أو قولّنا انت عايز إيه وهنجيبهولك.</p><button class="btn b1" data-go="#/wish">🤔 قولّنا عايز إيه</button></div>'; }
   // بانر العروض كبوستر (خالد 2026-11-20): الشكل من إعدادات المتجر في الكاشير (C.bn، poster.js)، والكارت القديم لو مفيش
@@ -165,7 +198,7 @@
   }
   function dealSlideHTML(p, index, total) {
     if (p._ps) return '<button type="button" class="deal psb" data-go="' + esc(window.RdPoster.goOf(p._ps)) + '" data-deal-banner aria-live="polite" aria-label="إعلان ' + (index + 1) + ' من ' + total + '">' + dealContent(p) + '</button>';
-    var pa = poster() ? window.RdPoster.attrs(C.bn, (C.shop || {}).ac) : { cls: '', style: '' };
+    var pa = poster() ? window.RdPoster.attrs(C.bn, (C.shop || {}).ac, ST + slug + '/i/') : { cls: '', style: '' };
     return '<button type="button" class="deal' + pa.cls + '"' + (pa.style ? ' style="' + esc(pa.style) + '"' : '') + ' data-p="' + esc(p.id) + '" data-deal-banner aria-live="polite" aria-label="العرض ' + (index + 1) + ' من ' + total + ': ' + esc(p.n) + '">' + dealContent(p) + '</button>';
   }
   /* خالد 2026-11-16: العروض الكتير كانت بتعمل صفين نقط. دلوقتي صف واحد، 5 نقط بالكتير بتتزحلق مع العرض، واللي على الطرف أصغر لو فيه عروض بعدها */
@@ -210,6 +243,7 @@
     var html = '<header class="hd"><div class="r1"><div class="logo">' + logoHTML() + '</div><div class="nm"><b>' + esc(C.shop.name) + '</b><small' + (brCur() ? ' class="hbr"' : '') + '>' + (brCur() ? '<button type="button" class="brc" data-br aria-haspopup="dialog">📍 فرع <b>' + esc(brCur().n) + '</b> ▾</button> ' : '') + '<span class="dot' + (opn ? '' : ' off') + '"></span>' + (C.shop.area && !brCur() ? esc(C.shop.area) + ' · ' : '') + (opn ? 'مفتوح' + (hoursTxt() ? ' لحد ' + esc(hoursTxt().split('–')[1].trim()) : '') : 'مقفول دلوقتي') + '</small></div>'
       + '<div class="ic"><button data-go="#/orders" aria-label="طلباتي">📦</button><button data-go="#/cart" aria-label="السلة">🛒<i class="bdg" data-cart hidden></i></button></div></div>'
       + '<form class="srch" id="sf"><span>🔍</span><input id="sq" type="search" enterkeyhint="search" placeholder="دوّر على موبايل، جراب، اسكرينة..." autocomplete="off"></form></header>';
+    var srv = shopRev(); if (srv) html += '<button type="button" class="sr-chip" data-go="#/reviews">' + starsHTML(srv.a) + ' <b class="num">' + srv.a + '</b> · <span class="num">' + srv.n + '</span> تقييم للمحل ←</button>';   // تقييم المحل (2026-11-21)
     if (!opn) html += '<div class="banner warn">🌙 المحل مقفول دلوقتي (' + esc(hoursTxt()) + '). اطلب عادي وطلبك هيتجهز أول ما نفتح.</div>';
     if (C.notice) html += '<div class="banner info">📣 ' + esc(C.notice) + '</div>';
     html += '<div class="chips">' + cats.map(function (c) { return '<button class="chip" data-go="#/c/' + esc(c.id) + '"><span style="--c1:' + esc(c.c1 || '#2f7cf6') + ';--c2:' + esc(c.c2 || '#5aa0ff') + '">' + esc(c.ic || '📦') + '</span>' + esc(c.n) + '</button>'; }).join('')
@@ -222,8 +256,13 @@
         : '';
       html += '<div class="deal-carousel"><div class="deal-stage">' + dealSlideHTML(dealSlides[0], 0, dealSlides.length) + dealNav + '</div>' + dealDotsHTML(dealSlides.length) + '</div>';
     }
-    if (newOnes.length) html += '<div class="sec"><b>✨ لسه واصل</b></div>' + gridHTML(newOnes);
-    cats.slice(0, 4).forEach(function (c) { var l = sortList(visible().filter(function (p) { return p.c === c.id; })).slice(0, 4); html += '<div class="sec"><b>' + esc(c.ic || '') + ' ' + esc(c.n) + '</b><button data-go="#/c/' + esc(c.id) + '">الكل ←</button></div>' + gridHTML(l); });
+    // سلتك مستنياك (نون/أمازون): لو فيه حاجات في السلة، سطر يرجّعه يكمّل الطلب
+    var cn = cartCount(); if (cn) { var ct = cart(), cs = ct.reduce(function (a, x) { return a + lineTotal(x); }, 0);
+      html += '<button type="button" class="cartback" data-go="#/cart"><span class="cb-ims">' + ct.slice(0, 3).map(function (x) { return '<i>' + pic(P[x.id]) + '</i>'; }).join('') + '</span><span class="cb-t"><b>سلتك مستنياك</b><small><span class="num">' + cn + '</span> ' + (cn === 1 ? 'حاجة' : 'حاجات') + ' · ' + money(cs) + '</small></span><span class="cb-go">كمّل ←</span></button>'; }
+    var seen = seenList(); if (seen.length >= 2) html += '<div class="sec"><b>👀 شوفته قبل كده</b><button data-clear-seen>امسح</button></div><div class="hrow">' + rowHTML(seen) + '</div>';
+    if (newOnes.length) html += '<div class="sec"><b>✨ لسه واصل</b></div><div class="hrow">' + rowHTML(newOnes.slice(0, 12)) + '</div>';
+    cats.slice(0, 4).forEach(function (c) { var l = sortList(visible().filter(function (p) { return p.c === c.id; })).slice(0, 12); html += '<div class="sec"><b>' + esc(c.ic || '') + ' ' + esc(c.n) + '</b><button data-go="#/c/' + esc(c.id) + '">الكل ←</button></div>' + '<div class="hrow">' + rowHTML(l) + '</div>'; });
+    html += shopRevHome();
     html += svcCards(s);
     html += '<div class="box" style="text-align:center;background:color-mix(in srgb,#f59e0b 9%,var(--card));border-color:color-mix(in srgb,#f59e0b 35%,var(--line))"><b style="font-size:14px;font-weight:900">🤔 مش لاقي اللي عايزه؟</b><div style="color:var(--mut);font-size:12.5px;font-weight:600;margin:4px 0 10px">اكتبلنا وهنجيبهولك ونكلمك على واتساب</div><button class="btn b1" data-go="#/wish" style="width:100%">قولّنا عايز إيه</button></div>';
     html += footHTML();
@@ -262,7 +301,7 @@
         activeDealId = p.id;
         if (p._ps) { delete dealBanner.dataset.p; dealBanner.dataset.go = window.RdPoster.goOf(p._ps); } else { delete dealBanner.dataset.go; dealBanner.dataset.p = p.id; }
         // الصورة والعرض شكلهم مختلف: الكلاس والألوان بتاعة الشريحة دي
-        var sa = p._ps ? { cls: ' psb', style: '' } : poster() ? window.RdPoster.attrs(C.bn, (C.shop || {}).ac) : { cls: '', style: '' };
+        var sa = p._ps ? { cls: ' psb', style: '' } : poster() ? window.RdPoster.attrs(C.bn, (C.shop || {}).ac, ST + slug + '/i/') : { cls: '', style: '' };
         dealBanner.className = 'deal' + sa.cls; if (sa.style) dealBanner.setAttribute('style', sa.style); else dealBanner.removeAttribute('style');
         dealBanner.setAttribute('aria-label', 'العرض ' + (dealIndex + 1) + ' من ' + dealSlides.length + ': ' + p.n);
         dealBanner.innerHTML = dealContent(p); refit();
@@ -302,7 +341,8 @@
         dealDots.forEach(function (b) { b.addEventListener('click', function () { lastMove = Date.now(); }); });
         dealAuto = setInterval(function () {
           if (!dealBanner.isConnected) { clearInterval(dealAuto); dealAuto = 0; return; }
-          if (held || document.hidden || Date.now() - lastMove < 5000) return;
+          var rotS = window.RdPoster && C.bn ? window.RdPoster.clean(C.bn).rot : 5;   // صفحة البانر: كل 3/5/8 ثواني أو مايقلبش
+          if (!rotS || held || document.hidden || Date.now() - lastMove < rotS * 1000) return;
           lastMove = Date.now(); showDeal(dealIndex + 1, 1);
         }, 1000);
         dealBanner.addEventListener('click', function (e) {
@@ -379,15 +419,20 @@
   }
   function simHTML(p) {
     var list = similar(p); if (list.length < 2) return '';
-    return '<div class="simw"><div class="sec"><b>ممكن يعجبك كمان</b></div><div class="sim">' + list.map(function (x) {
+    return '<div class="simw"><div class="sec"><b>ممكن يعجبك كمان</b></div>' + rowHTML(list) + '</div>';
+  }
+  // صف كروت بيتسحب (المشابه، وأقسام الرئيسية من 2026-11-21)
+  function rowHTML(list) {
+    return '<div class="sim">' + list.map(function (x) {
       var e = eff(x), so = avail(x) <= 0;
       return '<div class="sc' + (so ? ' soldout' : '') + '" data-p="' + esc(x.id) + '"><div class="img">' + pic(x) + '</div>' + (e.pct && !so ? '<span class="sc-off">−' + e.pct + '%</span>' : '')
-        + '<div class="nm">' + esc(x.n) + '</div><div class="pr">' + (x.ask ? '<span class="ask">💬 اسأل</span>' : so ? '<span class="out">هيتوفر قريب</span>' : '<strong class="num">' + fm(e.pr) + '</strong>' + (e.was ? '<s class="num">' + fm(e.was) + '</s>' : '')) + '</div>'
+        + '<div class="nm">' + esc(x.n) + '</div>' + (revOf(x.id) ? '<div class="cr">★ <b class="num">' + revOf(x.id).a + '</b> <span class="num">(' + revOf(x.id).n + ')</span></div>' : '') + dropTag(x) + '<div class="pr">' + (x.ask ? '<span class="ask">💬 اسأل</span>' : so ? '<span class="out">هيتوفر قريب</span>' : '<strong class="num">' + fm(e.pr) + '</strong>' + (e.was ? '<s class="num">' + fm(e.was) + '</s>' : '')) + '</div>'
         + (!x.ask && !so && !(x.add && x.add.length) ? '<button class="sc-add" data-add="' + esc(x.id) + '" aria-label="ضيف للسلة">+</button>' : '') + '</div>';
-    }).join('') + '</div></div>';
+    }).join('') + '</div>';
   }
   function product(id) {
     var p = P[id]; if (!p) return go('#/');
+    seenAdd(p.id);
     var e = eff(p), q = avail(p), so = q <= 0, sel = [], n = 1;
     var imgs = (p.img || []).length ? p.img : [''];
     var spec = p.spec || {};
@@ -534,7 +579,13 @@
       return '<div class="ci"><div class="im" data-p="' + esc(p.id) + '">' + pic(p) + '</div><div class="t"><b>' + esc(p.n) + '</b>' + (adds.length ? '<small>+ ' + esc(adds.map(function (a) { return a.n; }).join('، ')) + '</small>' : '') + '<strong>' + money(lineTotal(x)) + '</strong></div><span class="qty"><button data-k="' + esc(x.k) + '" data-d="-1">' + (x.q === 1 ? '🗑' : '−') + '</button><b class="num">' + x.q + '</b><button data-k="' + esc(x.k) + '" data-d="1">+</button></span></div>';
     }).join('') + '</div>';
     if (fixedQ) html += '<div class="banner warn">⚠ فيه حاجات خلصت أو الكمية المتاحة منها قلّت، فالسلة اتظبطت على المتاح.</div>';
-    var d = C.del || {}; if (+d.freeOver && sub < +d.freeOver) html += '<div class="banner info">🚚 ضيف بـ ' + money(d.freeOver - sub) + ' كمان والتوصيل يبقى ببلاش</div>';
+    var d = C.del || {};
+    if (+d.freeOver) { var pc = Math.min(100, Math.round(sub / d.freeOver * 100)), got = sub >= +d.freeOver;   // شريط زي نون/طلبات: فاضلك كام وتاخد التوصيل ببلاش
+      html += '<div class="box freebar' + (got ? ' ok' : '') + '"><b>' + (got ? '🎉 التوصيل ببلاش على الطلب ده' : '🚚 فاضلك ' + money(d.freeOver - sub) + ' والتوصيل يبقى ببلاش') + '</b><span class="fb-bar"><u style="width:' + pc + '%"></u></span></div>'; }
+    var inCart = {}; c.forEach(function (x) { inCart[x.id] = 1; });
+    var ups = []; c.forEach(function (x) { similar(P[x.id]).forEach(function (y) { if (!inCart[y.id] && ups.indexOf(y) < 0 && avail(y) > 0) ups.push(y); }); });
+    if (ups.length) html += '<div class="simw cart-up"><div class="sec"><b>ممكن يعجبك كمان</b></div>' + rowHTML(ups.slice(0, 10)) + '</div>';
+    if (waLink()) html += '<a class="btn bs cart-wa" target="_blank" rel="noopener" href="' + esc(waLink('السلام عليكم، عايز أسأل على الحاجات دي:\n' + c.map(function (x) { return '• ' + P[x.id].n + ' × ' + x.q + ' = ' + fm(lineTotal(x)) + ' ج'; }).join('\n') + '\nالمجموع: ' + fm(sub) + ' ج')) + '">' + WA_SVG.replace('<svg', '<svg style="width:18px;height:18px"') + ' اسأل المحل على السلة دي في واتساب</a>';
     html += '</div><div class="side"><div class="box sum"><div><span>المجموع</span><span>' + money(sub) + '</span></div><div><span>التوصيل</span><span>بيتحسب في الخطوة الجاية</span></div></div>';
     html += '<div class="cta"><button class="btn b1" data-go="#/checkout">كمّل الطلب · <span class="num">' + fm(sub) + '</span></button></div></div>';
     shell(html, '#/cart', true);
@@ -886,6 +937,7 @@
   function toggleFav(id) {
     var A = acct(), l = favs().slice(), i = l.indexOf(id), on = i < 0;
     if (on) l.unshift(id); else l.splice(i, 1);
+    var fp = ls('favpr') || {}; if (on && P[id]) fp[id] = eff(P[id]).pr; else delete fp[id]; ls('favpr', fp);
     l = l.slice(0, 60);
     if (A) { A.me.favs = l; setAcct(A); clearTimeout(favT); favT = setTimeout(function () { meSet({ favs: acct() ? acct().me.favs : l }); }, 700); } else ls('favs', l);
     toast(on ? '❤ اتضاف للمفضلة' : 'اتشال من المفضلة', on ? 'ok' : '');
@@ -1041,6 +1093,35 @@
       fr.readAsDataURL(file);
     });
   }
+  function shopRateBox(trk) {
+    var box = document.getElementById('shopbox'); if (!box) return;
+    gw({ action: 'store-review-get', trk: trk }).then(function (r) {
+      if (!box.isConnected) return;
+      var m = (r.mine || []).filter(function (x) { return x.pid === '_shop'; })[0];
+      if (!r.ok || (!r.canShop && !m)) { box.remove(); return; }
+      var v = m ? { s: m.stars, g: m.tags || [], t: m.text || '' } : { s: 0, g: [], t: '' }, edit = !m;
+      var paint = function () {
+        if (!edit) { box.innerHTML = '<div class="box rate-box"><h4>🏪 شكرًا على رأيك في المحل</h4><div class="rt-row">' + starsHTML(v.s, true) + '</div>' + (v.g.length ? '<div class="sr-mini">' + v.g.map(function (k) { return '<span>' + tagN(k) + '</span>'; }).join('') + '</div>' : '') + (r.canShop ? '<button type="button" class="btn bs" id="sr-edit" style="width:100%;margin-top:8px">✏️ عدّل</button>' : '') + '</div>'; var e = document.getElementById('sr-edit'); if (e) e.onclick = function () { edit = true; paint(); }; return; }
+        box.innerHTML = '<div class="box rate-box"><h4>🏪 رأيك في المحل؟ <small>بيساعد زباين تانيين</small></h4>'
+          + '<div class="rt-stars sr-stars" role="radiogroup" aria-label="عدد النجوم">' + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" role="radio" aria-checked="' + (v.s === n) + '" aria-label="' + n + ' من 5" data-s="' + n + '" class="' + (n <= v.s ? 'on' : '') + '">★</button>'; }).join('') + '</div>'
+          + '<div class="sr-pick">' + SHOP_TAGS.map(function (t) { return '<button type="button" data-g="' + t[0] + '" class="' + (v.g.indexOf(t[0]) >= 0 ? 'on' : '') + '">' + t[1] + '</button>'; }).join('') + '</div>'
+          + '<textarea class="in rt-t" id="sr-t" maxlength="340" rows="2" placeholder="اكتب حاجة (اختياري)">' + esc(v.t) + '</textarea>'
+          + '<button type="button" class="btn bg" id="sr-send" style="width:100%;margin-top:8px"' + (v.s ? '' : ' disabled') + '>ابعت رأيك</button><div class="hint" style="margin-top:8px">بيظهر باسمك الأول بس، من غير رقمك.</div></div>';
+        var ta = document.getElementById('sr-t'); ta.oninput = function () { v.t = ta.value; };
+        box.querySelectorAll('[data-s]').forEach(function (b) { b.onclick = function () { v.t = ta.value; v.s = +b.dataset.s; paint(); }; });
+        box.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { v.t = ta.value; var k = b.dataset.g, i = v.g.indexOf(k); if (i >= 0) v.g.splice(i, 1); else v.g.push(k); b.classList.toggle('on', i < 0); }; });
+        var sd = document.getElementById('sr-send');
+        sd.onclick = function () {
+          sd.disabled = true; sd.textContent = '⏳ بنبعت...';
+          gw({ action: 'store-review', trk: trk, shop: { s: v.s, tags: v.g, t: v.t } }).then(function (x) {
+            if (!x.ok) { sd.disabled = false; sd.textContent = 'ابعت رأيك'; return toast(x.error || 'التقييم ماتبعتش، جرّب تاني', 'bad'); }
+            edit = false; paint(); toast('⭐ شكرًا! رأيك اتنشر', 'ok'); loadRev();
+          });
+        };
+      };
+      paint();
+    });
+  }
   function rateBox(trk, o) {
     var box = document.getElementById('rvbox'); if (!box) return;
     gw({ action: 'store-review-get', trk: trk }).then(function (r) {
@@ -1116,6 +1197,7 @@
         if (o.pay_state === 'paid') html += '<div class="banner" style="background:var(--okbg);color:var(--okc)">✓ اتدفع ' + (o.pay === 'card' ? 'بالفيزا' : o.pay === 'voda' ? 'بفودافون كاش' : 'بانستا') + '</div>';
         html += '<div class="box"><div class="trk">' + (bad ? '<div class="x"><i>✕</i><span><b>' + esc(lab(o.kind, o.pickup, s, ask, reply)) + '</b><small>' + tm(at[s]) + '</small></span></div>'
           : flow.map(function (f, i) { var c = i < idx || (i === idx && s === 'done') ? 'd' : i === idx ? 'c' : 'n'; return '<div class="' + c + '"><i>' + (c === 'd' ? '✓' : c === 'c' ? esc((ST_ORDER[f] || [''])[0]) : '') + '</i><span><b>' + esc(lab(o.kind, o.pickup, f, ask, reply)) + '</b><small>' + (i <= idx ? tm(at[f]) : '—') + '</small></span></div>'; }).join('')) + '</div></div>';
+        if (o.kind !== 'wish' && s === 'done') html += '<div id="shopbox"></div>';   // رأيك في المحل (2026-11-21)
         if (o.kind === 'order' && s === 'done' && (o.items || []).length) html += '<div id="rvbox"></div>';   // قيّم اللي اشتريته (بعد ما وصل)
         if ((o.items || []).length || o.totals) {
           var t = o.totals || {};
@@ -1129,6 +1211,7 @@
         }
         html += '<div class="cta">' + (waLink() ? '<a class="btn bw" target="_blank" rel="noopener" href="' + esc(waLink('بخصوص طلب W-' + o.no)) + '">💬 كلّم المحل</a>' : '') + (s === 'new' ? '<button class="btn bs" id="cancel">✕ الغي الطلب</button>' : s === 'done' && o.kind === 'order' && waLink() ? '<a class="btn bs" target="_blank" rel="noopener" href="' + esc(waLink('عايز أرجّع حاجة من طلب W-' + o.no + '. السبب: ')) + '">↩ عايز أرجّع حاجة</a>' : '') + '</div>';
         shell(html, '#/me', true); if (QUIET) { QUIET = false; window.scrollTo({ top: y, behavior: 'instant' }); }
+        if (document.getElementById('shopbox')) shopRateBox(trk);
         if (document.getElementById('rvbox')) rateBox(trk, o);
         var cp = app.querySelector('[data-copy]'); if (cp) cp.onclick = function () { copy(cp.dataset.copy); toast('اتنسخ ✓', 'ok'); };
         var pf = document.getElementById('pf'); if (pf) pf.onchange = function () {
@@ -1211,6 +1294,7 @@
       case 'wish': return wishPage(q.get('p'));
       case 'trade': return wishPage('', true);
       case 'info': return infoPage();
+      case 'reviews': return reviewsPage();
       default: return home();
     }
   }
@@ -1230,9 +1314,12 @@
   window.addEventListener('hashchange', render);
   var fitT; window.addEventListener('resize', function () { clearTimeout(fitT); fitT = setTimeout(function () { fitDeal(document.querySelector('[data-deal-banner] b')); }, 120); });
   window.addEventListener('beforeunload', saveY);
+  // زرار الواتساب العايم كان بيغطي الكروت (مراجعة 2026-11-21): بيستخبى وانت نازل وبيرجع لما تطلع أو تقف ثانية
+  var waY = 0, waT = 0; window.addEventListener('scroll', function () { var w = document.querySelector('.wa'); if (!w) return; var y = window.scrollY; if (y > waY + 4 && y > 120) w.classList.add('hide'); else if (y < waY - 4) w.classList.remove('hide'); waY = y; clearTimeout(waT); waT = setTimeout(function () { w.classList.remove('hide'); }, 1200); }, { passive: true });
   document.addEventListener('click', function () { clearTimeout(saveT); saveY(); }, true);   // قبل أي تنقّل: احفظ مكان الصفحة اللي انت فيها
   document.addEventListener('click', function (e) {
     var t = e.target.closest('[data-add]'); if (t) { e.stopPropagation(); return addToCart(t.dataset.add, 1, []); }
+    if (e.target.closest('[data-clear-seen]')) { ls('seen', []); return render(); }
     var g = e.target.closest('[data-go]'); if (g) { e.preventDefault(); return go(g.dataset.go); }
     var p = e.target.closest('[data-p]'); if (p && !e.target.closest('a')) return go('#/p/' + encodeURIComponent(p.dataset.p));
     var b = e.target.closest('[data-back]'); if (b) { if (history.length > 1 && !b.dataset.back) history.back(); else go(b.dataset.back || '#/'); }

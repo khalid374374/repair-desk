@@ -64,3 +64,25 @@
 .pst .pst-stk.amt small, .deal.pst .pst-stk.amt small { font-size: .85em; }
 .pst .pst-stk.amt b, .deal.pst .pst-stk.amt b, .pst .pst-stk.amt.lg b, .deal.pst .pst-stk.amt.lg b { font-size: 1.35em; }
 @container pst (min-width: 700px) { .pst .pst-cta { font-size: 17px; padding: .5em 1.25em; margin-top: 4px; } .pst .pst-stk.amt { width: auto; height: auto; font-size: 16px; } .pst .pst-tm .cd span, .deal.pst .pst-tm .cd span { padding: .22em .3em .15em; } .pst .pst-copy { gap: 2px; } }   /* الكمبيوتر: البانر طوله 262 بالكتير، فالزرار والتايمر أضيق شوية علشان مايتقصّوش */
+/* صورة خلفية من المحل بدل الألوان (2026-11-21): الناحية اليمين (الكلام) أغمق علشان يتقري */
+.pst.pst-bgi, .deal.pst.pst-bgi { background: linear-gradient(270deg, rgba(0, 0, 0, .62), rgba(0, 0, 0, .28) 55%, rgba(0, 0, 0, .1)), var(--pimg) center / cover no-repeat !important; }
+.pst-bgi .pst-bg { opacity: .5; }
+/* ===== بانر "فول كاستمايز" (خالد 2026-11-21، صفحة البانر في الكاشير) ===== */
+.pst .pst-h, .deal.pst .pst-h { font-size: calc(21px * var(--hs, 1)); font-size: calc(clamp(5px, 5.8cqw, 27px) * var(--hs, 1)); }
+.pst .pst-prod { scale: var(--pz, 1); }
+.pst.pp-n .pst-copy { max-width: 100%; }
+.pst.pf-card .pst-prod.im img, .pst.pf-circle .pst-prod.im img { width: 100%; height: 100%; max-width: none; max-height: none; box-sizing: border-box; }
+.pst.pf-card .pst-prod.im img { object-fit: contain; background: #fff; padding: 8%; border-radius: 16px; }
+.pst.pf-circle .pst-prod.im img { object-fit: cover; border-radius: 50%; border: 4px solid #fff; }
+.pst.cs-s .pst-cta { font-size: calc(15px * .8); font-size: calc(clamp(7px, 4.4cqw, 19px) * .8); }
+.pst.cs-l .pst-cta { font-size: calc(15px * 1.2); font-size: calc(clamp(7px, 4.4cqw, 19px) * 1.2); }
+.pst.cc-w .pst-cta { background: #fff; color: var(--pa); } .pst.cc-o .pst-cta { background: linear-gradient(135deg, #f0753b, #e53950); color: #fff; }
+.pst.cc-y .pst-cta { background: #ffd23f; color: #5c2a00; } .pst.cc-n .pst-cta { background: #0d2557; color: #fff; }
+.pst .pst-stk.sc-y { background: #ffd23f; color: #9e1b16; } .pst .pst-stk.sc-r { background: #e53950; color: #fff; }
+.pst .pst-stk.sc-w { background: #fff; color: #c92a43; } .pst .pst-stk.sc-g { background: #17904f; color: #fff; }
+.pst .pst-stk.tag { width: auto; height: auto; border-radius: .35em; padding: .55em 1.1em .5em 1.6em; clip-path: polygon(18% 0, 100% 0, 100% 100%, 18% 100%, 0 50%); transform: rotate(-6deg); box-shadow: none; animation: none; font-size: 13px; font-size: clamp(6px, 3.6cqw, 16px); }
+.pst .pst-stk.one b, .deal.pst .pst-stk.one b { font-size: 1.15em; }
+.pst.pst-bgi, .deal.pst.pst-bgi { background: linear-gradient(270deg, rgba(0, 0, 0, var(--pdim, .55)), rgba(0, 0, 0, calc(var(--pdim, .55) * .45)) 55%, rgba(0, 0, 0, calc(var(--pdim, .55) * .15))), var(--pimg) center / cover no-repeat !important; }
+.pst.ts-line .pst-tm .cd span, .deal.pst.ts-line .pst-tm .cd span { background: none !important; min-width: 0; padding: 0 .12em; font-size: 1.15em; }
+.pst.ts-line .pst-tm .cd em, .deal.pst.ts-line .pst-tm .cd em { display: inline; font-size: .72em; margin-inline-start: 2px; }
+@container pst (min-width: 700px) { .pst.cs-s .pst-cta { font-size: 14px; } .pst.cs-l .pst-cta { font-size: 20px; } .pst .pst-stk.tag { width: auto; height: auto; font-size: 16px; } }

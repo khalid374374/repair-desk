@@ -605,9 +605,61 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
 .deal.psb .psb-bg { position: absolute; top: -10%; left: -10%; right: -10%; bottom: -10%; background-size: cover; background-position: center; filter: blur(22px) saturate(1.2); opacity: .9; }
 .deal.psb img { position: relative; display: block; width: 100%; height: 100%; object-fit: cover; }
 @supports not (aspect-ratio: 1) { .deal.psb { height: 240px; } }
-@media (min-width: 700px) { .deal.psb { aspect-ratio: auto; height: 340px; } .deal.psb img { object-fit: contain; } }
-@media (min-width: 1100px) { .deal.psb { height: 420px; } }
+@media (min-width: 700px) { .deal.psb { aspect-ratio: auto; height: 250px; } .deal.psb img { object-fit: contain; } }
+@media (min-width: 1100px) { .deal.psb { height: 290px; } }   /* كانت 340/420: كبيرة أوي على الكمبيوتر (خالد 2026-11-21) */
 .deal.psb.fit img { object-fit: contain; } .deal.psb.fit::before { content: none; }   /* صورة مش بالمقاس المقترح: كاملة، وورها نفسها متغبّشة (psb-bg) */
 /* صور الكروت (خالد 2026-11-21، بعد تجربة الأبيض: "الصورة تبقى كاملة، مش محتاجة خلفية بيضا"): الصورة بتملى مكانها كله،
    واللي شكلها بعيد عن المربع (كيبورد عريض) بتبان كاملة وورها نفسها متغبّشة (.fit من store.js) — من غير أبيض في الغامق */
 .pc .img.fit img, .sc .img.fit img, .deal .di.fit img, .ci .im.fit img { padding: 0 !important; }
+/* مراجعة المتجر (2026-11-21) */
+/* 1) أقسام الرئيسية صفوف بتتسحب، بنفس عرض الصفحة */
+.hrow { margin: 0 0 6px; } .hrow .sim { padding-top: 4px; }
+@media (min-width: 700px) { .hrow .sim { padding-inline: 28px; scroll-padding-inline: 28px; } .hrow .sc { width: 190px; } }
+@media (min-width: 1100px) { .hrow .sc { width: 210px; } }
+/* 2) أيقونات الشريط اللي تحت في الغامق (👤 و🗂 بتبقى غامقة على آيفون وويندوز) */
+@media (prefers-color-scheme: dark) { .nav button em { filter: drop-shadow(0 0 1.2px rgba(255, 255, 255, .6)) brightness(1.15); } }
+/* 3) زرار الواتساب أصغر شوية وبيستخبى وانت نازل */
+.wa { width: 48px; height: 48px; transition: transform .25s, opacity .25s; } .wa svg { width: 25px; height: 25px; }
+.wa.hide { transform: translateY(18px) scale(.6); opacity: 0; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .wa { transition: none; } }
+/* 5) نقط صور المنتج في كبسولة صغيرة فوق الورقة، مش لازقة في الصورة */
+.gal .dots { width: max-content; margin: 0 auto; padding: 5px 8px; border-radius: 99px; background: rgba(10, 26, 68, .28); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.gal .dots i { background: rgba(255, 255, 255, .55) !important; } .gal .dots i.on { background: #fff !important; }
+@media (max-width: 1099px) { .gal .dots { bottom: 112px; } }
+/* أفكار من المتاجر الكبيرة (2026-11-21) */
+.sc .cr { font-size: 11.5px; padding: 0 3px 2px; color: var(--mut); } .sc .cr b { color: #e0a100; }
+.drop { font-size: 11px; font-weight: 800; color: var(--gr); padding: 0 3px 3px; }
+@media (prefers-color-scheme: dark) { .drop { color: #6fe0a0; } }
+.cartback { display: flex; align-items: center; gap: 12px; margin: 12px 14px 4px; width: calc(100% - 28px); padding: 10px 14px; border-radius: 18px; background: var(--card); border: 1.5px solid var(--line); box-shadow: var(--sh); text-align: start; color: var(--ink); cursor: pointer; }
+.cb-ims { display: flex; flex: none; } .cb-ims i { width: 38px; height: 38px; border-radius: 11px; overflow: hidden; background: var(--soft); display: grid; place-items: center; font-style: normal; font-size: 18px; border: 2px solid var(--card); margin-inline-start: -10px; } .cb-ims i:first-child { margin-inline-start: 0; }
+.cb-ims img { width: 100%; height: 100%; object-fit: cover; }
+.cb-t { flex: 1; min-width: 0; display: grid; } .cb-t b { font-weight: 900; font-size: 14px; } .cb-t small { color: var(--mut); font-weight: 700; font-size: 12px; }
+.cb-go { flex: none; font-weight: 900; font-size: 13px; color: var(--on-ac); background: var(--ac-fill); padding: 7px 13px; border-radius: 99px; }
+@media (min-width: 700px) { .cartback { margin-inline: 28px; width: calc(100% - 56px); } }
+.sec button[data-clear-seen] { color: var(--mut); }
+.freebar b { display: block; font-size: 13.5px; font-weight: 900; margin-bottom: 8px; }
+.fb-bar { display: block; height: 8px; border-radius: 99px; background: var(--soft); overflow: hidden; } .fb-bar u { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--ac-fill), #22c06b); transition: width .4s; }
+.freebar.ok b { color: var(--gr); } .freebar.ok .fb-bar u { background: #22c06b; }
+.cart-up { margin: 14px 0 0; } .cart-up .sec { padding-inline: 14px; }   /* من غير سالب: كان بيعمل سكرول بالعرض */
+.cart-wa { flex: none; display: flex; margin: 4px 14px 14px; gap: 8px; font-size: 14px; color: #0b6b37; background: #e8f8ee; }
+@media (prefers-color-scheme: dark) { .cart-wa { background: #25d36622; color: #6ee7a0; } }
+.simw, .hrow, .sim { flex-shrink: 0; }   /* صف بيتسحب (overflow-x) كان بيتضغط في الصفحة اللي ارتفاعها ثابت (السلة) */
+/* تقييم المحل (2026-11-21) */
+.sr-chip { display: inline-flex; align-items: center; gap: 6px; margin: 12px 14px 0; padding: 7px 13px; border-radius: 99px; background: var(--card); border: 1px solid var(--line); font-size: 12.5px; font-weight: 800; color: var(--ink); box-shadow: var(--sh); cursor: pointer; }
+.sr-chip .stars { font-size: 12px; }
+@media (min-width: 700px) { .sr-chip { margin-inline: 28px; } }
+.sr-home { padding: 0 14px; } @media (min-width: 700px) { .sr-home { padding: 0 28px; } }
+.sr-sum { display: grid; grid-template-columns: 116px 1fr; gap: 14px; align-items: center; padding: 14px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); margin-bottom: 8px; }
+.sr-sum.side { grid-template-columns: 1fr; text-align: center; }
+.sr-big { text-align: center; display: grid; justify-items: center; gap: 4px; } .sr-big > b { font-size: 40px; font-weight: 900; line-height: 1; } .sr-big small { font-size: 11px; color: var(--mut); font-weight: 700; }
+.sr-bars > div { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--mut); font-weight: 700; margin: 3px 0; }
+.sr-bars u { flex: 1; height: 7px; border-radius: 9px; background: var(--soft); overflow: hidden; display: block; } .sr-bars u i { display: block; height: 100%; border-radius: 9px; background: #f5a524; }
+.sr-bars small { min-width: 16px; text-align: center; }
+.sr-tags, .sr-mini { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; } .sr-tags span, .sr-mini span { background: var(--card); border: 1px solid var(--line); border-radius: 99px; padding: 5px 10px; font-size: 12px; font-weight: 700; color: var(--ink); } .sr-tags b { color: var(--gr); }
+.sr-mini { margin: 6px 0 0; } .sr-mini span { font-size: 11px; padding: 3px 8px; background: var(--soft); }
+.sr-page { padding: 10px 14px 24px; display: grid; gap: 12px; }
+@media (min-width: 900px) { .sr-page { grid-template-columns: 300px minmax(0, 1fr); align-items: start; padding-inline: 28px; } .sr-col { position: sticky; top: 90px; } }
+.sr-stars { justify-content: center; margin: 4px 0 10px; } .sr-stars button { font-size: 32px; }
+.sr-pick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; justify-content: center; }
+.sr-pick button { border: 1px solid var(--inl); border-radius: 99px; padding: 6px 11px; font-size: 12.5px; font-weight: 700; color: var(--ink); background: var(--card); cursor: pointer; }
+.sr-pick button.on { background: var(--ac-fill); border-color: var(--ac-fill); color: var(--on-ac); }
