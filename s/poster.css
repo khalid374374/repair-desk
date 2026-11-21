@@ -17,7 +17,7 @@
 .pst .pst-cta { margin-top: 6px; margin-top: clamp(2px, 1.6cqw, 8px); background: #fff; color: var(--pa); font-weight: 900; font-size: 13px; font-size: clamp(5px, 3.6cqw, 15px); padding: .55em 1.15em; border-radius: 99px; box-shadow: 0 6px 16px #0003; white-space: nowrap; }
 /* المنتج: إيموجي أو صورة، في النص الشمال من البوستر */
 .pst .pst-prod { position: absolute; left: 4%; top: 22%; width: 36%; height: 62%; z-index: 1; display: grid; place-items: center; font-size: 84px; font-size: 22cqw; line-height: 1; filter: drop-shadow(0 16px 16px #0005); }
-.pst .pst-prod.im img { width: 100%; height: 100%; object-fit: cover; border-radius: 18px; border: 4px solid #ffffffd9; transform: rotate(-6deg); }
+.pst .pst-prod.im img { display: block; width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 14px; box-shadow: 0 14px 30px #0004; }   /* الصورة بشكلها بس، من غير مربع أبيض حواليها (خالد 2026-11-21)، ومن غير قص ولا ميلان */   /* زي أمازون: الصورة كاملة على أبيض، من غير قص ولا ميلان (خالد 2026-11-21) */
 /* الستيكر: دايرة، الكلمة صغيرة فوق والرقم كبير تحت */
 .pst .pst-stk { position: absolute; left: 3%; top: 4%; z-index: 3; width: 72px; height: 72px; width: 20cqw; height: 20cqw; font-size: 12px; font-size: 3.3cqw; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; background: #ffd23f; color: #9e1b16; text-align: center; line-height: 1.05; white-space: nowrap; transform: rotate(-12deg); box-shadow: 0 6px 14px #0004, inset 0 0 0 3px #ffffff66; }
 .pst .pst-stk small, .deal.pst .pst-stk small { font-size: .95em; font-weight: 800; color: inherit; opacity: .9; }
@@ -25,9 +25,9 @@
 .pst .pst-stk.lg b, .deal.pst .pst-stk.lg b { font-size: 1.2em; }   /* مبلغ طويل (1,500 ج) */
 /* التايمر جوه عمود الكلام، تحت السعر وفوق الزرار */
 .pst .pst-tm { display: block; font-size: 13px; font-size: clamp(6px, 3.8cqw, 16px); margin-top: 3px; }   /* أكبر (خالد 2026-11-21: "نكبر التايمر") */
-.pst .pst-tm .cd, .deal.pst .pst-tm .cd { margin: 0; gap: 4px; gap: 1cqw; }
-.pst .pst-tm .cd span, .deal.pst .pst-tm .cd span { min-width: 0; padding: .2em .55em .1em; font-size: 1.1em; border: 0; box-shadow: none; }
-.pst .pst-tm .cd em, .deal.pst .pst-tm .cd em { font-size: .75em; }
+.pst .pst-tm .cd, .deal.pst .pst-tm .cd { margin: 0; gap: 5px; gap: 1.5cqw; }
+.pst .pst-tm .cd span, .deal.pst .pst-tm .cd span { min-width: 3.3em; padding: .35em .3em .3em; font-size: 1.15em; line-height: 1.25; border: 0; border-radius: .45em; box-shadow: none; text-align: center; }   /* مربعات مش كبسولات */
+.pst .pst-tm .cd em, .deal.pst .pst-tm .cd em { font-size: .68em; white-space: nowrap; }
 /* فكرة 1: شرايط مايلة بتتحرك + المنتج بيطفو + الستيكر بينطّ */
 .pst-p1 .pst-bg { inset: -40%; background: repeating-linear-gradient(115deg, #ffffff16 0 22px, transparent 22px 60px); animation: pstSlide 9s linear infinite; }
 .pst-p1 .pst-prod { animation: pstFloat 3.4s ease-in-out infinite; }
@@ -55,3 +55,12 @@
 @media (prefers-reduced-motion: reduce) { .pst *, .pst .pst-bg { animation: none !important; } }
 /* بوستر عريض (الكمبيوتر): المنتج أكبر شوية والكلام أعرض، والمقاسات بحد أقصى (من فوق) */
 @container pst (min-width: 700px) { .pst .pst-h, .deal.pst .pst-h { -webkit-line-clamp: 1; } .pst .pst-prod { left: 8%; width: 28%; top: 10%; height: 80%; font-size: 150px; } .pst .pst-copy { max-width: 55%; } .pst .pst-stk { left: 4%; width: 92px; height: 92px; font-size: 15px; } .pst .pst-tm { font-size: 13px; } }
+/* 2026-11-21 (خالد): الصورة في مربع أبيض على قد طول مكانها (كانت بتطلع برّه البانر)، "اطلب دلوقتي" أكبر،
+   و"وفّر كام" مستطيل بكيرف تحت على الشمال علشان يختلف عن دايرة الخصم */
+.pst .pst-prod.im { width: auto; aspect-ratio: 1; max-width: 40%; }
+.pst .pst-cta { font-size: 15px; font-size: clamp(7px, 4.4cqw, 19px); padding: .6em 1.3em; }
+.pst .pst-stk.amt { width: auto; height: auto; padding: .55em .95em .5em; border-radius: .45em .45em .45em 1.8em; transform: rotate(-5deg); font-size: 13px; font-size: clamp(6px, 3.6cqw, 16px); }
+.pst-p1 .pst-stk.amt, .pst-p2 .pst-stk.amt, .pst-p3 .pst-stk.amt { animation: none; }
+.pst .pst-stk.amt small, .deal.pst .pst-stk.amt small { font-size: .85em; }
+.pst .pst-stk.amt b, .deal.pst .pst-stk.amt b, .pst .pst-stk.amt.lg b, .deal.pst .pst-stk.amt.lg b { font-size: 1.35em; }
+@container pst (min-width: 700px) { .pst .pst-cta { font-size: 17px; padding: .5em 1.25em; margin-top: 4px; } .pst .pst-stk.amt { width: auto; height: auto; font-size: 16px; } .pst .pst-tm .cd span, .deal.pst .pst-tm .cd span { padding: .22em .3em .15em; } .pst .pst-copy { gap: 2px; } }   /* الكمبيوتر: البانر طوله 262 بالكتير، فالزرار والتايمر أضيق شوية علشان مايتقصّوش */

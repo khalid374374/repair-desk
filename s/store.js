@@ -105,7 +105,7 @@
      دلوقتي بتبان كاملة، وورها نفس الصورة متغبّشة تملى المكان. الصور اللي قريبة من شكل المربع زي ما هي */
   document.addEventListener('load', function (e) {
     var im = e.target; if (!im || im.tagName !== 'IMG' || !im.naturalWidth) return;
-    var box = im.closest('.pc .img, .sc .img, .deal .di, .pst-prod.im, .ci .im, .deal.psb'); if (!box) return;
+    var box = im.closest('.pc .img, .sc .img, .deal .di, .ci .im, .deal.psb'); if (!box) return;
     var bw = box.clientWidth || 1, bh = box.clientHeight || 1, k = (im.naturalWidth / im.naturalHeight) / (bw / bh);
     var off = k > 1.3 || k < 0.72; box.classList.toggle('fit', off);   // toggle: البانر بيبدّل الصورة جوه نفس الزرار
     if (off) box.style.setProperty('--fitbg', 'url("' + im.currentSrc.replace(/"/g, '%22') + '")');
@@ -201,7 +201,8 @@
     var dealSlides = offs.filter(function (p) { return eff(p).end; }), preferredDeal = activeDealId || C.deal;
     // بوستر صورة من المحل (خالد 2026-11-21): الصور مكان عروض البانر، والدوسة بتفتح المنتج/القسم/العروض
     var psList = window.RdPoster && C.bn && window.RdPoster.imgs ? window.RdPoster.imgs(C.bn) : [];
-    if (psList.length) dealSlides = psList.map(function (x, i) { return { id: '_ps' + i, _ps: x, n: 'إعلان ' + (i + 1) }; });   // خالد 2026-11-16: البانر للعروض اللي ليها مدة بس؛ اللي من غير مدة بتفضل بخصمها في مكانها وفي "العروض"
+    var psOnly = psList.length && (window.RdPoster.clean(C.bn).pm === 'only' || !dealSlides.length), hasOffSlides = dealSlides.length && !psOnly;
+    if (psList.length) dealSlides = psList.map(function (x, i) { return { id: '_ps' + i, _ps: x, n: 'إعلان ' + (i + 1) }; }).concat(psOnly ? [] : dealSlides);   // الصور الأول وبعدها العروض   // خالد 2026-11-16: البانر للعروض اللي ليها مدة بس؛ اللي من غير مدة بتفضل بخصمها في مكانها وفي "العروض"
     var preferredIndex = dealSlides.findIndex(function (p) { return p.id === preferredDeal; });
     if (preferredIndex > 0) dealSlides.unshift(dealSlides.splice(preferredIndex, 1)[0]);
     var newOnes = visible().filter(function (p) { return isFresh(p) && avail(p) > 0; }).slice(0, 6);
@@ -215,7 +216,7 @@
       + (offs.length ? '<button class="chip" data-go="#/c/_off"><span style="--c1:#d6455f;--c2:#f0753b">🔥</span>العروض</button>' : '')
       + '<button class="chip" data-go="#/svc"><span style="--c1:#e48b07;--c2:#ffc35c">🛠</span>الخدمات</button></div>';
     if (dealSlides.length) {
-      html += psList.length ? '<div class="ps-gap"></div>' : '<div class="sec"><b>🔥 عروض لفترة محدودة</b><button data-go="#/c/_off">الكل ←</button></div>';
+      html += !hasOffSlides ? '<div class="ps-gap"></div>' : '<div class="sec"><b>🔥 عروض لفترة محدودة</b><button data-go="#/c/_off">الكل ←</button></div>';
       var dealNav = dealSlides.length > 1
         ? '<button type="button" class="deal-nav prev" data-deal-step="-1" aria-label="العرض السابق">←</button><button type="button" class="deal-nav next" data-deal-step="1" aria-label="العرض التالي">→</button>'
         : '';
@@ -260,6 +261,9 @@
         var p = dealSlides[dealIndex];
         activeDealId = p.id;
         if (p._ps) { delete dealBanner.dataset.p; dealBanner.dataset.go = window.RdPoster.goOf(p._ps); } else { delete dealBanner.dataset.go; dealBanner.dataset.p = p.id; }
+        // الصورة والعرض شكلهم مختلف: الكلاس والألوان بتاعة الشريحة دي
+        var sa = p._ps ? { cls: ' psb', style: '' } : poster() ? window.RdPoster.attrs(C.bn, (C.shop || {}).ac) : { cls: '', style: '' };
+        dealBanner.className = 'deal' + sa.cls; if (sa.style) dealBanner.setAttribute('style', sa.style); else dealBanner.removeAttribute('style');
         dealBanner.setAttribute('aria-label', 'العرض ' + (dealIndex + 1) + ' من ' + dealSlides.length + ': ' + p.n);
         dealBanner.innerHTML = dealContent(p); refit();
         if (!reduced) {
