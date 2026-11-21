@@ -360,12 +360,18 @@
   /* منتجات مشابهة تحت صفحة المنتج، صف بيتسحب للشمال زي أمازون (خالد 2026-11-21). نفس القسم والنوع والماركة وكلام في الاسم وسعر قريب */
   function similar(p) {
     var words = norm(p.n).split(' ').filter(function (w) { return w.length >= 3; }), pr = eff(p).pr || 0;
-    return visible().filter(function (x) { return x.id !== p.id; }).map(function (x) {
+    var scored = visible().filter(function (x) { return x.id !== p.id; }).map(function (x) {
       var sc = (x.c === p.c ? 3 : 0) + (p.s && x.s === p.s ? 3 : 0) + (p.b && x.b && norm(x.b) === norm(p.b) ? 2 : 0), xn = norm(x.n), xp = eff(x).pr || 0, k = 0;
       words.forEach(function (w) { if (k < 3 && xn.indexOf(w) >= 0) { sc++; k++; } });
       if (pr && xp && xp >= pr / 2 && xp <= pr * 2) sc++;
       return { x: x, sc: sc - (avail(x) <= 0 ? 2 : 0) };
-    }).filter(function (o) { return o.sc >= 3; }).sort(function (a, b) { return b.sc - a.sc; }).slice(0, 12).map(function (o) { return o.x; });
+    }).sort(function (a, b) { return b.sc - a.sc; });
+    /* المشابه الأول (نفس القسم/النوع/الماركة/الاسم)، ولو قليل (محل فيه منتجات قليلة) بيكمّل بباقي المنتجات: العروض الأول وبعدين السعر الأقرب
+       (خالد 2026-11-21: "ليه مش شايف الأصناف المشابهة" — متجره كل منتج في قسم لوحده فماكانش بيطلع حاجة) */
+    var sim = scored.filter(function (o) { return o.sc >= 3; }).map(function (o) { return o.x; });
+    if (sim.length < 6) sim = sim.concat(scored.filter(function (o) { return o.sc < 3 && avail(o.x) > 0; }).map(function (o) { return o.x; })
+      .sort(function (a, b) { var ea = eff(a), eb = eff(b); return (eb.pct ? 1 : 0) - (ea.pct ? 1 : 0) || Math.abs((ea.pr || 0) - pr) - Math.abs((eb.pr || 0) - pr); }));
+    return sim.slice(0, 12);
   }
   function simHTML(p) {
     var list = similar(p); if (list.length < 2) return '';
