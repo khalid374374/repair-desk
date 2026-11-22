@@ -663,3 +663,6 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
 .sr-pick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; justify-content: center; }
 .sr-pick button { border: 1px solid var(--inl); border-radius: 99px; padding: 6px 11px; font-size: 12.5px; font-weight: 700; color: var(--ink); background: var(--card); cursor: pointer; }
 .sr-pick button.on { background: var(--ac-fill); border-color: var(--ac-fill); color: var(--on-ac); }
+/* إعلان ليه صورة للكمبيوتر: بتملى البانر العريض كله من غير خلفية متغبّشة (2026-11-22) */
+.deal.psb picture { display: contents; }
+@media (min-width: 700px) { .deal.psb.psb-dk img, .deal.psb.psb-dk.fit img { object-fit: cover !important; padding: 0; } .deal.psb.psb-dk .psb-bg { display: none; } }

@@ -86,3 +86,36 @@
 .pst.ts-line .pst-tm .cd span, .deal.pst.ts-line .pst-tm .cd span { background: none !important; min-width: 0; padding: 0 .12em; font-size: 1.15em; }
 .pst.ts-line .pst-tm .cd em, .deal.pst.ts-line .pst-tm .cd em { display: inline; font-size: .72em; margin-inline-start: 2px; }
 @container pst (min-width: 700px) { .pst.cs-s .pst-cta { font-size: 14px; } .pst.cs-l .pst-cta { font-size: 20px; } .pst .pst-stk.tag { width: auto; height: auto; font-size: 16px; } }
+/* ===== 2026-11-22: الحركة كل حاجة لوحدها + لمعة العنوان في أي شكل + 3 أشكال متحركة جديدة ===== */
+.pst.no-mbg .pst-bg, .pst.no-mbg .pst-burst, .pst.no-mbg .pst-beam, .pst.no-mbg .pst-wave, .pst.no-mbg .pst-bub i, .pst.no-mbg .pst-ring { animation: none !important; }
+.pst.no-mpr .pst-prod { animation: none !important; }
+.pst.no-mst .pst-stk { animation: none !important; }
+.pst.sh-on .pst-h, .deal.pst.sh-on .pst-h { background: linear-gradient(100deg, #fff 30%, #ffe2b8 45%, #fff 60%); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; animation: pstShine 3.2s linear infinite; }
+.pst.sh-off .pst-h, .deal.pst.sh-off .pst-h { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: #fff; animation: none; text-shadow: 0 2px 12px #0003; }
+.pst.pst-still.sh-on .pst-h { animation: none; }
+/* p4 موجات: موجتين بيتحركوا تحت */
+.pst-p4 .pst-bg { background: radial-gradient(120% 80% at 85% 0%, #ffffff2e, transparent 60%); }
+.pst-p4 .pst-wave { position: absolute; left: 0; right: 0; bottom: -2%; height: 46%; z-index: 0; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M0 20 Q25 0 50 20 T100 20 T150 20 T200 20 V40 H0Z' fill='%23fff'/%3E%3C/svg%3E") 0 100% / 50% 100% repeat-x; opacity: .16; animation: pstWave 7s linear infinite; }
+.pst-p4 .pst-wave.w2 { height: 34%; opacity: .12; animation-duration: 11s; animation-direction: reverse; background-size: 40% 100%; }
+.pst-p4 .pst-prod { animation: pstFloat 3.4s ease-in-out infinite; }
+.pst-p4 .pst-stk { animation: pstPop 2.6s ease-in-out infinite; }
+@keyframes pstWave { to { background-position: 200% 100%; } }
+/* p5 فقاعات: دواير شفافة طالعة لفوق */
+.pst-p5 .pst-bg { background: radial-gradient(100% 70% at 15% 100%, #ffffff26, transparent 60%); }
+.pst-p5 .pst-bub { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; border-radius: inherit; }
+.pst-p5 .pst-bub i { position: absolute; bottom: -20%; width: 9%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffffff80, #ffffff1a 60%); border: 1px solid #ffffff40; animation: pstBub 7s ease-in infinite; }
+.pst-p5 .pst-bub i:nth-child(1) { left: 6%; animation-delay: 0s; } .pst-p5 .pst-bub i:nth-child(2) { left: 22%; width: 6%; animation-delay: 1.6s; animation-duration: 6s; }
+.pst-p5 .pst-bub i:nth-child(3) { left: 38%; width: 12%; animation-delay: 3.2s; animation-duration: 8s; } .pst-p5 .pst-bub i:nth-child(4) { left: 55%; width: 5%; animation-delay: .8s; }
+.pst-p5 .pst-bub i:nth-child(5) { left: 70%; width: 8%; animation-delay: 2.4s; animation-duration: 9s; } .pst-p5 .pst-bub i:nth-child(6) { left: 84%; width: 6%; animation-delay: 4s; }
+.pst-p5 .pst-bub i:nth-child(7) { left: 93%; width: 10%; animation-delay: 5.2s; animation-duration: 7.5s; }
+@keyframes pstBub { 0% { transform: translateY(0) scale(.6); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-560%) scale(1.1); opacity: 0; } }
+.pst-p5 .pst-prod { animation: pstFloat 3.4s ease-in-out infinite; }
+.pst-p5 .pst-stk { animation: pstPop 2.6s ease-in-out infinite; }
+/* p6 نيون: إطار منوّر بيلف حوالين البانر، والخلفية غامقة */
+.pst-p6 .pst-ring { position: absolute; top: -60%; left: -10%; width: 120%; height: 220%; z-index: -1; background: conic-gradient(from 0deg, transparent 0 55%, var(--pb) 70%, #fff 75%, var(--pa) 80%, transparent 90%); animation: pstSpin 5s linear infinite; pointer-events: none; }
+.pst-p6 .pst-core { position: absolute; inset: 3px; border-radius: 23px; z-index: -1; background: linear-gradient(135deg, #0b0b1e, color-mix(in srgb, var(--pa) 40%, #0b0b1e)); background: linear-gradient(135deg, #0b0b1e, #17173a); pointer-events: none; }
+.pst-p6 .pst-h, .deal.pst-p6 .pst-h { text-shadow: 0 0 10px var(--pb), 0 0 22px var(--pb); }
+.pst-p6 .pst-cta { background: transparent; color: #fff; border: 2px solid var(--pb); box-shadow: 0 0 14px var(--pb), inset 0 0 10px var(--pb); }
+.pst-p6 .pst-prod { animation: pstFloat 3.4s ease-in-out infinite; }
+.pst-p6 .pst-stk { background: var(--pb); color: #fff; box-shadow: 0 0 16px var(--pb); }
+.pst-p6.pst-bgi .pst-core { background: linear-gradient(270deg, rgba(0, 0, 0, var(--pdim, .55)), rgba(0, 0, 0, .15)), var(--pimg) center / cover no-repeat; }
