@@ -94,5 +94,16 @@
       + '<span class="pst-cta">' + esc(b.cta || 'اطلب دلوقتي') + ' ←</span></span>'
       + (b.pp === 'n' ? '' : '<span class="pst-prod' + (d.img ? ' im' : '') + '">' + d.pic + '</span>') + stk;
   }
-  W.RdPoster = { clean: clean, style: style, forP: forP, KEYS: KEYS, on: on, imgs: imgs, goOf: goOf, PAGES: PAGES, attrs: attrs, html: html, PAL: PAL, DEF: DEF, STYLES: STYLES, ELS: ELS, lay: lay };
+  // الكلام أطول من البانر (مقاسات كبيرة، أو خط المتجر Cairo أطول من خط الكاشير): الكلام كله بيصغر سوا (--fitk) لحد ما آخر حاجة
+  // (الزرار) تبان جوه البانر، فمابيتقصش أبدًا. بيرجّع النسبة (1 = مااتصغرش). 2026-11-22
+  function fit(el) {
+    var cp = el && el.querySelector && el.querySelector('.pst-copy'); if (!cp || !cp.lastElementChild) return 1;
+    el.style.setProperty('--fitk', '1'); var k = 1, last = cp.lastElementChild;
+    for (var i = 0; i < 14; i++) {
+      var need = last.offsetTop + last.offsetHeight, have = cp.clientHeight; if (!have || need <= have + 1) break;
+      k = Math.max(0.55, k * Math.max(0.9, have / need) - 0.005); el.style.setProperty('--fitk', k.toFixed(3)); if (k <= 0.55) break;
+    }
+    return k;
+  }
+  W.RdPoster = { clean: clean, fit: fit, style: style, forP: forP, KEYS: KEYS, on: on, imgs: imgs, goOf: goOf, PAGES: PAGES, attrs: attrs, html: html, PAL: PAL, DEF: DEF, STYLES: STYLES, ELS: ELS, lay: lay };
 })(window);

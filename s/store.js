@@ -195,6 +195,9 @@
   function fitDeal(b) {
     if (!b || !b.isConnected) return;
     b.style.fontSize = ''; b.style.height = ''; b.style.webkitLineClamp = ''; b.style.display = '';
+    // البوستر (poster.css) ليه مقاساته وعدد سطوره (سطرين موبايل، سطر كمبيوتر). fitDeal للكارت القديم بس:
+    // كان بيثبّت العنوان على طول سطرين و display:block فبيزق الزرار برّه البانر، والمتجر مابيبقاش زي معاينة الكاشير (2026-11-22)
+    if (b.closest && b.closest('.pst')) { b.style.minHeight = ''; if (window.RdPoster && RdPoster.fit) RdPoster.fit(b.closest('.pst')); return; }
     var base = parseFloat(getComputedStyle(b).fontSize) || 16, H = Math.ceil(base * 1.35 * 2), f = base;
     b.style.height = H + 'px'; b.style.minHeight = '0'; b.style.display = 'block';
     for (; f >= 12; f -= 0.5) { b.style.fontSize = f + 'px'; if (b.scrollHeight <= H + 1) return; }
@@ -272,7 +275,7 @@
     html += footHTML();
     shell(html, '#/');
     var dealBanner = app.querySelector('[data-deal-banner]');
-    var refit = function () { fitDeal(dealBanner && dealBanner.querySelector('b')); };
+    var refit = function () { tickTimers(); fitDeal(dealBanner && dealBanner.querySelector('b')); };   // التايمر بيتملي الأول (كان فاضي وقت القياس، وبعد ثانية بيطوّل الكلام ويزق الزرار برّه)
     refit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
     var dealDots = [].slice.call(app.querySelectorAll('[data-deal-index]'));
     if (dealAuto) { clearInterval(dealAuto); dealAuto = 0; }
@@ -1317,6 +1320,8 @@
   try { history.scrollRestoration = 'manual'; } catch (e) {}
   window.addEventListener('hashchange', render);
   var fitT; window.addEventListener('resize', function () { clearTimeout(fitT); fitT = setTimeout(function () { fitDeal(document.querySelector('[data-deal-banner] b')); }, 120); });
+  // خط Cairo بيحمّل كل تخانة لما تتستعمل أول مرة (900 مثلًا): لما يوصل الكلام بيطول، فالبانر بيتقاس تاني علشان الزرار مايتقصش
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', function () { fitDeal(document.querySelector('[data-deal-banner] b')); });
   window.addEventListener('beforeunload', saveY);
   // زرار الواتساب العايم كان بيغطي الكروت (مراجعة 2026-11-21): بيستخبى وانت نازل وبيرجع لما تطلع أو تقف ثانية
   var waY = 0, waT = 0; window.addEventListener('scroll', function () { var w = document.querySelector('.wa'); if (!w) return; var y = window.scrollY; if (y > waY + 4 && y > 120) w.classList.add('hide'); else if (y < waY - 4) w.classList.remove('hide'); waY = y; clearTimeout(waT); waT = setTimeout(function () { w.classList.remove('hide'); }, 1200); }, { passive: true });
