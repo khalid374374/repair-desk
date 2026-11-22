@@ -119,3 +119,43 @@
 .pst-p6 .pst-prod { animation: pstFloat 3.4s ease-in-out infinite; }
 .pst-p6 .pst-stk { background: var(--pb); color: #fff; box-shadow: 0 0 16px var(--pb); }
 .pst-p6.pst-bgi .pst-core { background: linear-gradient(270deg, rgba(0, 0, 0, var(--pdim, .55)), rgba(0, 0, 0, .15)), var(--pimg) center / cover no-repeat; }
+/* ===== 2026-11-22: مقاسات وأماكن لكل جهاز (bn.lay، poster.js layVars) =====
+   كل عنصر بياخد --lx / --ly (إزاحة بالبكسل على المقاس المرجعي) و --lk (الحجم). الموبايل من --m*، والكمبيوتر (بوستر 700 عرض وأكتر) من --d*.
+   الإزاحة بـ translate (مابتحركش الباقي)، والحجم: الكلام font-size (السطور بتنزل لوحدها)، والصورة والستيكر scale */
+.pst .pst-sub { --lx: var(--mx-sub, 0); --ly: var(--my-sub, 0); --lk: var(--mk-sub, 1); }
+.pst .pst-h { --lx: var(--mx-h, 0); --ly: var(--my-h, 0); --lk: var(--mk-h, 1); }
+.pst .pst-pr { --lx: var(--mx-pr, 0); --ly: var(--my-pr, 0); --lk: var(--mk-pr, 1); }
+.pst .pst-tm { --lx: var(--mx-tm, 0); --ly: var(--my-tm, 0); --lk: var(--mk-tm, 1); }
+.pst .pst-cta { --lx: var(--mx-cta, 0); --ly: var(--my-cta, 0); --lk: var(--mk-cta, 1); }
+.pst .pst-prod { --lx: var(--mx-prod, 0); --ly: var(--my-prod, 0); --lk: var(--mk-prod, 1); }
+.pst .pst-stk { --lx: var(--mx-stk, 0); --ly: var(--my-stk, 0); --lk: var(--mk-stk, 1); }
+.pst .pst-sub, .pst .pst-h, .pst .pst-pr, .pst .pst-tm, .pst .pst-cta, .pst .pst-prod, .pst .pst-stk { --ux: 1px; --uy: 1px; translate: calc(var(--lx) * var(--ux)) calc(var(--ly) * var(--uy)); }
+.pst .pst-prod { scale: calc(var(--pz, 1) * var(--lk)); } .pst .pst-stk { scale: var(--lk); }
+.pst .pst-copy { gap: calc(var(--mg, 3) * 1px); max-width: calc(var(--mw, 58) * 1%); } .pst.pp-n .pst-copy { max-width: calc(var(--mw, 100) * 1%); }
+.pst .pst-sub, .deal.pst .pst-sub { font-size: calc(12px * var(--lk)); }
+.pst .pst-h, .deal.pst .pst-h { font-size: calc(21px * var(--hs, 1) * var(--lk)); }
+.pst .pst-pr strong { font-size: calc(22px * var(--lk)); } .pst .pst-pr s { font-size: calc(13px * var(--lk)); }
+.pst .pst-tm { font-size: calc(13px * var(--lk)); }
+.pst .pst-cta { font-size: calc(15px * var(--lk)); } .pst.cs-s .pst-cta { font-size: calc(12px * var(--lk)); } .pst.cs-l .pst-cta { font-size: calc(18px * var(--lk)); }
+@supports (width: 1cqw) {
+  .pst .pst-sub, .pst .pst-h, .pst .pst-pr, .pst .pst-tm, .pst .pst-cta, .pst .pst-prod, .pst .pst-stk { --ux: calc(100cqw / 360); --uy: calc(100cqw / 360); }
+  .pst .pst-copy { gap: calc(var(--mg, 2.9) * 100cqw / 360); }
+  .pst .pst-sub, .deal.pst .pst-sub { font-size: calc(clamp(5px, 3.3cqw, 14px) * var(--lk)); }
+  .pst .pst-h, .deal.pst .pst-h { font-size: calc(clamp(5px, 5.8cqw, 27px) * var(--hs, 1) * var(--lk)); }
+  .pst .pst-pr strong { font-size: calc(clamp(5px, 6.1cqw, 28px) * var(--lk)); } .pst .pst-pr s { font-size: calc(clamp(5px, 3.6cqw, 15px) * var(--lk)); }
+  .pst .pst-tm { font-size: calc(clamp(6px, 3.8cqw, 16px) * var(--lk)); }
+  .pst .pst-cta { font-size: calc(clamp(7px, 4.4cqw, 19px) * var(--lk)); } .pst.cs-s .pst-cta { font-size: calc(clamp(7px, 4.4cqw, 19px) * .8 * var(--lk)); } .pst.cs-l .pst-cta { font-size: calc(clamp(7px, 4.4cqw, 19px) * 1.2 * var(--lk)); }
+}
+@container pst (min-width: 700px) {
+  .pst .pst-sub { --lx: var(--dx-sub, 0); --ly: var(--dy-sub, 0); --lk: var(--dk-sub, 1); }
+  .pst .pst-h { --lx: var(--dx-h, 0); --ly: var(--dy-h, 0); --lk: var(--dk-h, 1); }
+  .pst .pst-pr { --lx: var(--dx-pr, 0); --ly: var(--dy-pr, 0); --lk: var(--dk-pr, 1); }
+  .pst .pst-tm { --lx: var(--dx-tm, 0); --ly: var(--dy-tm, 0); --lk: var(--dk-tm, 1); }
+  .pst .pst-cta { --lx: var(--dx-cta, 0); --ly: var(--dy-cta, 0); --lk: var(--dk-cta, 1); }
+  .pst .pst-prod { --lx: var(--dx-prod, 0); --ly: var(--dy-prod, 0); --lk: var(--dk-prod, 1); }
+  .pst .pst-stk { --lx: var(--dx-stk, 0); --ly: var(--dy-stk, 0); --lk: var(--dk-stk, 1); }
+  .pst .pst-sub, .pst .pst-h, .pst .pst-pr, .pst .pst-tm, .pst .pst-cta, .pst .pst-prod, .pst .pst-stk { --ux: calc(100cqw / 1112); --uy: 1px; }
+  .pst .pst-copy { gap: calc(var(--dg, 2) * 1px); max-width: calc(var(--dw, 55) * 1%); } .pst.pp-n .pst-copy { max-width: calc(var(--dw, 100) * 1%); }
+  .pst .pst-tm { font-size: calc(13px * var(--lk)); }
+  .pst .pst-cta { font-size: calc(17px * var(--lk)); } .pst.cs-s .pst-cta { font-size: calc(14px * var(--lk)); } .pst.cs-l .pst-cta { font-size: calc(20px * var(--lk)); }
+}

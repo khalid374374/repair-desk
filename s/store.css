@@ -666,3 +666,7 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
 /* إعلان ليه صورة للكمبيوتر: بتملى البانر العريض كله من غير خلفية متغبّشة (2026-11-22) */
 .deal.psb picture { display: contents; }
 @media (min-width: 700px) { .deal.psb.psb-dk img, .deal.psb.psb-dk.fit img { object-fit: cover !important; padding: 0; } .deal.psb.psb-dk .psb-bg { display: none; } }
+/* صورة الكمبيوتر مش بمقاس البانر العريض (2026-11-22): كاملة وورها نفسها متغبّشة زي الموبايل، بدل ما تتقص.
+   psb-bgd = صورة الكمبيوتر (أو أول فريم ثابت منها لو متحركة، ibd) */
+.deal.psb .psb-bgd { display: none; position: absolute; top: -10%; left: -10%; right: -10%; bottom: -10%; background-size: cover; background-position: center; filter: blur(22px) saturate(1.2); opacity: .9; }
+@media (min-width: 700px) { .deal.psb.psb-dk.fit img { object-fit: contain !important; } .deal.psb.psb-dk.fit .psb-bgd { display: block; } }

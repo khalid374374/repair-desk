@@ -8,19 +8,37 @@
      hs: 80..140 — was — cta + cs (s|m|l) + cc ('' | w | o | y | n) — tm + ts (box|line)
      الحركة: anim (الكل) + mbg الخلفية + mpr المنتج بيطفو + mst الستيكر بينطّ + msh لمعة العنوان (افتراضي في الكشّاف بس)
      rot: يقلب كل 0|3|5|8 ثواني — ps: صور الإعلانات [{ im, go }] و pm: mix | only
-     ov: { <id المنتج>: شكل العرض ده لوحده } (2026-11-22: "أعدّل البانر لكل إعلان لوحده") */
+     ov: { <id المنتج>: شكل العرض ده لوحده } (2026-11-22: "أعدّل البانر لكل إعلان لوحده")
+     lay: مقاسات وأماكن لكل جهاز لوحده (خالد 2026-11-22: "بانر الكمبيوتر يبقى ليه تعديلات لوحده"، وبيتسحب بالماوس في صفحة البانر)
+       { m: موبايل, d: كمبيوتر } وكل واحد { <عنصر>: [x, y, حجم%], g: المسافة بين السطور, w: عرض الكلام% }
+       العناصر ELS. x/y بالبكسل على مقاس مرجعي (عرض البانر من جوه = 360 على الموبايل و1112 على الكمبيوتر، والطول على الكمبيوتر بكسل عادي) فبيتكبّروا مع البانر */
 (function (W) {
   var PAL = { red: ['#c92a43', '#ee6a35'], navy: ['#0d2557', '#1d4fb8'], night: ['#1a1033', '#3a1c5c'], green: ['#0b6b3a', '#139a6a'], purple: ['#4a2196', '#7c4ddb'], orange: ['#a53d06', '#d9620b'] };
   var DEF = { p1: 'red', p2: 'navy', p3: 'night', p4: 'purple', p5: 'orange', p6: 'night' };
   var STYLES = ['card', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6'];
   var PAGES = ['svc', 'repair', 'bill', 'trade', 'wish'];   // صفحات المتجر اللي البوستر الصورة يقدر يفتحها
-  var KEYS = ['st', 'col', 'c1', 'c2', 'bg', 'dim', 'pp', 'pf', 'pz', 'stk', 'sks', 'skc', 'skw', 'hs', 'was', 'cta', 'cs', 'cc', 'tm', 'ts', 'anim', 'mbg', 'mpr', 'mst', 'msh'];   // اللي يتعدّل لكل عرض لوحده
+  var KEYS = ['st', 'col', 'c1', 'c2', 'bg', 'dim', 'pp', 'pf', 'pz', 'stk', 'sks', 'skc', 'skw', 'hs', 'was', 'cta', 'cs', 'cc', 'tm', 'ts', 'anim', 'mbg', 'mpr', 'mst', 'msh', 'lay'];
+  var ELS = ['sub', 'h', 'pr', 'tm', 'cta', 'prod', 'stk'];   // اللي يتعدّل لكل عرض لوحده
   var IMG = /^poster-[0-9a-f]{8}\.(webp|jpg|png)$/, HEX = /^#[0-9a-f]{6}$/i, PID = /^[\w-]{1,40}$/;
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   // لون المحل: الفاتح زي ما هو والغامق أغمق 35% (من غير color-mix علشان الآيفون القديم)
   function dark(hex, k) { var m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '')); if (!m) return '#0d2557'; var n = parseInt(m[1], 16), f = function (v) { return Math.max(0, Math.round(v * (1 - k))); }; return '#' + ((1 << 24) + (f(n >> 16 & 255) << 16) + (f(n >> 8 & 255) << 8) + f(n & 255)).toString(16).slice(1); }
   function one(v, list, d) { return list.indexOf(v) >= 0 ? v : d; }
   function num(v, a, b, d) { v = Math.round(+v); return v >= a && v <= b ? v : d; }
+  function lay(v) {
+    var o = { m: {}, d: {} }; if (!v || typeof v !== 'object') return o;
+    ['m', 'd'].forEach(function (dv) {
+      var src = v[dv], r = {}; if (!src || typeof src !== 'object') return;
+      ELS.forEach(function (e) { var a = src[e]; if (Object.prototype.toString.call(a) !== '[object Array]') return; var x = num(a[0], -700, 700, 0), y = num(a[1], -300, 300, 0), k = num(a[2], 40, 250, 100); if (x || y || k !== 100) r[e] = [x, y, k]; });
+      var g = num(src.g, 0, 40, -1), w = num(src.w, 30, 100, 0); if (g >= 0) r.g = g; if (w) r.w = w; o[dv] = r;
+    });
+    return o;
+  }
+  // المتغيرات اللي poster.css بيقراها: --mx-h / --my-h / --mk-h (موبايل) و --dx-h ... (كمبيوتر)
+  function layVars(l) {
+    var s = ''; ['m', 'd'].forEach(function (dv) { var r = l[dv] || {}; ELS.forEach(function (e) { var a = r[e]; if (!a) return; if (a[0]) s += ';--' + dv + 'x-' + e + ':' + a[0]; if (a[1]) s += ';--' + dv + 'y-' + e + ':' + a[1]; if (a[2] !== 100) s += ';--' + dv + 'k-' + e + ':' + a[2] / 100; }); if (r.g != null) s += ';--' + dv + 'g:' + r.g; if (r.w) s += ';--' + dv + 'w:' + r.w; });
+    return s;
+  }
   function style(bn) {
     var st = one(bn.st, STYLES, 'card');
     return { st: st, col: PAL[bn.col] || bn.col === 'shop' || (bn.col === 'custom' && HEX.test(bn.c1 || '') && HEX.test(bn.c2 || '')) ? bn.col : '',
@@ -28,12 +46,12 @@
       pp: one(bn.pp, ['l', 'n'], 'l'), pf: one(bn.pf, ['raw', 'card', 'circle'], 'raw'), pz: num(bn.pz, 70, 140, 100),
       stk: one(bn.stk, ['pct', 'amt', 'new', 'none'], 'pct'), sks: one(bn.sks, ['circle', 'rect', 'tag'], ''), skc: one(bn.skc, ['y', 'r', 'w', 'g'], ''), skw: String(bn.skw || '').slice(0, 12),
       hs: num(bn.hs, 80, 140, 100), was: bn.was !== false, cta: String(bn.cta || '').slice(0, 24), cs: one(bn.cs, ['s', 'm', 'l'], 'm'), cc: one(bn.cc, ['w', 'o', 'y', 'n'], ''),
-      tm: bn.tm !== false, ts: one(bn.ts, ['box', 'line'], 'box'), anim: bn.anim !== false, mbg: bn.mbg !== false, mpr: bn.mpr !== false, mst: bn.mst !== false, msh: bn.msh == null ? st === 'p3' : !!bn.msh };
+      tm: bn.tm !== false, ts: one(bn.ts, ['box', 'line'], 'box'), anim: bn.anim !== false, mbg: bn.mbg !== false, mpr: bn.mpr !== false, mst: bn.mst !== false, msh: bn.msh == null ? st === 'p3' : !!bn.msh, lay: lay(bn.lay) };
   }
   function clean(bn) {
     bn = bn && typeof bn === 'object' ? bn : {};
     var ps = (Object.prototype.toString.call(bn.ps) === '[object Array]' ? bn.ps : []).filter(function (x) { return x && IMG.test(x.im); }).slice(0, 5)
-      .map(function (x) { return { im: x.im, imd: IMG.test(x.imd || '') ? x.imd : '', go: /^(p|c|g):[^\s<>"'&]{1,40}$/.test(x.go || '') ? x.go : '' }; });   // imd: صورة عريضة للكمبيوتر (اختياري)
+      .map(function (x) { var o = { im: x.im, imd: IMG.test(x.imd || '') ? x.imd : '', go: /^(p|c|g):[^\s<>"'&]{1,40}$/.test(x.go || '') ? x.go : '' }; if (IMG.test(x.ib || '')) o.ib = x.ib; if (IMG.test(x.ibd || '')) o.ibd = x.ibd; return o; });   // imd: صورة عريضة للكمبيوتر (اختياري). ib / ibd: أول فريم صغير ثابت (للموبايل / للكمبيوتر) للخلفية المتغبّشة لو الإعلان متحرك (2026-11-22)
     // pm: الصور مع عروض البانر (mix) أو لوحدها مكانها (only). st 'img' من النسخة الأولى (2.58.3) = لوحدها
     var out = style(bn), ov = {}, n = 0, src = bn.ov && typeof bn.ov === 'object' ? bn.ov : {};
     for (var k in src) { if (n >= 30 || !PID.test(k) || !src[k] || typeof src[k] !== 'object') continue; var mix = {}, i; for (i = 0; i < KEYS.length; i++) mix[KEYS[i]] = KEYS[i] in src[k] ? src[k][KEYS[i]] : out[KEYS[i]]; ov[k] = style(mix); n++; }
@@ -54,7 +72,7 @@
     var bgi = b.bg && base ? ";--pimg:url('" + base + b.bg + "')" : '';
     var cls = ' pst pst-' + b.st + (b.anim ? '' : ' pst-still') + (b.mbg ? '' : ' no-mbg') + (b.mpr ? '' : ' no-mpr') + (b.mst ? '' : ' no-mst') + (b.msh ? ' sh-on' : ' sh-off')
       + (bgi ? ' pst-bgi' : '') + (b.pp === 'n' ? ' pp-n' : '') + (b.pf !== 'raw' ? ' pf-' + b.pf : '') + (b.cs !== 'm' ? ' cs-' + b.cs : '') + (b.cc ? ' cc-' + b.cc : '') + (b.ts === 'line' ? ' ts-line' : '');
-    return { cls: cls, style: '--pa:' + c[0] + ';--pb:' + c[1] + ';--hs:' + b.hs / 100 + ';--pz:' + b.pz / 100 + ';--pdim:' + b.dim / 100 + bgi };
+    return { cls: cls, style: '--pa:' + c[0] + ';--pb:' + c[1] + ';--hs:' + b.hs / 100 + ';--pz:' + b.pz / 100 + ';--pdim:' + b.dim / 100 + layVars(b.lay) + bgi };
   }
   /* d = { name, pic (HTML جاهز: <img> أو إيموجي)، img (فيه صورة؟)، price (HTML)، was (HTML أو '')، pct، save (HTML: الفرق)، timer (HTML)، sub } */
   function html(bn, d) {
@@ -76,5 +94,5 @@
       + '<span class="pst-cta">' + esc(b.cta || 'اطلب دلوقتي') + ' ←</span></span>'
       + (b.pp === 'n' ? '' : '<span class="pst-prod' + (d.img ? ' im' : '') + '">' + d.pic + '</span>') + stk;
   }
-  W.RdPoster = { clean: clean, style: style, forP: forP, KEYS: KEYS, on: on, imgs: imgs, goOf: goOf, PAGES: PAGES, attrs: attrs, html: html, PAL: PAL, DEF: DEF, STYLES: STYLES };
+  W.RdPoster = { clean: clean, style: style, forP: forP, KEYS: KEYS, on: on, imgs: imgs, goOf: goOf, PAGES: PAGES, attrs: attrs, html: html, PAL: PAL, DEF: DEF, STYLES: STYLES, ELS: ELS, lay: lay };
 })(window);
