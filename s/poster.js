@@ -18,7 +18,7 @@
   var STYLES = ['card', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6'];
   var PAGES = ['svc', 'repair', 'bill', 'trade', 'wish'];   // صفحات المتجر اللي البوستر الصورة يقدر يفتحها
   var KEYS = ['st', 'col', 'c1', 'c2', 'bg', 'dim', 'pp', 'pf', 'pz', 'stk', 'sks', 'skc', 'skw', 'hs', 'was', 'cta', 'cs', 'cc', 'tm', 'ts', 'anim', 'mbg', 'mpr', 'mst', 'msh', 'lay'];
-  var ELS = ['sub', 'h', 'pr', 'tm', 'cta', 'prod', 'stk'];   // اللي يتعدّل لكل عرض لوحده
+  var ELS = ['sub', 'h', 'pr', 'tm', 'cta', 'prod', 'stk', 'stt'];   // stt: كلام الستيكر (حجم بس)   // اللي يتعدّل لكل عرض لوحده
   var IMG = /^poster-[0-9a-f]{8}\.(webp|jpg|png)$/, HEX = /^#[0-9a-f]{6}$/i, PID = /^[\w-]{1,40}$/;
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   // لون المحل: الفاتح زي ما هو والغامق أغمق 35% (من غير color-mix علشان الآيفون القديم)
@@ -79,9 +79,9 @@
     var b = style(bn && bn.ov ? bn : clean(bn)), stk = '', sc = b.skc ? ' sc-' + b.skc : '';
     // الستيكر: الكلمة صغيرة فوق والرقم كبير تحت. الشكل تلقائي (الخصم دايرة، وفّر مستطيل بكيرف، الكلمة بس شريطة) أو اللي المحل اختاره
     var shape = function (auto) { var s = b.sks || auto; return s === 'rect' ? ' amt' : s === 'tag' ? ' tag' : ''; };
-    if (b.stk === 'pct' && d.pct > 0) stk = '<span class="pst-stk' + shape('circle') + sc + '"><small>' + esc(b.skw || 'خصم') + '</small><b dir="ltr">' + Math.round(d.pct) + '%</b></span>';
-    else if (b.stk === 'amt' && d.save) stk = '<span class="pst-stk' + shape('rect') + sc + (String(d.save).replace(/<[^>]*>/g, '').trim().length > 5 ? ' lg' : '') + '"><small>' + esc(b.skw || 'وفّر') + '</small><b><bdi>' + d.save + '</bdi></b></span>';
-    else if (b.stk === 'new') stk = '<span class="pst-stk one' + shape('tag') + sc + '"><b>' + esc(b.skw || 'جديد') + '</b></span>';
+    if (b.stk === 'pct' && d.pct > 0) stk = '<span class="pst-stk' + shape('circle') + sc + '"><span class="pst-stt"><small>' + esc(b.skw || 'خصم') + '</small><b dir="ltr">' + Math.round(d.pct) + '%</b></span></span>';
+    else if (b.stk === 'amt' && d.save) stk = '<span class="pst-stk' + shape('rect') + sc + (String(d.save).replace(/<[^>]*>/g, '').trim().length > 5 ? ' lg' : '') + '"><span class="pst-stt"><small>' + esc(b.skw || 'وفّر') + '</small><b><bdi>' + d.save + '</bdi></b></span></span>';
+    else if (b.stk === 'new') stk = '<span class="pst-stk one' + shape('tag') + sc + '"><span class="pst-stt"><b>' + esc(b.skw || 'جديد') + '</b></span></span>';
     var extra = b.st === 'p2' ? '<svg class="pst-burst" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 0 L58 30 L88 20 L70 45 L100 55 L70 62 L84 92 L55 74 L42 100 L38 70 L8 82 L28 58 L0 42 L30 36 L18 8 L44 26 Z"/></svg>'
       : b.st === 'p3' ? '<span class="pst-beam" aria-hidden="true"></span>'
       : b.st === 'p4' ? '<span class="pst-wave w1" aria-hidden="true"></span><span class="pst-wave w2" aria-hidden="true"></span>'

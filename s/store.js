@@ -90,7 +90,19 @@
   /* QUIET (خالد 2026-11-09: "الموقع بيفضل يعمل ريفرش"): الرسم اللي جاي من تحديث في الخلفية (الكتالوج اتغيّر، حالة الطلب اتغيّرت، عرض خلص) بيتعمل
      من غير حركة الدخول ومن غير ما الصفحة ترجع لفوق. الحركة للتنقّل اللي العميل عمله بس */
   var QUIET = false;
-  function shell(html, on, noNav) { clearTimers(); app.className = noNav ? '' : 'has-nav'; app.innerHTML = '<div class="page' + (QUIET ? ' still' : '') + '">' + html + '</div>' + navHTML(on, noNav); badge(); tickTimers(); installMaybe(); markLoading(app); adPick(); }
+  function shell(html, on, noNav) { clearTimers(); app.className = noNav ? '' : 'has-nav'; app.innerHTML = '<div class="page' + (QUIET ? ' still' : '') + '">' + html + '</div>' + navHTML(on, noNav); badge(); tickTimers(); installMaybe(); markLoading(app); adPick(); rowNav(app); }
+  // صفوف المنتجات اللي بتتسحب بالعرض: على الكمبيوتر (ماوس) سهمين يمين وشمال (خالد 2026-11-22: "الكروت اللي تحت ملهاش زراير في الكمبيوتر")
+  function rowNav(root) {
+    [].forEach.call(root.querySelectorAll('.hrow'), function (row) {
+      var sc = row.querySelector('.sim'); if (!sc || row.querySelector('.rw-nav')) return;
+      row.insertAdjacentHTML('beforeend', '<button type="button" class="rw-nav prev" aria-label="اللي قبله">→</button><button type="button" class="rw-nav next" aria-label="اللي بعده">←</button>');
+      var pv = row.querySelector('.rw-nav.prev'), nx = row.querySelector('.rw-nav.next');
+      var upd = function () { var max = sc.scrollWidth - sc.clientWidth, x = Math.abs(sc.scrollLeft); pv.disabled = x < 4; nx.disabled = x > max - 4 || max < 4; };
+      var go = function (d) { sc.scrollBy({ left: d * Math.max(200, sc.clientWidth * 0.8), behavior: 'smooth' }); };   // RTL: "اللي بعده" ناحية الشمال (سالب)
+      pv.onclick = function () { go(1); }; nx.onclick = function () { go(-1); };
+      sc.addEventListener('scroll', upd, { passive: true }); upd(); setTimeout(upd, 400);
+    });
+  }
   /* خالد 2026-11-16: الصورة وهي بتتحمّل بيظهر عليها لمعة التحميل، وبعدين بتظهر بهدوء */
   function markLoading(root) {
     root.querySelectorAll('img').forEach(function (im) {
@@ -234,6 +246,8 @@
   }
 
   /* ---------- الصفحات ---------- */
+  // كل قسم في الرئيسية عليه data-s (العناصر اللي في أول مستوى) علشان الثيم يرتّبه أو يخبّيه لكل جهاز
+  function mark(html, k) { if (!html) return ''; var t = document.createElement('template'); t.innerHTML = html; [].forEach.call(t.content.children, function (e) { e.setAttribute('data-s', k); }); return t.innerHTML; }
   function home() {
     var cats = (C.cats || []).filter(function (c) { return visible().some(function (p) { return p.c === c.id; }); });
     var offs = sortList(visible(), 'off').filter(function (p) { return avail(p) > 0; });
@@ -253,27 +267,29 @@
     var srv = shopRev(); if (srv) html += '<button type="button" class="sr-chip" data-go="#/reviews">' + starsHTML(srv.a) + ' <b class="num">' + srv.a + '</b> · <span class="num">' + srv.n + '</span> تقييم للمحل ←</button>';   // تقييم المحل (2026-11-21)
     if (!opn) html += '<div class="banner warn">🌙 المحل مقفول دلوقتي (' + esc(hoursTxt()) + '). اطلب عادي وطلبك هيتجهز أول ما نفتح.</div>';
     if (C.notice) html += '<div class="banner info">📣 ' + esc(C.notice) + '</div>';
-    html += '<div class="chips">' + cats.map(function (c) { return '<button class="chip" data-go="#/c/' + esc(c.id) + '"><span style="--c1:' + esc(c.c1 || '#2f7cf6') + ';--c2:' + esc(c.c2 || '#5aa0ff') + '">' + esc(c.ic || '📦') + '</span>' + esc(c.n) + '</button>'; }).join('')
+    if (window.RdTheme) html += RdTheme.homeTop(C);   // رمضان: التهنئة والعدّ للفطار
+    html += '<div class="chips" data-s="cats">' + cats.map(function (c) { return '<button class="chip" data-go="#/c/' + esc(c.id) + '"><span style="--c1:' + esc(c.c1 || '#2f7cf6') + ';--c2:' + esc(c.c2 || '#5aa0ff') + '">' + esc(c.ic || '📦') + '</span>' + esc(c.n) + '</button>'; }).join('')
       + (offs.length ? '<button class="chip" data-go="#/c/_off"><span style="--c1:#d6455f;--c2:#f0753b">🔥</span>العروض</button>' : '')
       + '<button class="chip" data-go="#/svc"><span style="--c1:#e48b07;--c2:#ffc35c">🛠</span>الخدمات</button></div>';
     if (dealSlides.length) {
-      html += !hasOffSlides ? '<div class="ps-gap"></div>' : '<div class="sec"><b>🔥 عروض لفترة محدودة</b><button data-go="#/c/_off">الكل ←</button></div>';
+      html += !hasOffSlides ? '<div class="ps-gap" data-s="deal"></div>' : '<div class="sec" data-s="deal"><b>🔥 عروض لفترة محدودة</b><button data-go="#/c/_off">الكل ←</button></div>';
       var dealNav = dealSlides.length > 1
         ? '<button type="button" class="deal-nav prev" data-deal-step="-1" aria-label="العرض السابق">←</button><button type="button" class="deal-nav next" data-deal-step="1" aria-label="العرض التالي">→</button>'
         : '';
-      html += '<div class="deal-carousel"><div class="deal-stage">' + dealSlideHTML(dealSlides[0], 0, dealSlides.length) + dealNav + '</div>' + dealDotsHTML(dealSlides.length) + '</div>';
+      html += '<div class="deal-carousel" data-s="deal"><div class="deal-stage">' + dealSlideHTML(dealSlides[0], 0, dealSlides.length) + dealNav + '</div>' + dealDotsHTML(dealSlides.length) + '</div>';
     }
     // سلتك مستنياك (نون/أمازون): لو فيه حاجات في السلة، سطر يرجّعه يكمّل الطلب
     var cn = cartCount(); if (cn) { var ct = cart(), cs = ct.reduce(function (a, x) { return a + lineTotal(x); }, 0);
-      html += '<button type="button" class="cartback" data-go="#/cart"><span class="cb-ims">' + ct.slice(0, 3).map(function (x) { return '<i>' + pic(P[x.id]) + '</i>'; }).join('') + '</span><span class="cb-t"><b>سلتك مستنياك</b><small><span class="num">' + cn + '</span> ' + (cn === 1 ? 'حاجة' : 'حاجات') + ' · ' + money(cs) + '</small></span><span class="cb-go">كمّل ←</span></button>'; }
-    var seen = seenList(); if (seen.length >= 2) html += '<div class="sec"><b>👀 شوفته قبل كده</b><button data-clear-seen>امسح</button></div><div class="hrow">' + rowHTML(seen) + '</div>';
-    if (newOnes.length) html += '<div class="sec"><b>✨ لسه واصل</b></div><div class="hrow">' + rowHTML(newOnes) + '</div>';
-    cats.slice(0, 4).forEach(function (c) { var l = sortList(visible().filter(function (p) { return p.c === c.id; })).slice(0, 12); html += '<div class="sec"><b>' + esc(c.ic || '') + ' ' + esc(c.n) + '</b><button data-go="#/c/' + esc(c.id) + '">الكل ←</button></div>' + '<div class="hrow">' + rowHTML(l) + '</div>'; });
-    html += shopRevHome();
-    html += svcCards(s);
-    html += '<div class="box" style="text-align:center;background:color-mix(in srgb,#f59e0b 9%,var(--card));border-color:color-mix(in srgb,#f59e0b 35%,var(--line))"><b style="font-size:14px;font-weight:900">🤔 مش لاقي اللي عايزه؟</b><div style="color:var(--mut);font-size:12.5px;font-weight:600;margin:4px 0 10px">اكتبلنا وهنجيبهولك ونكلمك على واتساب</div><button class="btn b1" data-go="#/wish" style="width:100%">قولّنا عايز إيه</button></div>';
-    html += footHTML();
+      html += '<button type="button" class="cartback" data-s="cart" data-go="#/cart"><span class="cb-ims">' + ct.slice(0, 3).map(function (x) { return '<i>' + pic(P[x.id]) + '</i>'; }).join('') + '</span><span class="cb-t"><b>سلتك مستنياك</b><small><span class="num">' + cn + '</span> ' + (cn === 1 ? 'حاجة' : 'حاجات') + ' · ' + money(cs) + '</small></span><span class="cb-go">كمّل ←</span></button>'; }
+    var seen = seenList(); if (seen.length >= 2) html += mark('<div class="sec"><b>👀 شوفته قبل كده</b><button data-clear-seen>امسح</button></div><div class="hrow">' + rowHTML(seen) + '</div>', 'seen');
+    if (newOnes.length) html += mark('<div class="sec"><b>✨ لسه واصل</b></div><div class="hrow">' + rowHTML(newOnes) + '</div>', 'new');
+    cats.slice(0, 4).forEach(function (c) { var l = sortList(visible().filter(function (p) { return p.c === c.id; })).slice(0, 12); html += mark('<div class="sec"><b>' + esc(c.ic || '') + ' ' + esc(c.n) + '</b><button data-go="#/c/' + esc(c.id) + '">الكل ←</button></div>' + '<div class="hrow">' + rowHTML(l) + '</div>', 'rows'); });
+    html += mark(shopRevHome(), 'rev');
+    html += mark(svcCards(s), 'svc');
+    html += '<div class="box" data-s="wish" style="text-align:center;background:color-mix(in srgb,#f59e0b 9%,var(--card));border-color:color-mix(in srgb,#f59e0b 35%,var(--line))"><b style="font-size:14px;font-weight:900">🤔 مش لاقي اللي عايزه؟</b><div style="color:var(--mut);font-size:12.5px;font-weight:600;margin:4px 0 10px">اكتبلنا وهنجيبهولك ونكلمك على واتساب</div><button class="btn b1" data-go="#/wish" style="width:100%">قولّنا عايز إيه</button></div>';
+    html += mark(footHTML(), 'foot');
     shell(html, '#/');
+    if (window.RdTheme) RdTheme.startTick();
     var dealBanner = app.querySelector('[data-deal-banner]');
     var refit = function () { tickTimers(); fitDeal(dealBanner && dealBanner.querySelector('b')); };   // التايمر بيتملي الأول (كان فاضي وقت القياس، وبعد ثانية بيطوّل الكلام ويزق الزرار برّه)
     refit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
@@ -301,6 +317,10 @@
           leaving.tabIndex = -1;
           leaving.disabled = true;
           leaving.classList.add(movingRight ? 'deal-leave-right' : 'deal-leave-left', 'deal-leaving');
+          // نفس مقاس ومكان البانر بالظبط (2026-11-22): بـ inset بس، البوستر (aspect-ratio) كان بيحسب عرضه من طوله فبيصغر لـ 400px وهو خارج (الحركة "بتقطع")
+          var br0 = dealBanner.getBoundingClientRect(), sr0 = dealStage.getBoundingClientRect();
+          leaving.style.left = (br0.left - sr0.left) + 'px'; leaving.style.top = (br0.top - sr0.top) + 'px'; leaving.style.right = 'auto'; leaving.style.bottom = 'auto';
+          leaving.style.width = br0.width + 'px'; leaving.style.height = br0.height + 'px'; leaving.style.maxHeight = 'none'; leaving.style.aspectRatio = 'auto';
           dealStage.appendChild(leaving);
         }
         dealIndex = nextIndex;
@@ -1349,19 +1369,22 @@
   var crC = function (a, b) { var x = lumC(a), y = lumC(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
   // بنقرّب اللون من "to" خطوة خطوة لحد ما يبقى مقروء على كل الخلفيات اللي بيظهر عليها
   var fitC = function (c, to, bgs, need) { for (var t = 0; t <= 1.0001; t += 0.04) { var x = mixC(c, to, t); if (bgs.every(function (b) { return crC(x, b) >= need; })) return x; } return to; };
-  function accentVars(hex) {
+  function accentVars(hex, extra) {   // extra: خلفيات الثيم (theme.js bgs) علشان اللون يفضل مقروء عليها كمان
     var ac = hexRgb(hex), W = [255, 255, 255], INK = [11, 31, 77], DK = [11, 20, 48], CARD_D = [19, 28, 48], BG_D = [10, 17, 32];
+    var ex = (extra || []).map(hexRgb), dkTh = window.RdTheme && RdTheme.isDark();
     var onWhite = crC(W, ac) >= 2.5;   // أبيض على لون المحل إلا لو اللون فاتح أوي (أصفر)؛ الدرجة بعدين بتتغمّق لحد 4.6 (كانت + سودة على الأزرق)
     var on = onWhite ? W : [16, 24, 40];
     var fill = fitC(ac, onWhite ? DK : W, [on], 4.6);
-    var txL = fitC(ac, INK, [W, [247, 248, 251], mixC(W, ac, 0.13)], 4.6);
-    var txD = fitC(ac, W, [CARD_D, BG_D, mixC(CARD_D, ac, 0.15)], 4.6);
+    var txL = fitC(ac, INK, [W, [247, 248, 251], mixC(W, ac, 0.13)].concat(dkTh ? [] : ex.concat(ex.map(function (b) { return mixC(b, ac, 0.13); }))), 4.6);
+    var txD = fitC(ac, W, [CARD_D, BG_D, mixC(CARD_D, ac, 0.15)].concat(dkTh ? ex.concat(ex.map(function (b) { return mixC(b, ac, 0.15); })) : []), 4.6);
     var dk = fitC(ac, DK, [W], 7);
     return { '--ac': hex, '--ac-fill': rgbHex(fill), '--ac2': rgbHex(mixC(fill, onWhite ? DK : W, 0.18)), '--on-ac': rgbHex(on), '--ac-tx-l': rgbHex(txL), '--ac-tx-d': rgbHex(txD), '--ac-dk': rgbHex(dk) };
   }
   function theme() {
-    var ac = C.shop && /^#[0-9a-f]{6}$/i.test(C.shop.ac || '') ? C.shop.ac : '#2b7be0';
-    var v = accentVars(ac); for (var k in v) document.documentElement.style.setProperty(k, v[k]);
+    // الثيم (theme.js): الألوان والخلفية والخط والترتيب لكل جهاز. بيرجّع لون الزرار لو الثيم أو المحل غيّره
+    var tac = window.RdTheme ? RdTheme.apply(C.th) : ''; try { ls('thm', { m: window.RdTheme ? RdTheme.mode() : 'auto' }); } catch (e) {}
+    var ac = /^#[0-9a-f]{6}$/i.test(tac || '') ? tac : C.shop && /^#[0-9a-f]{6}$/i.test(C.shop.ac || '') ? C.shop.ac : '#2b7be0';
+    var v = accentVars(ac, window.RdTheme && C.th ? RdTheme.bgs() : null); for (var k in v) document.documentElement.style.setProperty(k, v[k]);
     document.title = C.shop.name || 'المتجر';
     // فروع: التثبيت بشكل الرئيسي ولينكه (ولينك الرئيسي بيفتح الفرع اللي العميل اختاره)
     document.getElementById('mf').href = ST + ((brCur() && BR.main) || slug) + '/manifest.json';
@@ -1377,7 +1400,10 @@
       .then(function (j) { var txt = JSON.stringify(j), same = txt === loadCat.sig; loadCat.sig = txt; set(j); try { localStorage.setItem('rds_cat_' + slug, txt); } catch (e) {} if (quiet && !same) refresh(); })
       .catch(function (st) { if (C) return; var old = null; try { old = JSON.parse(localStorage.getItem('rds_cat_' + slug)); } catch (e) {} if (old) { set(old); render(); toast('مفيش نت — بتشوف آخر نسخة', 'bad'); } else fail(st === 400 || st === 404 ? 'المتجر ده مش موجود' : 'مفيش نت. جرّب تاني.'); });
   }
-  function set(j) { C = j; C.shop = C.shop || {}; P = {}; (C.p || []).forEach(function (p) { P[p.id] = p; }); brand(); theme(); }
+  function set(j) { C = j; C.shop = C.shop || {}; if (PREV_TH) C.th = PREV_TH; P = {}; (C.p || []).forEach(function (p) { P[p.id] = p; }); brand(); theme(); }
+  // صفحة "شكل المتجر" في الكاشير بتبعت الثيم اللي بيتعدّل (theme.js message): بيتلبس من غير حفظ، والمتجر بيترسم تاني
+  var PREV_TH = null;
+  if (window.RdTheme) { RdTheme.onPreview = function (th) { PREV_TH = th; if (!C) return; C.th = th; theme(); refresh(); }; RdTheme.onChange = function () { if (C) { theme(); refresh(); } }; }
 
   /* ---------- متجر واحد لكل الفروع (خالد 2026-11-18، فكرة 1) ----------
      branches.json جنب الكتالوج (السيرفر بيكتبه لو الفرع الرئيسي مشغّل "متجر واحد"): الفروع وشكل الرئيسي.

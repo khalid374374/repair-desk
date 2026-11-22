@@ -12,8 +12,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://sgqscttmkhmiqyjsuvio.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script>/* الغامق (html.dk) قبل ما الصفحة تترسم، علشان مايبقاش فيه ومضة فاتحة. الثيم بيحدد: زي موبايل العميل / فاتح / غامق (theme.js) */
+(function () { try { var d = document.documentElement, q = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null, s = new URLSearchParams(location.search).get('s') || location.hostname, t = null;
+  try { t = JSON.parse(localStorage.getItem('rds_' + s + '_thm') || 'null'); } catch (e) {}
+  var m = (t && t.m) || 'auto', on = function () { var md = (window.RdTheme && RdTheme.mode()) || m; d.classList.toggle('dk', md === 'dark' || (md === 'auto' && !!(q && q.matches))); };
+  on(); if (q) { if (q.addEventListener) q.addEventListener('change', on); else if (q.addListener) q.addListener(on); } window.__dkOn = on; } catch (e) {} })();</script>
 <link rel="stylesheet" href="store.css">
 <link rel="stylesheet" href="poster.css">
+<link rel="stylesheet" href="theme.css">
 <link rel="manifest" id="mf">
 <link rel="icon" type="image/png" sizes="192x192" id="fav">
 <link rel="apple-touch-icon" id="ati">
@@ -24,6 +30,7 @@
 </div>
 <div id="toast"></div>
 <script src="poster.js"></script>
+<script src="theme.js"></script>
 <script src="store.js"></script>
 </body>
 </html>
