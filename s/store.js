@@ -1371,7 +1371,7 @@
   var fitC = function (c, to, bgs, need) { for (var t = 0; t <= 1.0001; t += 0.04) { var x = mixC(c, to, t); if (bgs.every(function (b) { return crC(x, b) >= need; })) return x; } return to; };
   function accentVars(hex, extra) {   // extra: خلفيات الثيم (theme.js bgs) علشان اللون يفضل مقروء عليها كمان
     var ac = hexRgb(hex), W = [255, 255, 255], INK = [11, 31, 77], DK = [11, 20, 48], CARD_D = [19, 28, 48], BG_D = [10, 17, 32];
-    var ex = (extra || []).map(hexRgb), dkTh = window.RdTheme && RdTheme.isDark();
+    var ex = (extra || []).map(hexRgb), dkTh = window.RdTheme && C && C.th ? !RdTheme.lightSurf() : !!(window.RdTheme && RdTheme.isDark());   // السطح نفسه (المحل ممكن يحط خلفية فاتحة في الغامق)
     var onWhite = crC(W, ac) >= 2.5;   // أبيض على لون المحل إلا لو اللون فاتح أوي (أصفر)؛ الدرجة بعدين بتتغمّق لحد 4.6 (كانت + سودة على الأزرق)
     var on = onWhite ? W : [16, 24, 40];
     var fill = fitC(ac, onWhite ? DK : W, [on], 4.6);
@@ -1382,7 +1382,7 @@
   }
   function theme() {
     // الثيم (theme.js): الألوان والخلفية والخط والترتيب لكل جهاز. بيرجّع لون الزرار لو الثيم أو المحل غيّره
-    var tac = window.RdTheme ? RdTheme.apply(C.th) : ''; try { ls('thm', { m: window.RdTheme ? RdTheme.mode() : 'auto' }); } catch (e) {}
+    var tac = window.RdTheme ? RdTheme.apply(C.th, ST + encodeURIComponent(slug) + '/i/') : ''; try { ls('thm', { m: window.RdTheme ? RdTheme.mode() : 'auto' }); } catch (e) {}
     var ac = /^#[0-9a-f]{6}$/i.test(tac || '') ? tac : C.shop && /^#[0-9a-f]{6}$/i.test(C.shop.ac || '') ? C.shop.ac : '#2b7be0';
     var v = accentVars(ac, window.RdTheme && C.th ? RdTheme.bgs() : null); for (var k in v) document.documentElement.style.setProperty(k, v[k]);
     document.title = C.shop.name || 'المتجر';

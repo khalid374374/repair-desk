@@ -1,8 +1,10 @@
 /* ثيمات المتجر (خالد 2026-11-22: "ثيمات لموقع المتجر... فول كاستمايز... وثيم رمضان احتياطي"). ES5 (الآيفونات القديمة).
    C.th (من الكاشير، store.js setCfg بنفس قواعد clean):
      id: base | lux | clean | neon | glass | warm | ramadan        m: auto (زي موبايل العميل) | light | dark
-     c:  ألوان من عند المحل فوق الثيم { bg, bg2, card, ink, hd1, hd2, ac, deal1, deal2 } (كلها اختيارية #rrggbb)
-     bgk: plain | grad | pat     pat: dots | grid | waves | islamic | stars      r: استدارة الكروت 4..32      sh: الظل 0..3
+     c:  ألوان من عند المحل فوق الثيم للفاتح { bg, bg2, card, ink, hd1, hd2, ac, deal1, deal2 } (كلها اختيارية #rrggbb)
+     cd: نفس الألوان للغامق (خالد 2026-11-23: "لما بغيّر لون الصفحة في الفاتح بيأثر على الغامق كمان")
+     bgk: plain | grad | pat | img     pat: dots | grid | waves | islamic | stars     gd: اتجاه التدرّج d مايل | v من فوق لتحت | h بالعرض | r دايرة
+     bi: صورة خلفية من المحل (poster-xxxxxxxx.webp) + bd: غمقان/تفتيح ورا الكلام 0..80      r: استدارة الكروت 4..32      sh: الظل 0..3
      f:  الخط cairo | tajawal | almarai | plex | messiri | changa | readex       fx: الحركة والزينة (true افتراضي)
      dv: { m: موبايل, d: كمبيوتر (1100+) } كل واحد { cols, hd: big|slim, fs: 90..115, ord: [أقسام الرئيسية بالترتيب], hide: [أقسام مستخبية] }
      rm: رمضان { greet, sub, ift: عد تنازلي للفطار, city, lanterns }
@@ -41,6 +43,10 @@
     luxor: ['الأقصر', 25.6872, 32.6396], aswan: ['أسوان', 24.0889, 32.8998], hurghada: ['الغردقة', 27.2579, 33.8116], matrouh: ['مرسى مطروح', 31.3543, 27.2373], arish: ['العريش', 31.1316, 33.7984],
     dubai: ['دبي', 25.2048, 55.2708], abudhabi: ['أبوظبي', 24.4539, 54.3773], riyadh: ['الرياض', 24.7136, 46.6753], jeddah: ['جدة', 21.4858, 39.1925], kuwait: ['الكويت', 29.3759, 47.9774], doha: ['الدوحة', 25.2854, 51.531] };
 
+  function rgb(h) { var n = parseInt(String(h).slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function hex3(a) { return '#' + ((1 << 24) + (a[0] << 16) + (a[1] << 8) + a[2]).toString(16).slice(1); }
+  function mixH(a, b, t) { var x = rgb(a), y = rgb(b); return hex3([0, 1, 2].map(function (i) { return Math.round(x[i] + (y[i] - x[i]) * t); })); }
+  function lum(h) { var c = rgb(h).map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
   function one(v, l, d) { return l.indexOf(v) >= 0 ? v : d; }
   function num(v, a, b, d) { v = Math.round(+v); return v >= a && v <= b ? v : d; }
   function txt(v, n) { return String(v == null ? '' : v).replace(/[<>]/g, '').slice(0, n); }
@@ -48,14 +54,16 @@
   // نفس القواعد في store.js (الكاشير) قبل الحفظ
   function clean(th) {
     th = th && typeof th === 'object' ? th : {};
-    var id = one(th.id, ORDER, 'base'), P = PRESETS[id], c = {}, cs = th.c && typeof th.c === 'object' ? th.c : {};
-    ['bg', 'bg2', 'card', 'ink', 'hd1', 'hd2', 'ac', 'deal1', 'deal2'].forEach(function (k) { if (HEX.test(cs[k] || '')) c[k] = cs[k].toLowerCase(); });
+    var id = one(th.id, ORDER, 'base'), P = PRESETS[id];
+    var cols = function (cs) { var o = {}; cs = cs && typeof cs === 'object' ? cs : {}; ['bg', 'bg2', 'card', 'ink', 'hd1', 'hd2', 'ac', 'deal1', 'deal2'].forEach(function (k) { if (HEX.test(cs[k] || '')) o[k] = cs[k].toLowerCase(); }); return o; };
+    var c = cols(th.c), cd = cols(th.cd);
     var dv = {}, src = th.dv && typeof th.dv === 'object' ? th.dv : {};
     ['m', 'd'].forEach(function (k) { var s = src[k] && typeof src[k] === 'object' ? src[k] : {};
       dv[k] = { cols: num(s.cols, k === 'm' ? 1 : 3, k === 'm' ? 3 : 6, 0), hd: one(s.hd, ['big', 'slim'], 'big'), fs: num(s.fs, 90, 115, 100), ord: arr(s.ord, SECS), hide: arr(s.hide, SECS) }; });
     var r = th.rm && typeof th.rm === 'object' ? th.rm : {};
     var m = one(th.m, ['auto', 'light', 'dark'], P.m); if (id !== 'base') { if (!P.L) m = 'dark'; else if (!P.D) m = 'light'; }   // الثيم اللي ليه شكل واحد (فخم، نيون، فاتح) بيفضل عليه
-    return { id: id, m: m, c: c, bgk: one(th.bgk, ['plain', 'grad', 'pat'], P.bgk || 'plain'), pat: one(th.pat, ['dots', 'grid', 'waves', 'islamic', 'stars'], P.pat || 'dots'),
+    var bi = /^poster-[0-9a-f]{8}\.(webp|jpg|png)$/.test(th.bi || '') ? th.bi : '', bgk = one(th.bgk, ['plain', 'grad', 'pat', 'img'], P.bgk || 'plain');   // img من غير صورة لسه = لون الخلفية لحد ما المحل يرفع صورة
+    return { id: id, m: m, c: c, cd: cd, bgk: bgk, bi: bi, bd: num(th.bd, 0, 80, 35), gd: one(th.gd, ['d', 'v', 'h', 'r'], 'd'), pat: one(th.pat, ['dots', 'grid', 'waves', 'islamic', 'stars'], P.pat || 'dots'),
       r: num(th.r, 4, 32, P.r || 0), sh: num(th.sh, 0, 3, P.sh == null ? 1 : P.sh), f: one(th.f, Object.keys(FONTS), P.f || 'cairo'), fx: th.fx !== false, dv: dv,
       rm: { greet: txt(r.greet, 40), sub: txt(r.sub, 80), ift: r.ift !== false, city: one(r.city, Object.keys(CITIES), 'cairo'), lan: r.lan !== false } };
   }
@@ -79,10 +87,13 @@
 
   var CUR = clean(null), MQ = W.matchMedia ? W.matchMedia('(prefers-color-scheme: dark)') : null, fontsOn = {}, ticker = 0;
   function mode() { return CUR.m; }
+  function colsNow() { return isDark() ? CUR.cd : CUR.c; }   // ألوان المحل للوضع اللي ظاهر دلوقتي
+  // السطح (الكروت/الخلفية) فاتح؟ المحل ممكن يحط خلفية فاتحة في الغامق: لون الكلام ولون المحل بيتظبطوا على السطح نفسه مش على الوضع
+  function lightSurf() { var c = colsNow(), s2 = c.card || c.bg; if (s2) return lum(s2) > 0.36; var P = PRESETS[CUR.id], T = (isDark() ? P.D || P.L : P.L || P.D) || {}; return HEX.test(T.card || '') ? lum(T.card) > 0.36 : !isDark(); }
   // خلفيات الثيم الحالي (hex بس) علشان لون المحل يتظبط عليها ويفضل مقروء (store.js accentVars)
   function bgs() {
-    var P = PRESETS[CUR.id], T = (isDark() ? P.D || P.L : P.L || P.D) || {}, out = [], base = CUR.c.bg || T.bg;
-    [CUR.c.bg || T.bg, CUR.c.bg2 || T.bg2, CUR.c.card || T.card, T.soft].forEach(function (x) {
+    var P = PRESETS[CUR.id], T = (isDark() ? P.D || P.L : P.L || P.D) || {}, out = [], cc = colsNow(), base = cc.bg || T.bg;
+    [cc.bg || T.bg, cc.bg2 || T.bg2, cc.card || T.card, T.soft].forEach(function (x) {
       if (HEX.test(x || '')) return out.push(x);
       // كروت شفافة (الزجاجي): اللون اللي بيبان فعلًا = الكارت فوق الخلفية
       var m = /^rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)$/.exec(String(x || '')); if (!m || !HEX.test(base || '')) return;
@@ -107,27 +118,38 @@
     if (k === 'cairo' || fontsOn[k] || !FONTS[k]) return; fontsOn[k] = 1;
     var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=' + FONTS[k][1] + '&display=swap'; document.head.appendChild(l);
   }
-  var VARS = ['--bg', '--card', '--ink', '--mut', '--line', '--soft', '--inp', '--inl', '--pimg', '--th-hd', '--th-hdink', '--th-hdsub', '--th-deal', '--th-body', '--th-glow', '--th-font', '--th-r', '--th-cardsh',
+  var VARS = ['--ac-tx', '--bg', '--card', '--ink', '--mut', '--line', '--soft', '--inp', '--inl', '--pimg', '--th-hd', '--th-hdink', '--th-hdsub', '--th-deal', '--th-body', '--th-glow', '--th-font', '--th-r', '--th-cardsh',
     '--mcols', '--dcols', '--mfs', '--dfs'].concat(SECS.map(function (s) { return '--mo-' + s; })).concat(SECS.map(function (s) { return '--do-' + s; }));
   // الألوان: الثيم (فاتح/غامق) وفوقه ألوان المحل. بيرجّع لون الزرار (ac) لو الثيم أو المحل غيّره، وإلا '' (لون المحل)
-  function apply(th) {
-    CUR = clean(th); var d = document.documentElement, P = PRESETS[CUR.id], dk = isDark();
+  var IMGBASE = '';
+  function apply(th, base) {   // base: لينك فولدر صور المحل (.../store/<slug>/i/) علشان صورة الخلفية
+    if (base) IMGBASE = base; CUR = clean(th); var d = document.documentElement, P = PRESETS[CUR.id], dk = isDark();
     d.classList.toggle('dk', dk);
     VARS.forEach(function (k) { d.style.removeProperty(k); });
     var cls = (d.className || '').split(/\s+/).filter(function (x) { return x && x !== 'dk' && !/^(th-|hm-|hd-|dv-)/.test(x); });
-    if (CUR.id === 'base' && !Object.keys(CUR.c).length && CUR.bgk === 'plain' && !CUR.r && CUR.f === 'cairo') { d.removeAttribute('data-th'); }
+    if (CUR.id === 'base' && !Object.keys(CUR.c).length && !Object.keys(CUR.cd).length && CUR.bgk === 'plain' && !CUR.r && CUR.f === 'cairo') { d.removeAttribute('data-th'); }
     else d.setAttribute('data-th', CUR.id);
-    var T = (dk ? P.D || P.L : P.L || P.D) || {}, c = CUR.c, set = function (k, v) { if (v) d.style.setProperty(k, v); };
+    var T = (dk ? P.D || P.L : P.L || P.D) || {}, c = dk ? CUR.cd : CUR.c, set = function (k, v) { if (v) d.style.setProperty(k, v); };
     if (CUR.id !== 'base') ['bg', 'card', 'ink', 'mut', 'line', 'soft', 'inp', 'inl', 'pimg'].forEach(function (k) { set('--' + k, T[k]); });
     if (c.bg) set('--bg', c.bg); if (c.card) { set('--card', c.card); set('--pimg', c.card); } if (c.ink) set('--ink', c.ink);
+    // لون الكلام لوحده (2026-11-23): المحل غيّر الخلفية أو الكروت من غير ما يختار لون كلام → كلام غامق على الفاتح وفاتح على الغامق، فمايختفيش أبدًا
+    var surf = c.card || c.bg; if (surf && !c.ink) { var lt = lum(surf) > 0.36;
+      set('--ac-tx', lt ? 'var(--ac-tx-l)' : 'var(--ac-tx-d)');
+      set('--ink', lt ? '#0b1f4d' : '#eef2fb'); set('--mut', lt ? '#4b5875' : '#aab7d4'); set('--line', mixH(surf, lt ? '#0b1f4d' : '#ffffff', 0.12)); set('--soft', mixH(surf, lt ? '#0b1f4d' : '#ffffff', 0.05)); set('--inp', lt ? '#ffffff' : mixH(surf, '#000000', 0.25)); set('--inl', mixH(surf, lt ? '#0b1f4d' : '#ffffff', 0.22)); }
     var hd1 = c.hd1 || T.hd1, hd2 = c.hd2 || T.hd2; if (hd1 && hd2) set('--th-hd', 'radial-gradient(130% 120% at 100% 0%, ' + hd1 + ', transparent 62%), linear-gradient(160deg, ' + hd2 + ', ' + hd1 + ')');
     if (T.hdink) set('--th-hdink', T.hdink); if (T.hdsub) set('--th-hdsub', T.hdsub);
     if (c.deal1 || T.deal1) set('--th-deal', 'linear-gradient(120deg, ' + (c.deal1 || T.deal1) + ', ' + (c.deal2 || T.deal2 || c.deal1 || T.deal1) + ')');
     if (T.glow) set('--th-glow', T.glow);
     // الخلفية
-    var bg = c.bg || T.bg || (dk ? '#070b14' : '#f7f8fb'), bg2 = c.bg2 || T.bg2 || bg, pc = (c.ink || T.ink || (dk ? '#ffffff' : '#0b1f4d'));
-    if (CUR.bgk === 'grad') set('--th-body', 'linear-gradient(160deg, ' + bg + ', ' + bg2 + ') fixed');
-    else if (CUR.bgk === 'pat') set('--th-body', patURL(CUR.pat, pc + (dk ? '17' : '12')) + ', linear-gradient(160deg, ' + bg + ', ' + bg2 + ') fixed');
+    var bg = c.bg || T.bg || (dk ? '#070b14' : '#f7f8fb'), bg2 = c.bg2 || (c.bg ? '' : T.bg2) || '', pc = (c.ink || (surf ? (lum(surf) > 0.36 ? '#0b1f4d' : '#ffffff') : '') || T.ink || (dk ? '#ffffff' : '#0b1f4d'));
+    // التدرّج (خالد 2026-11-23: "مش بيعمل حاجة"): لو مفيش لون تاني أو هو نفس الأول، التاني بيتعمل من لون الراس علشان التدرّج يبان
+    if (!bg2 || bg2 === bg) bg2 = mixH(bg, c.hd1 || T.hd1 || (dk ? '#1f5fae' : '#2b7be0'), dk ? 0.28 : 0.2);
+    var grad = CUR.gd === 'r' ? 'radial-gradient(120% 90% at 50% 0%, ' + bg2 + ', ' + bg + ')' : 'linear-gradient(' + ({ d: '160deg', v: '180deg', h: '90deg' }[CUR.gd]) + ', ' + bg + ', ' + bg2 + ')';
+    if (CUR.bgk === 'grad') set('--th-body', grad + ' fixed');
+    else if (CUR.bgk === 'pat') set('--th-body', patURL(CUR.pat, pc + (dk ? '17' : '12')) + ', ' + grad + ' fixed');
+    else if (CUR.bgk === 'img' && CUR.bi && IMGBASE) {   // صورة من المحل: طبقة غامقة (أو فاتحة) فوقها علشان الكلام يتقري
+      var lt2 = lightSurf(), a = (CUR.bd / 100).toFixed(2), ov = lt2 ? 'rgba(255,255,255,' + a + ')' : 'rgba(0,0,0,' + a + ')';
+      set('--th-body', 'linear-gradient(' + ov + ', ' + ov + ') fixed, url("' + IMGBASE + encodeURIComponent(CUR.bi) + '") center / cover no-repeat fixed'); }
     if (CUR.r) set('--th-r', CUR.r + 'px');
     set('--th-cardsh', ['none', '0 2px 10px #0a1a4410', '0 8px 24px #0a1a441c', '0 14px 34px #0a1a4430'][CUR.sh] + (dk && CUR.sh ? ', 0 0 0 1px #ffffff0a' : ''));
     if (CUR.f !== 'cairo') { loadFont(CUR.f); set('--th-font', "'" + FONTS[CUR.f][0] + "', 'Cairo', system-ui, Tahoma, sans-serif"); }
@@ -140,7 +162,7 @@
     d.className = cls.concat(dk ? ['dk'] : []).filter(function (x, i, a) { return a.indexOf(x) === i; }).join(' ');
     try { var meta = document.querySelector('meta[name=theme-color]'); if (meta) meta.content = (CUR.id === 'base' && !c.hd2) ? '#0a1a44' : (hd2 || T.bg || '#0a1a44'); } catch (e) {}
     deco();
-    return c.ac || T.ac || '';
+    return c.ac || CUR.c.ac || T.ac || '';
   }
   /* ===== زينة رمضان: فوانيس متعلّقة بتتهز، هلال ونجوم (مرسومين SVG، من غير صور) ===== */
   function lantern(col, glass, h) {
@@ -180,10 +202,13 @@
   }
   function startTick() { if (!ticker) ticker = setInterval(tick, 1000); tick(); }
   if (MQ) { var onMq = function () { if (CUR.m === 'auto') { document.documentElement.classList.toggle('dk', MQ.matches); if (W.RdTheme && W.RdTheme.onChange) W.RdTheme.onChange(); } }; if (MQ.addEventListener) MQ.addEventListener('change', onMq); else if (MQ.addListener) MQ.addListener(onMq); }
+  // المعاينة في الكاشير (?pv=1 جوه iframe): من غير شريط سكرول ظاهر (خالد 2026-11-23)، والسكرول شغال عادي
+  try { if (/[?&]pv=1/.test(location.search) && W.parent !== W) document.documentElement.classList.add('in-pv'); } catch (e) {}
   // معاينة من صفحة "شكل المتجر" في الكاشير (iframe): الكاشير بيبعت الثيم اللي بيتعدّل، والمتجر بيتلبسه على طول من غير حفظ
   W.addEventListener('message', function (e) {
     if (W.parent === W || e.source !== W.parent || !e.data || e.data.rd !== 'theme') return;
-    W.RdTheme.preview = true; if (W.RdTheme.onPreview) W.RdTheme.onPreview(e.data.th);
+    W.RdTheme.preview = true; var th = e.data.th; if (th && (e.data.pm === 'light' || e.data.pm === 'dark')) { th = JSON.parse(JSON.stringify(th)); th.m = e.data.pm; }   // pm: بتعدّل ألوان الفاتح/الغامق
+    if (W.RdTheme.onPreview) W.RdTheme.onPreview(th);
   });
-  W.RdTheme = { PRESETS: PRESETS, ORDER: ORDER, FONTS: FONTS, CITIES: CITIES, SECS: SECS, SEC_N: SEC_N, clean: clean, apply: apply, mode: mode, bgs: bgs, isDark: isDark, homeTop: homeTop, startTick: startTick, maghrib: maghrib, sunset: sunset, cur: function () { return CUR; } };
+  W.RdTheme = { PRESETS: PRESETS, ORDER: ORDER, FONTS: FONTS, CITIES: CITIES, SECS: SECS, SEC_N: SEC_N, clean: clean, apply: apply, mode: mode, bgs: bgs, lum: lum, lightSurf: lightSurf, isDark: isDark, homeTop: homeTop, startTick: startTick, maghrib: maghrib, sunset: sunset, cur: function () { return CUR; } };
 })(window);

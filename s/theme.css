@@ -1,6 +1,6 @@
 /* ثيمات المتجر (theme.js، 2026-11-22). كل حاجة هنا تحت html[data-th] أو كلاسات theme.js: من غير ثيم = store.css زي ما هو بالظبط.
    المتغيرات (theme.js بيحطها على html): --bg --card --ink ... (ألوان الثيم) و --th-hd (الراس) --th-hdink --th-hdsub --th-deal --th-body (خلفية الصفحة)
-   --th-glow --th-font --th-r (الاستدارة) --th-cardsh (الظل)، ولكل جهاز --mcols/--dcols --mfs/--dfs --mo-*/--do-* (ترتيب الأقسام) */
+   --th-glow --th-font --th-r (الاستدارة) --th-cardsh (الظل)، ولكل جهاز --mcols/--dcols --mfs/--dfs --mo-xx و --do-xx (ترتيب الأقسام) */
 
 /* ===== عام لكل الثيمات ===== */
 html[data-th] body { font-family: var(--th-font, 'Cairo', system-ui, Tahoma, sans-serif); background: var(--th-body, none), var(--bg); background-color: var(--bg); }
@@ -108,3 +108,5 @@ html.th-still .rd-lan, html.th-still .rd-star { animation: none; }
   .hrow .rw-nav:hover { transform: scale(1.08); } .hrow .rw-nav[disabled] { opacity: 0; pointer-events: none; }
   .hrow .rw-nav.next { left: -8px; } .hrow .rw-nav.prev { right: -8px; }
 }
+/* المعاينة في الكاشير: من غير شريط سكرول (theme.js in-pv) */
+html.in-pv { scrollbar-width: none; } html.in-pv::-webkit-scrollbar, html.in-pv body::-webkit-scrollbar { display: none; width: 0; height: 0; }
