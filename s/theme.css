@@ -60,8 +60,10 @@ html[data-th="neon"] .srch { background: #120f24 !important; border: 1px solid #
 html[data-th="neon"] .b1 { background: linear-gradient(135deg, #7c3aed, #0e7490) !important; color: #fff !important; box-shadow: 0 8px 24px #a855f755 !important; }
 
 /* ===== زجاجي: كروت شفافة بتغبّش اللي وراها ===== */
-html[data-th="glass"] .pc, html[data-th="glass"] .sc, html[data-th="glass"] .box, html[data-th="glass"] .svc button, html[data-th="glass"] .chip, html[data-th="glass"] .nav, html[data-th="glass"] .bar {
-  -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); border: 1px solid var(--line) !important; }
+/* التغبيش (backdrop-filter) على الشرايط الثابتة بس (خالد 2026-11-27: "الموقع تقيل وبيقطع وأنا بسكرول"): كان على كل كارت بيتحرك مع السكرول
+   (25 عنصر)، والمتصفح بيعيد حسابه في كل خطوة سكرول. ورا الكروت تدرّج ناعم فالتغبيش ماكانش بيبان أصلًا، والكروت فضلت بنفس لونها الشفاف */
+html[data-th="glass"] .pc, html[data-th="glass"] .sc, html[data-th="glass"] .box, html[data-th="glass"] .svc button, html[data-th="glass"] .chip, html[data-th="glass"] .nav, html[data-th="glass"] .bar { border: 1px solid var(--line) !important; }
+html[data-th="glass"] .nav, html[data-th="glass"] .bar { -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); }
 html[data-th="glass"] .srch { background: var(--inp) !important; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 
 /* ===== دافي ===== */

@@ -148,6 +148,9 @@
   // "/" بيفتح البحث (الكمبيوتر)
   document.addEventListener('keydown', function (e) { if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '')) return; var i = document.getElementById(wide() && pcOpt().bar ? 'dsq' : 'sq'); if (i) { e.preventDefault(); i.focus(); } });
   /* ===== إعلانات الكمبيوتر: جنب البانر (2) وعريض بين الأقسام. auto = أحسن عرض (أكبر خصم)، وبعده الجديد، وبعده أي منتج بصورة ===== */
+  // البوستر جنب الإعلانين: بيصغر كله بنسبة عرض البانر لـ 1112 (العرض اللي اتصمّم عليه في صفحة البانر)
+  function pcZoom() { var st = app.querySelector('.pc-hero .deal-stage'); if (!st) return; var cs = getComputedStyle(st), w = st.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0); st.style.setProperty('--pcz', String(wide() ? Math.min(1, Math.max(0.5, w / 1112)) : 1)); }   // العرض من جوه (من غير مكان الأسهم)
+  window.addEventListener('resize', function () { clearTimeout(pcZoom.t); pcZoom.t = setTimeout(pcZoom, 120); });
   function pcAdPick(a, used) {
     if (!a || a.k === 'off') return null;
     if (a.k === 'img') return { img: a.im, go: a.go && window.RdPoster ? RdPoster.goOf({ go: a.go }) : '#/c/_off' };
@@ -161,7 +164,7 @@
     if (x.img) return '<button type="button" class="pcad pcad-img ' + (cls || '') + '" data-go="' + esc(x.go) + '"><img src="' + esc(img(x.img)) + '" alt="" loading="lazy"></button>';
     var p = x.p, e = eff(p), c = catOf(p.c) || {}, c1 = c.c1 || '#2f7cf6', c2 = c.c2 || '#5aa0ff';
     return '<button type="button" class="pcad ' + (cls || '') + '" data-go="#/p/' + esc(encodeURIComponent(p.id)) + '" style="--c1:' + esc(c1) + ';--c2:' + esc(c2) + '"><span class="pa-t"><small>' + (e.pct ? '🔥 خصم ' + e.pct + '%' : isFresh(p) ? '✨ لسه واصل' : esc((c.ic || '') + ' ' + (c.n || ''))) + '</small><b>' + esc(p.n) + '</b>'
-      + '<span class="pa-pr"><b class="num">' + fm(e.pr) + '</b> ' + esc(cur()) + (e.was ? ' <s class="num">' + fm(e.was) + '</s>' : '') + '</span><em>تسوّق ←</em></span><span class="pa-im">' + pic(p) + '</span></button>';
+      + '<span class="pa-pr"><b class="num">' + fm(e.pr) + '</b> ' + esc(cur()) + (e.was ? ' <s class="num">' + fm(e.was) + '</s>' : '') + '<i class="pa-go">تسوّق ←</i></span><em>تسوّق ←</em></span><span class="pa-im">' + pic(p) + '</span></button>';
   }
   // "ليه تشتري مننا": اللي المحل كتبه، أو من بيانات المحل نفسها (التوصيل، الضمان، الاسترجاع، الدفع، الصيانة)
   function whyItems(o) {
@@ -408,14 +411,13 @@
     var seen = seenList(); if (seen.length >= 2) html += mark('<div class="sec"><b>👀 شوفته قبل كده</b><button data-clear-seen>امسح</button></div><div class="hrow">' + rowHTML(seen) + '</div>', 'seen');
     if (newOnes.length) html += mark('<div class="sec"><b>✨ لسه واصل</b></div><div class="hrow">' + rowHTML(newOnes) + '</div>', 'new');
     var wdAt = pco.wd && pco.wd.k !== 'off' ? (cats.some(function (c) { return c.id === pco.wd.at; }) ? pco.wd.at : (cats[0] || {}).id) : '';
-    /* الكمبيوتر: الأقسام اللي منتجاتها أقل من صف (خالد 2026-11-26: "استغل الأماكن الفاضية") بتتجمع في صف واحد "منتجات المحل" بدل صفوف فيها كارت واحد وفاضية */
-    var rowCols = (window.RdTheme && RdTheme.cur && RdTheme.cur().dv.d.cols) || 6, rowsOf = function (c) { return sortList(visible().filter(function (p) { return p.c === c.id; })).slice(0, 12); };
-    var rowCats = cats.slice(0, 4), mixed = [];
-    if (wide() && pco.row === 'scroll') { var sparse = cats.filter(function (c) { return rowsOf(c).length < rowCols; }); if (sparse.length > 1) { rowCats = cats.filter(function (c) { return sparse.indexOf(c) < 0; }).slice(0, 4); sparse.forEach(function (c) { mixed = mixed.concat(rowsOf(c).slice(0, 4)); }); } }
-    var rowSec = function (c, l, k) { html += mark('<div class="sec"><b>' + (c ? esc(c.ic || '') + ' ' + esc(c.n) : '🛍 منتجات المحل') + '</b><button data-go="' + (c ? '#/c/' + esc(c.id) : '#/cats') + '">الكل ←</button></div>' + '<div class="hrow">' + rowHTML(l) + '</div>', 'rows');
-      if (wdAt && (k === wdAt || (!c && mixed.length))) { var wx = pcAdPick(pco.wd, adUsed); if (wx) html += '<div class="pc-wd" data-s="rows">' + pcAdHTML(wx, 'wide') + '</div>'; wdAt = ''; } };
-    rowCats.forEach(function (c) { rowSec(c, rowsOf(c), c.id); });
-    if (mixed.length) rowSec(null, mixed.slice(0, 24), '');
+    /* صفوف الأقسام (موبايلات، شواحن، جرابات…): الموبايل أول 4 زي الأول، والكمبيوتر كل قسم فيه منتجات (خالد 2026-11-27: "الرئيسية لازم يبان فيها
+       الأصناف… دلوقتي بقت منتجات المحل بس": اتشال تجميع الأقسام القليلة في صف واحد) */
+    var rowsOf = function (c) { return sortList(visible().filter(function (p) { return p.c === c.id; })).slice(0, 12); };
+    var rowCats = wide() ? cats : cats.slice(0, 4);
+    var rowSec = function (c, l) { html += mark('<div class="sec"><b>' + esc(c.ic || '') + ' ' + esc(c.n) + '</b><button data-go="#/c/' + esc(c.id) + '">الكل ←</button></div>' + '<div class="hrow">' + rowHTML(l) + '</div>', 'rows');
+      if (wdAt && c.id === wdAt) { var wx = pcAdPick(pco.wd, adUsed); if (wx) html += '<div class="pc-wd" data-s="rows">' + pcAdHTML(wx, 'wide') + '</div>'; wdAt = ''; } };
+    rowCats.forEach(function (c) { rowSec(c, rowsOf(c)); });
     html += mark(shopRevHome(), 'rev');
     html += mark(svcCards(s), 'svc');
     html += '<div class="box" data-s="wish" style="text-align:center;background:color-mix(in srgb,#f59e0b 9%,var(--card));border-color:color-mix(in srgb,#f59e0b 35%,var(--line))"><b style="font-size:14px;font-weight:900">🤔 مش لاقي اللي عايزه؟</b><div style="color:var(--mut);font-size:12.5px;font-weight:600;margin:4px 0 10px">اكتبلنا وهنجيبهولك ونكلمك على واتساب</div><button class="btn b1" data-go="#/wish" style="width:100%">قولّنا عايز إيه</button></div>';
@@ -423,6 +425,7 @@
     shell(html, '#/');
     if (window.RdTheme) RdTheme.startTick();
     var dealBanner = app.querySelector('[data-deal-banner]');
+    pcZoom();
     var refit = function () { tickTimers(); fitDeal(dealBanner && dealBanner.querySelector('b')); };   // التايمر بيتملي الأول (كان فاضي وقت القياس، وبعد ثانية بيطوّل الكلام ويزق الزرار برّه)
     refit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
     var dealDots = [].slice.call(app.querySelectorAll('[data-deal-index]'));
