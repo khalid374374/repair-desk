@@ -90,7 +90,92 @@
   /* QUIET (خالد 2026-11-09: "الموقع بيفضل يعمل ريفرش"): الرسم اللي جاي من تحديث في الخلفية (الكتالوج اتغيّر، حالة الطلب اتغيّرت، عرض خلص) بيتعمل
      من غير حركة الدخول ومن غير ما الصفحة ترجع لفوق. الحركة للتنقّل اللي العميل عمله بس */
   var QUIET = false;
-  function shell(html, on, noNav) { clearTimers(); app.className = noNav ? '' : 'has-nav'; app.innerHTML = '<div class="page' + (QUIET ? ' still' : '') + '">' + html + '</div>' + navHTML(on, noNav); badge(); tickTimers(); installMaybe(); markLoading(app); adPick(); rowNav(app); }
+  function shell(html, on, noNav) { clearTimers(); app.className = noNav ? '' : 'has-nav'; app.innerHTML = dbarHTML(on) + '<div class="page' + (QUIET ? ' still' : '') + '">' + html + '</div>' + navHTML(on, noNav); badge(); tickTimers(); installMaybe(); markLoading(app); adPick(); rowNav(app); srchBind(); }
+  /* ===== الكمبيوتر (خالد 2026-11-26، الدمج بين فكرة 1 و3، tests/ui/shots/store-pc-*.png): كل حاجة هنا بتظهر على 1100+ بس (store.css)، والموبايل زي ما هو.
+     الإعدادات من الكاشير (شكل المتجر ← 💻 الكمبيوتر): C.th.pc بعد theme.js clean ===== */
+  var PC_DEF = { bar: true, an: true, ln: true, hero: 'side', sd: [{ k: 'auto' }, { k: 'auto' }], why: true, wy: [], row: 'scroll', wd: { k: 'off' } };
+  function pcOpt() { var c = window.RdTheme && RdTheme.cur && RdTheme.cur(); return (c && c.pc) || PC_DEF; }
+  var wideMQ = window.matchMedia ? matchMedia('(min-width: 1100px)') : null;
+  function wide() { return !!(wideMQ && wideMQ.matches); }
+  // الشريط زي بتاع الكاشير: اللوجو والحالة، الروابط، البحث في النص، طلباتي وحسابي والسلة
+  function dbarHTML(on) {
+    var opn = openNow(), b = function (k, ic, t) { return '<button type="button" data-go="' + k + '" class="db-l' + (on === k ? ' on' : '') + '"><em>' + ic + '</em>' + t + '</button>'; };
+    return '<header class="dbar" aria-label="' + esc(C.shop.name) + '"><div class="db-lg"><button type="button" class="logo" data-go="#/" aria-label="الرئيسية">' + logoHTML() + '</button><span class="db-nm"><b data-go="#/">' + esc(C.shop.name) + '</b><small>'
+      + (brCur() ? '<button type="button" class="brc" data-br aria-haspopup="dialog">📍 ' + esc(brCur().n) + ' ▾</button> · ' : '') + '<i class="dot' + (opn ? '' : ' off') + '"></i>' + (opn ? 'مفتوح' + (hoursTxt() ? ' لحد ' + esc(hoursTxt().split('–')[1].trim()) : '') : 'مقفول دلوقتي') + '</small></span></div>'
+      + '<nav class="db-ln">' + b('#/', '🏠', 'الرئيسية') + b('#/cats', '🗂', 'الأقسام') + (hasOffers() ? b('#/c/_off', '🔥', 'العروض') : '') + b('#/svc', '🛠', 'الخدمات') + '</nav>'
+      + '<form class="db-sr" id="dsf" role="search"><span aria-hidden="true">🔍</span><input id="dsq" type="search" enterkeyhint="search" placeholder="دوّر على موبايل، جراب، اسكرينة..." autocomplete="off" aria-label="بحث في المتجر"><kbd title="اضغط / للبحث">/</kbd></form>'
+      + '<button type="button" class="db-ic' + (on === '#/orders' ? ' on' : '') + '" data-go="#/orders" aria-label="طلباتي" title="طلباتي">📦</button><button type="button" class="db-ic' + (on === '#/me' ? ' on' : '') + '" data-go="#/me" aria-label="حسابي" title="حسابي">👤</button>'
+      + '<button type="button" class="db-cart" data-go="#/cart">🛒 السلة<i class="bdg" data-cart hidden></i></button></header>';
+  }
+  /* ===== قايمة نتايج البحث وانت بتكتب (موبايل وكمبيوتر): الأقرب بالصورة والسعر، الأقسام اللي فيها نتايج، "قصدك …؟"، واعرض الكل.
+     الأسهم فوق وتحت وEnter، وEsc بيقفلها ===== */
+  function markName(n, q) {
+    var ws = norm(q).split(' ').filter(Boolean); if (!ws.length) return esc(n);
+    return String(n).split(/(\s+)/).map(function (t) { if (!t.trim()) return t; var nt = norm(t); var hit = nt && ws.some(function (w) { return wordHit(w, [nt]).sc >= 5; }); return hit ? '<mark>' + esc(t) + '</mark>' : esc(t); }).join('');
+  }
+  function srchPanel(q) {
+    var r = smartSearch(q), list = r.list, h = '';
+    if (r.fix) h += '<button type="button" class="sd-fix" data-sq="' + esc(r.fix) + '">قصدك <b>«' + esc(r.fix) + '»</b>؟</button>';
+    else if (r.more && list.length) h += '<div class="sd-note">مفيش «' + esc(q) + '» بالظبط، ودي أقرب حاجات</div>';
+    if (!list.length) return h + '<div class="sd-none"><b>مفيش نتايج لـ «' + esc(q) + '»</b><button type="button" class="sd-wish" data-go="#/wish">🤔 قولّنا عايز إيه وهنجيبهولك</button></div>';
+    var cs = {}; list.forEach(function (p) { if (p.c) cs[p.c] = (cs[p.c] || 0) + 1; });
+    var ck = Object.keys(cs).filter(function (k) { return catOf(k); }).sort(function (a, b) { return cs[b] - cs[a]; }).slice(0, 4);
+    if (ck.length > 1) h += '<div class="sd-h">في الأقسام</div><div class="sd-cats">' + ck.map(function (k) { var c = catOf(k); return '<button type="button" data-go="#/c/' + esc(k) + '">' + esc(c.ic || '📦') + ' ' + esc(c.n) + ' <i class="num">' + cs[k] + '</i></button>'; }).join('') + '</div>';
+    h += '<div class="sd-h">المنتجات</div>' + list.slice(0, 6).map(function (p) { var e = eff(p), c = catOf(p.c), so = avail(p) <= 0;
+      return '<button type="button" class="sd-r" data-go="#/p/' + esc(encodeURIComponent(p.id)) + '"><span class="sd-im">' + pic(p) + '</span><span class="sd-n"><b>' + markName(p.n, r.fix || q) + '</b><small>' + (c ? esc(c.n) : '') + (p.b ? ' · ' + esc(p.b) : '') + (so ? ' · هيتوفر قريب' : '') + '</small></span>'
+        + '<span class="sd-p">' + (p.ask ? 'اسأل' : '<b class="num">' + fm(e.pr) + '</b> ' + esc(cur()) + (e.was ? '<s class="num">' + fm(e.was) + '</s>' : '')) + '</span></button>'; }).join('');
+    return h + '<button type="button" class="sd-all" data-go="#/q/' + esc(encodeURIComponent(q)) + '">اعرض كل النتايج (<span class="num">' + list.length + '</span>) ←</button>';
+  }
+  function srchBind() {
+    [['sf', 'sq'], ['dsf', 'dsq']].forEach(function (ids) {
+      var f = document.getElementById(ids[0]), inp = document.getElementById(ids[1]); if (!f || !inp || inp._sd) return; inp._sd = 1;
+      var box = document.createElement('div'); box.className = 'sdd'; box.hidden = true; box.setAttribute('role', 'listbox'); f.appendChild(box);
+      var t = 0, at = -1, show = function () { var q = inp.value.trim(); if (!q) { box.hidden = true; return; } box.innerHTML = srchPanel(q); box.hidden = false; at = -1; };
+      var rows = function () { return [].slice.call(box.querySelectorAll('.sd-r, .sd-all')); };
+      inp.addEventListener('input', function () { clearTimeout(t); t = setTimeout(show, 110); });
+      inp.addEventListener('focus', function () { if (inp.value.trim()) show(); });
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { box.hidden = true; inp.blur(); return; }
+        if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !box.hidden) { e.preventDefault(); var l = rows(); if (!l.length) return; at = (at + (e.key === 'ArrowDown' ? 1 : -1) + l.length) % l.length; l.forEach(function (x, i) { x.classList.toggle('on', i === at); }); l[at].scrollIntoView({ block: 'nearest' }); }
+        else if (e.key === 'Enter' && !box.hidden && at >= 0) { var l2 = rows(); if (l2[at]) { e.preventDefault(); box.hidden = true; go(l2[at].dataset.go); } }
+      });
+      box.addEventListener('mousedown', function (e) { e.preventDefault(); });   // الدوسة جوه القايمة ماتقفلهاش قبل ما تتنفّذ
+      box.addEventListener('click', function (e) { var fx = e.target.closest('[data-sq]'); if (fx) { e.stopPropagation(); inp.value = fx.dataset.sq; show(); inp.focus(); return; } if (e.target.closest('[data-go]')) box.hidden = true; });
+      inp.addEventListener('blur', function () { setTimeout(function () { box.hidden = true; }, 120); });
+      if (ids[0] === 'dsf') f.onsubmit = function (ev) { ev.preventDefault(); var v = inp.value.trim(); box.hidden = true; if (v) go('#/q/' + encodeURIComponent(v)); };
+    });
+  }
+  // "/" بيفتح البحث (الكمبيوتر)
+  document.addEventListener('keydown', function (e) { if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '')) return; var i = document.getElementById(wide() && pcOpt().bar ? 'dsq' : 'sq'); if (i) { e.preventDefault(); i.focus(); } });
+  /* ===== إعلانات الكمبيوتر: جنب البانر (2) وعريض بين الأقسام. auto = أحسن عرض (أكبر خصم)، وبعده الجديد، وبعده أي منتج بصورة ===== */
+  function pcAdPick(a, used) {
+    if (!a || a.k === 'off') return null;
+    if (a.k === 'img') return { img: a.im, go: a.go && window.RdPoster ? RdPoster.goOf({ go: a.go }) : '#/c/_off' };
+    if (a.k === 'p' && P[a.id] && !P[a.id].hide && used.indexOf(a.id) < 0) { used.push(a.id); return { p: P[a.id] }; }
+    var pool = visible().filter(function (p) { return avail(p) > 0 && !p.ask && used.indexOf(p.id) < 0; });
+    var pick = pool.filter(function (p) { return eff(p).pct; }).sort(function (a, b) { return eff(b).pct - eff(a).pct; })[0] || pool.filter(isFresh)[0] || pool.filter(function (p) { return p.img && p.img.length; })[0] || pool[0];
+    if (!pick) return null; used.push(pick.id); return { p: pick };
+  }
+  function pcAdHTML(x, cls) {
+    if (!x) return '';
+    if (x.img) return '<button type="button" class="pcad pcad-img ' + (cls || '') + '" data-go="' + esc(x.go) + '"><img src="' + esc(img(x.img)) + '" alt="" loading="lazy"></button>';
+    var p = x.p, e = eff(p), c = catOf(p.c) || {}, c1 = c.c1 || '#2f7cf6', c2 = c.c2 || '#5aa0ff';
+    return '<button type="button" class="pcad ' + (cls || '') + '" data-go="#/p/' + esc(encodeURIComponent(p.id)) + '" style="--c1:' + esc(c1) + ';--c2:' + esc(c2) + '"><span class="pa-t"><small>' + (e.pct ? '🔥 خصم ' + e.pct + '%' : isFresh(p) ? '✨ لسه واصل' : esc((c.ic || '') + ' ' + (c.n || ''))) + '</small><b>' + esc(p.n) + '</b>'
+      + '<span class="pa-pr"><b class="num">' + fm(e.pr) + '</b> ' + esc(cur()) + (e.was ? ' <s class="num">' + fm(e.was) + '</s>' : '') + '</span><em>تسوّق ←</em></span><span class="pa-im">' + pic(p) + '</span></button>';
+  }
+  // "ليه تشتري مننا": اللي المحل كتبه، أو من بيانات المحل نفسها (التوصيل، الضمان، الاسترجاع، الدفع، الصيانة)
+  function whyItems(o) {
+    if (o.wy && o.wy.length) return o.wy.map(function (x) { return [x.ic || '✅', x.t, x.s]; });
+    var out = [], d = C.del || {}, t = C.terms || {}, pay = C.pay || {}, sv = C.svc || {};
+    if ((d.zones || []).length) out.push(['🚚', 'توصيل لحد البيت', d.eta || delFreeTxt() || 'لحد باب البيت']); else if (d.pickup) out.push(['🏪', 'استلم من المحل', 'جاهز في ساعته']);
+    if (t.war) out.push(['🛡', 'ضمان على المنتجات', t.war.length <= 34 ? t.war : 'حسب كل منتج']);
+    var dy = /(\d+)\s*(يوم|أيام|ايام)/.exec(t.ret || ''); if (t.ret) out.push(['🔁', dy ? 'استرجاع خلال ' + dy[1] + ' يوم' : 'استرجاع واستبدال', 'لو فيه عيب صناعة']);
+    var pm = []; if (pay.cash !== false) pm.push('كاش'); if (pay.insta && pay.insta.on) pm.push('انستاباي'); if (pay.card && pay.card.on) pm.push('فيزا'); if (pm.length) out.push(['💳', 'ادفع زي ما تحب', pm.join(' · ')]);
+    if (out.length < 4 && sv.repair && sv.repair.on !== false) out.push(['🛠', 'صيانة من البيت', 'ناخده ونرجّعه']);
+    if (out.length < 4 && C.shop.phone) out.push(['💬', 'اسألنا على واتساب', 'بنرد بسرعة']);
+    return out.slice(0, 4);
+  }
+  function whyHTML() { var o = pcOpt(); if (!o.why) return ''; var l = whyItems(o); return l.length ? '<div class="pc-why" data-s="why">' + l.map(function (x) { return '<div><i>' + esc(x[0]) + '</i><span><b>' + esc(x[1]) + '</b>' + (x[2] ? '<small>' + esc(x[2]) + '</small>' : '') + '</span></div>'; }).join('') + '</div>' : ''; }
   // صفوف المنتجات اللي بتتسحب بالعرض: على الكمبيوتر (ماوس) سهمين يمين وشمال (خالد 2026-11-22: "الكروت اللي تحت ملهاش زراير في الكمبيوتر")
   function rowNav(root) {
     [].forEach.call(root.querySelectorAll('.hrow'), function (row) {
@@ -101,7 +186,40 @@
       var go = function (d) { sc.scrollBy({ left: d * Math.max(200, sc.clientWidth * 0.8), behavior: 'smooth' }); };   // RTL: "اللي بعده" ناحية الشمال (سالب)
       pv.onclick = function () { go(1); }; nx.onclick = function () { go(-1); };
       sc.addEventListener('scroll', upd, { passive: true }); upd(); setTimeout(upd, 400);
+      rowWheel(row, sc);
     });
+  }
+  /* صف المنتجات بالبكرة على الكمبيوتر (خالد 2026-11-26: "من غير زراير، أقف على الصف وألف البكرة… من غير ما يأثر على سكرول الصفحة ولا يروح لمكان فاضي"):
+     - البكرة فوق الصف بتحركه كارت كارت (السناب بيوقّفه على كارت كامل) لحد آخر منتج، وبعدها البكرة ترجع تنزّل الصفحة
+     - لو انت بتنزّل الصفحة والصف عدّى تحت الماوس (لسه داخل عليه وكنت بتلف البكرة) مابيمسكهاش
+     - الترَكباد بالعرض شغال لوحده، و"6 من 14" + خط تحت = انت فين في الصف */
+  var lastPageWheel = 0;
+  window.addEventListener('wheel', function (e) { if (!e.defaultPrevented) lastPageWheel = Date.now(); }, { passive: true });
+  function rowWheel(row, sc) {
+    if (row._wh) return; row._wh = 1;
+    var entered = 0, cardW = function () { var c = sc.firstElementChild; if (!c) return 200; var cs = getComputedStyle(sc), g = parseFloat(cs.columnGap) || parseFloat(cs.gap) || 0; return c.getBoundingClientRect().width + g; };
+    var pos = function () { return Math.abs(sc.scrollLeft); }, max = function () { return Math.max(0, sc.scrollWidth - sc.clientWidth); }, rtl = function () { return getComputedStyle(sc).direction === 'rtl'; };
+    var prog = document.createElement('div'); prog.className = 'rw-prog'; prog.innerHTML = '<i></i>'; row.appendChild(prog);
+    var sec = row.previousElementSibling, cnt = null; if (sec && sec.classList.contains('sec')) { cnt = document.createElement('span'); cnt.className = 'rw-cnt'; cnt.dir = 'rtl'; var hb = sec.querySelector('b'); if (hb) hb.insertAdjacentElement('afterend', cnt); }
+    var paint = function () { var m = max(), n = sc.children.length, w = cardW(), vis = Math.max(1, Math.round(sc.clientWidth / w)), on = m > 4;
+      row.classList.toggle('rw-more', on); prog.hidden = !on;
+      if (on) { var i = prog.firstChild; i.style.width = Math.max(8, Math.min(100, (sc.clientWidth / sc.scrollWidth) * 100)) + '%'; i.style.insetInlineStart = (pos() / sc.scrollWidth * 100) + '%'; }
+      if (cnt) { var first = Math.round(pos() / w) + 1, last = Math.min(n, first + vis - 1); cnt.innerHTML = on ? '<bdi>' + (first > 1 ? first + '–' + last : last) + '</bdi> من <bdi>' + n + '</bdi>' : ''; cnt.hidden = !on; } };
+    sc.addEventListener('scroll', paint, { passive: true }); paint(); setTimeout(paint, 450); if (wideMQ && wideMQ.addEventListener) wideMQ.addEventListener('change', paint);
+    row.addEventListener('pointerenter', function () { entered = Date.now(); });
+    var target = -1, tmr = 0;
+    sc.addEventListener('wheel', function (e) {
+      if (!wide() || e.ctrlKey || pcOpt().row !== 'scroll') return;
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;   // ترَكباد بالعرض: البراوزر بيحركه لوحده
+      var m = max(); if (m < 4 || !e.deltaY) return;
+      if (Date.now() - entered < 450 && Date.now() - lastPageWheel < 250) return;   // كنت بتنزّل الصفحة والصف عدّى تحت الماوس
+      var dir = e.deltaY > 0 ? 1 : -1, from = target >= 0 ? target : pos();
+      if ((dir > 0 && from >= m - 2) || (dir < 0 && from <= 2)) { target = -1; return; }   // آخر الصف (أو أوله): البكرة للصفحة
+      e.preventDefault();
+      var w = cardW(), nx = Math.max(0, Math.min(m, Math.round((from + dir * w) / w) * w)); if (nx > m - 2) nx = m;
+      target = nx; clearTimeout(tmr); tmr = setTimeout(function () { target = -1; }, 420);
+      sc.scrollTo({ left: rtl() ? -nx : nx, behavior: noMotion() ? 'auto' : 'smooth' });
+    }, { passive: false });
   }
   /* خالد 2026-11-16: الصورة وهي بتتحمّل بيظهر عليها لمعة التحميل، وبعدين بتظهر بهدوء */
   function markLoading(root) {
@@ -271,19 +389,33 @@
     html += '<div class="chips" data-s="cats">' + cats.map(function (c) { return '<button class="chip" data-go="#/c/' + esc(c.id) + '"><span style="--c1:' + esc(c.c1 || '#2f7cf6') + ';--c2:' + esc(c.c2 || '#5aa0ff') + '">' + esc(c.ic || '📦') + '</span>' + esc(c.n) + '</button>'; }).join('')
       + (offs.length ? '<button class="chip" data-go="#/c/_off"><span style="--c1:#d6455f;--c2:#f0753b">🔥</span>العروض</button>' : '')
       + '<button class="chip" data-go="#/svc"><span style="--c1:#e48b07;--c2:#ffc35c">🛠</span>الخدمات</button></div>';
+    var pco = pcOpt(), adUsed = [];
+    if (dealSlides[0] && !dealSlides[0]._ps) adUsed.push(dealSlides[0].id);   // الإعلانات ماتكررش أول عرض في البانر ولا بعض
+    var sideAds = pco.hero === 'side' && dealSlides.length ? pco.sd.map(function (a) { return pcAdPick(a, adUsed); }).filter(Boolean) : [];
     if (dealSlides.length) {
+      if (sideAds.length) html += '<div class="pc-hero n' + sideAds.length + '" data-s="deal"><div class="pc-hm">';
       html += !hasOffSlides ? '<div class="ps-gap" data-s="deal"></div>' : '<div class="sec" data-s="deal"><b>🔥 عروض لفترة محدودة</b><button data-go="#/c/_off">الكل ←</button></div>';
       var dealNav = dealSlides.length > 1
         ? '<button type="button" class="deal-nav prev" data-deal-step="-1" aria-label="العرض السابق">←</button><button type="button" class="deal-nav next" data-deal-step="1" aria-label="العرض التالي">→</button>'
         : '';
       html += '<div class="deal-carousel" data-s="deal"><div class="deal-stage">' + dealSlideHTML(dealSlides[0], 0, dealSlides.length) + dealNav + '</div>' + dealDotsHTML(dealSlides.length) + '</div>';
+      if (sideAds.length) html += '</div><aside class="pc-sd">' + sideAds.map(function (x) { return pcAdHTML(x); }).join('') + '</aside></div>';
     }
+    html += whyHTML();
     // سلتك مستنياك (نون/أمازون): لو فيه حاجات في السلة، سطر يرجّعه يكمّل الطلب
     var cn = cartCount(); if (cn) { var ct = cart(), cs = ct.reduce(function (a, x) { return a + lineTotal(x); }, 0);
       html += '<button type="button" class="cartback" data-s="cart" data-go="#/cart"><span class="cb-ims">' + ct.slice(0, 3).map(function (x) { return '<i>' + pic(P[x.id]) + '</i>'; }).join('') + '</span><span class="cb-t"><b>سلتك مستنياك</b><small><span class="num">' + cn + '</span> ' + (cn === 1 ? 'حاجة' : 'حاجات') + ' · ' + money(cs) + '</small></span><span class="cb-go">كمّل ←</span></button>'; }
     var seen = seenList(); if (seen.length >= 2) html += mark('<div class="sec"><b>👀 شوفته قبل كده</b><button data-clear-seen>امسح</button></div><div class="hrow">' + rowHTML(seen) + '</div>', 'seen');
     if (newOnes.length) html += mark('<div class="sec"><b>✨ لسه واصل</b></div><div class="hrow">' + rowHTML(newOnes) + '</div>', 'new');
-    cats.slice(0, 4).forEach(function (c) { var l = sortList(visible().filter(function (p) { return p.c === c.id; })).slice(0, 12); html += mark('<div class="sec"><b>' + esc(c.ic || '') + ' ' + esc(c.n) + '</b><button data-go="#/c/' + esc(c.id) + '">الكل ←</button></div>' + '<div class="hrow">' + rowHTML(l) + '</div>', 'rows'); });
+    var wdAt = pco.wd && pco.wd.k !== 'off' ? (cats.some(function (c) { return c.id === pco.wd.at; }) ? pco.wd.at : (cats[0] || {}).id) : '';
+    /* الكمبيوتر: الأقسام اللي منتجاتها أقل من صف (خالد 2026-11-26: "استغل الأماكن الفاضية") بتتجمع في صف واحد "منتجات المحل" بدل صفوف فيها كارت واحد وفاضية */
+    var rowCols = (window.RdTheme && RdTheme.cur && RdTheme.cur().dv.d.cols) || 6, rowsOf = function (c) { return sortList(visible().filter(function (p) { return p.c === c.id; })).slice(0, 12); };
+    var rowCats = cats.slice(0, 4), mixed = [];
+    if (wide() && pco.row === 'scroll') { var sparse = cats.filter(function (c) { return rowsOf(c).length < rowCols; }); if (sparse.length > 1) { rowCats = cats.filter(function (c) { return sparse.indexOf(c) < 0; }).slice(0, 4); sparse.forEach(function (c) { mixed = mixed.concat(rowsOf(c).slice(0, 4)); }); } }
+    var rowSec = function (c, l, k) { html += mark('<div class="sec"><b>' + (c ? esc(c.ic || '') + ' ' + esc(c.n) : '🛍 منتجات المحل') + '</b><button data-go="' + (c ? '#/c/' + esc(c.id) : '#/cats') + '">الكل ←</button></div>' + '<div class="hrow">' + rowHTML(l) + '</div>', 'rows');
+      if (wdAt && (k === wdAt || (!c && mixed.length))) { var wx = pcAdPick(pco.wd, adUsed); if (wx) html += '<div class="pc-wd" data-s="rows">' + pcAdHTML(wx, 'wide') + '</div>'; wdAt = ''; } };
+    rowCats.forEach(function (c) { rowSec(c, rowsOf(c), c.id); });
+    if (mixed.length) rowSec(null, mixed.slice(0, 24), '');
     html += mark(shopRevHome(), 'rev');
     html += mark(svcCards(s), 'svc');
     html += '<div class="box" data-s="wish" style="text-align:center;background:color-mix(in srgb,#f59e0b 9%,var(--card));border-color:color-mix(in srgb,#f59e0b 35%,var(--line))"><b style="font-size:14px;font-weight:900">🤔 مش لاقي اللي عايزه؟</b><div style="color:var(--mut);font-size:12.5px;font-weight:600;margin:4px 0 10px">اكتبلنا وهنجيبهولك ونكلمك على واتساب</div><button class="btn b1" data-go="#/wish" style="width:100%">قولّنا عايز إيه</button></div>';
@@ -402,7 +534,8 @@
   function catPage(id, q) {
     var st = catPage.st[id] = catPage.st[id] || { s: '', b: '', m: '', sort: '' };
     var c = id === '_off' ? { id: '_off', n: 'العروض', ic: '🔥' } : catOf(id);
-    var base = id === '_off' ? sortList(visible(), 'off') : id === '_q' ? search(q) : visible().filter(function (p) { return p.c === id; });
+    var sr = id === '_q' ? smartSearch(q) : null;
+    var base = id === '_off' ? sortList(visible(), 'off') : sr ? sr.list : visible().filter(function (p) { return p.c === id; });
     if (!c && id !== '_q') return go('#/');
     var subs = uniq(base.map(function (p) { return p.s; }).filter(Boolean));
     if (st.s && subs.indexOf(st.s) < 0) st.s = '';
@@ -412,6 +545,8 @@
     var models = c && c.models ? uniq([].concat.apply([], inB.map(function (p) { return p.m || []; }))) : [];
     var list = sortList(inB.filter(function (p) { return !st.m || (p.m || []).indexOf(st.m) >= 0; }), st.sort === 'off' ? '' : st.sort);
     var html = barHTML(id === '_q' ? '🔍 ' + esc(q) : esc(c.ic || '') + ' ' + esc(c.n), '<span class="num">' + list.length + '</span> منتج');
+    if (sr && sr.fix) html += '<div class="banner info sq-fix">🔎 بندوّر على <b>«' + esc(sr.fix) + '»</b> (كتبت «' + esc(q) + '»)</div>';
+    else if (sr && sr.more && list.length) html += '<div class="banner info sq-fix">🔎 مفيش «' + esc(q) + '» بالظبط، ودي أقرب حاجات</div>';
     if (subs.length > 1) html += '<div class="subs">' + ['<button data-s="" class="' + (!st.s ? 'on' : '') + '">الكل</button>'].concat(subs.map(function (x) { return '<button data-s="' + esc(x) + '" class="' + (st.s === x ? 'on' : '') + '">' + esc(x) + ' <i>' + base.filter(function (p) { return p.s === x; }).length + '</i></button>'; })).join('') + '</div>';
     if (brands.length > 1) html += '<div class="brands">' + ['<button data-b="" class="' + (!st.b ? 'on' : '') + '">الكل</button>'].concat(brands.map(function (b) { return '<button data-b="' + esc(b) + '" class="' + (st.b === b ? 'on' : '') + '">' + esc(b) + '</button>'; })).join('') + '</div>';
     if (models.length) html += '<div class="models">' + ['<button data-m="" class="' + (!st.m ? 'on' : '') + '">كل الموديلات</button>'].concat(models.map(function (m) { return '<button data-m="' + esc(m) + '" class="' + (st.m === m ? 'on' : '') + '">' + esc(m) + '</button>'; })).join('') + '</div>';
@@ -425,8 +560,60 @@
   }
   catPage.st = {};
   function uniq(a) { var s = {}; return a.filter(function (x) { return s[x] ? false : (s[x] = 1); }); }
-  function norm(s) { return String(s || '').toLowerCase().replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, ' ').trim(); }
-  function search(q) { var w = norm(q).split(' ').filter(Boolean); return visible().filter(function (p) { var t = norm([p.n, p.b, p.s, (p.m || []).join(' '), (catOf(p.c) || {}).n, p.d].join(' ')); return w.every(function (x) { return t.indexOf(x) >= 0; }); }); }
+  /* ===== البحث الذكي (خالد 2026-11-23: "عايز السيرش يبقى ذكي"): عربي/إنجليزي (ايفون = iPhone)، الغلط في حرف أو اتنين (ايفوم)،
+     أول الكلمة (سامس)، والمرادفات (جراب = كفر = case). كل كلمة لازم تلاقي حاجة، والترتيب بالأقرب (الاسم قبل الوصف، والمتاح قبل اللي خلص).
+     لو مفيش نتيجة بكل الكلمات: الأقرب بأي كلمة (more). fix = الكلمة اللي اتصلّحت (قصدك …؟) ===== */
+  function norm(s) { return String(s || '').toLowerCase().replace(/[ً-ٟـ]/g, '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/ؤ/g, 'و').replace(/ئ/g, 'ي')
+    .replace(/[٠-٩]/g, function (c) { return String(c.charCodeAt(0) - 0x660); }).replace(/[^\w؀-ۿ+.\s-]/g, ' ').replace(/\s+/g, ' ').trim(); }
+  var SYN = [['ايفون', 'iphone', 'ابل', 'apple', 'اي فون', 'ايفونات'], ['سامسونج', 'سامسونغ', 'samsung', 'galaxy', 'جالكسي', 'جلاكسي'], ['شاومي', 'xiaomi', 'ريدمي', 'redmi', 'poco', 'بوكو'],
+    ['اوبو', 'oppo'], ['ريلمي', 'realme'], ['هواوي', 'huawei', 'هونر', 'honor'], ['انفنكس', 'infinix'], ['تكنو', 'tecno'], ['نوكيا', 'nokia'], ['فيفو', 'vivo'], ['انكر', 'anker'],
+    ['جراب', 'جرابات', 'كفر', 'كفرات', 'case', 'cover', 'بيت'], ['اسكرينه', 'سكرينه', 'اسكرين', 'سكرين', 'protector', 'لزقه'], ['شاحن', 'شواحن', 'charger', 'adapter', 'راس'],
+    ['كابل', 'كابلات', 'وصله', 'وصلات', 'cable', 'سلك'], ['سماعه', 'سماعات', 'هيدفون', 'headphone', 'headphones', 'earbuds', 'earphone', 'ايربودز', 'airpods', 'هاندفري'],
+    ['باور', 'باوربانك', 'powerbank', 'power'], ['ميموري', 'memory', 'microsd', 'sd'], ['فلاشه', 'flash'], ['ساعه', 'ساعات', 'watch', 'smartwatch'], ['موبايل', 'موبايلات', 'تليفون', 'phone', 'mobile', 'هاتف'],
+    ['شاشه', 'lcd', 'display', 'screen'], ['بطاريه', 'battery'], ['لاب', 'لابتوب', 'laptop'], ['ماوس', 'mouse'], ['كيبورد', 'keyboard'], ['برو', 'pro'], ['ماكس', 'max'], ['بلس', 'plus'], ['الترا', 'ultra']];
+  var SYNMAP = (function () { var m = {}; SYN.forEach(function (g) { g.forEach(function (w) { m[norm(w)] = g.map(norm); }); }); return m; })();
+  function lev(a, b, cap) {   // مسافة التعديل (بتقف بدري لو عدّت cap)
+    if (Math.abs(a.length - b.length) > cap) return cap + 1;
+    var pp = [], prev = [], i, j; for (j = 0; j <= b.length; j++) prev[j] = j;   // + تبديل حرفين جنب بعض = غلطة واحدة (سليكون/سيلكون)
+    for (i = 1; i <= a.length; i++) { var cur = [i], mn = i; for (j = 1; j <= b.length; j++) { cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) cur[j] = Math.min(cur[j], pp[j - 2] + 1); if (cur[j] < mn) mn = cur[j]; } if (mn > cap) return cap + 1; pp = prev; prev = cur; }
+    return prev[b.length];
+  }
+  // درجة الكلمة في نص المنتج (tokens) + الكلمة اللي اتصلّحت لو جت من غلطة
+  function wordHit(w, toks) {
+    var best = 0, fix = '', syn = SYNMAP[w] || null, num = /^\d+$/.test(w), cap = num ? 0 : w.length >= 7 ? 2 : w.length >= 3 ? 1 : 0;
+    for (var i = 0; i < toks.length; i++) { var t = toks[i], sc = 0, f = '';
+      if (t === w) sc = 10; else if (syn && syn.indexOf(t) >= 0) sc = 9; else if (w.length >= 2 && t.indexOf(w) === 0) sc = 7; else if (w.length >= 3 && t.indexOf(w) > 0) sc = 5;
+      else if (cap && t.length >= 3 && (w.length > 3 || t.length > 3)) { var d = lev(w, t, cap); if (d <= cap) { sc = 4 - d; f = t; } }   // كلمة من 3 حروف: غلطة مع كلمة أطول بس (opo ← oppo)
+      if (sc > best) { best = sc; fix = f; } }
+    // غلطة في كلمة ليها مرادف (ايفوم ← ايفون = iphone)
+    if (!best && cap) { for (var key in SYNMAP) { if (Math.abs(key.length - w.length) > cap || (w.length <= 3 && key.length <= 3) || lev(w, key, cap) > cap) continue; var g = SYNMAP[key]; for (var j = 0; j < toks.length; j++) if (g.indexOf(toks[j]) >= 0) return { sc: 6, fix: key }; } }
+    return { sc: best, fix: fix };
+  }
+  var srchCache = { sig: '', idx: [] };
+  function srchIdx() {
+    var l = visible(), sig = l.length + '|' + (C.sig || '') + '|' + (l[0] && l[0].id);
+    if (srchCache.sig === sig) return srchCache.idx;
+    srchCache = { sig: sig, idx: l.map(function (p) { var name = norm([p.n, p.b].join(' ')), more = norm([p.s, (p.m || []).join(' '), (catOf(p.c) || {}).n, p.d].join(' '));
+      return { p: p, n: name.split(' ').filter(Boolean), m: more.split(' ').filter(Boolean) }; }) };
+    return srchCache.idx;
+  }
+  function smartSearch(q) {
+    var ws = uniq(norm(q).split(' ').filter(Boolean)).slice(0, 8); if (!ws.length) return { list: [], fix: '', more: false };
+    var fixes = {}, sure = {}, scored = srchIdx().map(function (x) {
+      var tot = 0, all = true, any = 0;
+      ws.forEach(function (w) { var a = wordHit(w, x.n), b = wordHit(w, x.m), h = a.sc && a.sc >= b.sc ? { sc: a.sc + 2, fix: a.fix } : b; if (!h.sc) { all = false; return; } any++; tot += h.sc;
+        if (h.fix && h.fix !== w) fixes[w] = fixes[w] || h.fix; else sure[w] = 1; });   // "قصدك …؟" بس للكلمة اللي مالقتش حاجة من غير تصليح
+      if (tot) tot += (avail(x.p) > 0 ? 3 : 0) + (eff(x.p).pct ? 1 : 0);
+      return { p: x.p, sc: tot, all: all, any: any };
+    }).filter(function (x) { return x.sc > 0; });
+    var exact = scored.filter(function (x) { return x.all; }), more = !exact.length;
+    var list = (more ? scored.filter(function (x) { return x.any; }) : exact).sort(function (a, b) { return (b.any - a.any) || (b.sc - a.sc); }).map(function (x) { return x.p; });
+    Object.keys(sure).forEach(function (w) { delete fixes[w]; });
+    var fix = Object.keys(fixes).length ? ws.map(function (w) { return fixes[w] || w; }).join(' ') : '';
+    return { list: list, fix: fix, more: more };
+  }
+  function search(q) { return smartSearch(q).list; }
 
   /* منتجات مشابهة تحت صفحة المنتج، صف بيتسحب للشمال زي أمازون (خالد 2026-11-21). نفس القسم والنوع والماركة وكلام في الاسم وسعر قريب */
   function similar(p) {

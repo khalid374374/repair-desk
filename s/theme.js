@@ -8,6 +8,9 @@
      f:  الخط cairo | tajawal | almarai | plex | messiri | changa | readex       fx: الحركة والزينة (true افتراضي)
      dv: { m: موبايل, d: كمبيوتر (1100+) } كل واحد { cols, hd: big|slim, fs: 90..115, ord: [أقسام الرئيسية بالترتيب], hide: [أقسام مستخبية] }
      rm: رمضان { greet, sub, ift: عد تنازلي للفطار, city, lanterns }
+     pc: الكمبيوتر بس (خالد 2026-11-26، الدمج بين فكرة 1 و3): { bar: الشريط زي الكاشير, an: حركته, ln: الروابط فيه, hero: side (البانر وجنبه إعلانين) | full,
+         sd: [إعلان، إعلان], why: شريط "ليه تشتري مننا", wy: [{ ic, t, s }] (فاضي = تلقائي من بيانات المحل), row: scroll (صف بالبكرة) | grid, wd: إعلان عريض { ..., at: بعد قسم } }
+         الإعلان: { k: auto } أحسن عرض | { k: p, id } منتج | { k: img, im, go } صورة من المحل
    الأساسي (base) من غير أي تغيير = شكل المتجر زي ما هو بالظبط (store.css). الباقي طبقة فوقه في theme.css تحت html[data-th]. */
 (function (W) {
   var HEX = /^#[0-9a-f]{6}$/i;
@@ -50,6 +53,17 @@
   function one(v, l, d) { return l.indexOf(v) >= 0 ? v : d; }
   function num(v, a, b, d) { v = Math.round(+v); return v >= a && v <= b ? v : d; }
   function txt(v, n) { return String(v == null ? '' : v).replace(/[<>]/g, '').slice(0, n); }
+  var AD_IMG = /^poster-[0-9a-f]{8}\.(webp|jpg|png)$/, AD_GO = /^(p|c|g):[^\s<>"'&]{1,40}$/, AD_ID = /^[\w-]{1,40}$/;
+  function ad(x) { x = x && typeof x === 'object' ? x : {};
+    if (x.k === 'p' && AD_ID.test(x.id || '')) return { k: 'p', id: x.id };
+    if (x.k === 'img' && AD_IMG.test(x.im || '')) return { k: 'img', im: x.im, go: AD_GO.test(x.go || '') ? x.go : '' };
+    return { k: x.k === 'off' ? 'off' : 'auto' }; }
+  function pcClean(z) { z = z && typeof z === 'object' ? z : {};
+    var sd = Object.prototype.toString.call(z.sd) === '[object Array]' ? z.sd : [], wy = Object.prototype.toString.call(z.wy) === '[object Array]' ? z.wy : [], wd = z.wd && typeof z.wd === 'object' ? z.wd : null;
+    var w = wd ? ad(wd) : { k: 'off' }; if (wd && w.k !== 'off') w.at = AD_ID.test(wd.at || '') ? wd.at : '';
+    return { bar: z.bar !== false, an: z.an !== false, ln: z.ln !== false, hero: one(z.hero, ['side', 'full'], 'side'), sd: [ad(sd[0]), ad(sd[1])], why: z.why !== false,
+      wy: wy.slice(0, 4).map(function (x) { x = x && typeof x === 'object' ? x : {}; return { ic: txt(x.ic, 4), t: txt(x.t, 30), s: txt(x.s, 40) }; }).filter(function (x) { return x.t; }),
+      row: one(z.row, ['scroll', 'grid'], 'scroll'), wd: w }; }
   function arr(v, list) { var o = []; (Object.prototype.toString.call(v) === '[object Array]' ? v : []).forEach(function (x) { if (list.indexOf(x) >= 0 && o.indexOf(x) < 0) o.push(x); }); return o; }
   // نفس القواعد في store.js (الكاشير) قبل الحفظ
   function clean(th) {
@@ -59,12 +73,12 @@
     var c = cols(th.c), cd = cols(th.cd);
     var dv = {}, src = th.dv && typeof th.dv === 'object' ? th.dv : {};
     ['m', 'd'].forEach(function (k) { var s = src[k] && typeof src[k] === 'object' ? src[k] : {};
-      dv[k] = { cols: num(s.cols, k === 'm' ? 1 : 3, k === 'm' ? 3 : 6, 0), hd: one(s.hd, ['big', 'slim'], 'big'), fs: num(s.fs, 90, 115, 100), ord: arr(s.ord, SECS), hide: arr(s.hide, SECS) }; });
+      dv[k] = { cols: num(s.cols, k === 'm' ? 1 : 3, k === 'm' ? 3 : 7, 0), hd: one(s.hd, ['big', 'slim'], 'big'), fs: num(s.fs, 90, 115, 100), ord: arr(s.ord, SECS), hide: arr(s.hide, SECS) }; });
     var r = th.rm && typeof th.rm === 'object' ? th.rm : {};
     var m = one(th.m, ['auto', 'light', 'dark'], P.m); if (id !== 'base') { if (!P.L) m = 'dark'; else if (!P.D) m = 'light'; }   // الثيم اللي ليه شكل واحد (فخم، نيون، فاتح) بيفضل عليه
     var bi = /^poster-[0-9a-f]{8}\.(webp|jpg|png)$/.test(th.bi || '') ? th.bi : '', bgk = one(th.bgk, ['plain', 'grad', 'pat', 'img'], P.bgk || 'plain');   // img من غير صورة لسه = لون الخلفية لحد ما المحل يرفع صورة
     return { id: id, m: m, c: c, cd: cd, bgk: bgk, bi: bi, bd: num(th.bd, 0, 80, 35), gd: one(th.gd, ['d', 'v', 'h', 'r'], 'd'), pat: one(th.pat, ['dots', 'grid', 'waves', 'islamic', 'stars'], P.pat || 'dots'),
-      r: num(th.r, 4, 32, P.r || 0), sh: num(th.sh, 0, 3, P.sh == null ? 1 : P.sh), f: one(th.f, Object.keys(FONTS), P.f || 'cairo'), fx: th.fx !== false, dv: dv,
+      r: num(th.r, 4, 32, P.r || 0), sh: num(th.sh, 0, 3, P.sh == null ? 1 : P.sh), f: one(th.f, Object.keys(FONTS), P.f || 'cairo'), fx: th.fx !== false, dv: dv, pc: pcClean(th.pc),
       rm: { greet: txt(r.greet, 40), sub: txt(r.sub, 80), ift: r.ift !== false, city: one(r.city, Object.keys(CITIES), 'cairo'), lan: r.lan !== false } };
   }
 
@@ -126,7 +140,7 @@
     if (base) IMGBASE = base; CUR = clean(th); var d = document.documentElement, P = PRESETS[CUR.id], dk = isDark();
     d.classList.toggle('dk', dk);
     VARS.forEach(function (k) { d.style.removeProperty(k); });
-    var cls = (d.className || '').split(/\s+/).filter(function (x) { return x && x !== 'dk' && !/^(th-|hm-|hd-|dv-)/.test(x); });
+    var cls = (d.className || '').split(/\s+/).filter(function (x) { return x && x !== 'dk' && !/^(th-|hm-|hd-|dv-|pc-)/.test(x); });
     if (CUR.id === 'base' && !Object.keys(CUR.c).length && !Object.keys(CUR.cd).length && CUR.bgk === 'plain' && !CUR.r && CUR.f === 'cairo') { d.removeAttribute('data-th'); }
     else d.setAttribute('data-th', CUR.id);
     var T = (dk ? P.D || P.L : P.L || P.D) || {}, c = dk ? CUR.cd : CUR.c, set = function (k, v) { if (v) d.style.setProperty(k, v); };
@@ -159,6 +173,8 @@
       v.ord.forEach(function (s, i) { set('--' + k + 'o-' + s, String(10 + i)); });
       v.hide.forEach(function (s) { cls.push('hm-' + k + '-' + s); }); if (v.hd === 'slim') cls.push('hd-' + k + '-slim'); if (v.cols) cls.push('dv-' + k + 'cols'); if (v.fs !== 100) cls.push('dv-' + k + 'fs'); });
     if (!CUR.fx) cls.push('th-still');
+    // الكمبيوتر (store.css تحت @media 1100+): الشريط زي الكاشير وحركته، والصفوف
+    var pc = CUR.pc; if (pc.bar) cls.push('pc-bar'); if (pc.bar && pc.an && CUR.fx) cls.push('pc-an'); if (!pc.ln) cls.push('pc-noln'); cls.push('pc-row-' + pc.row);
     d.className = cls.concat(dk ? ['dk'] : []).filter(function (x, i, a) { return a.indexOf(x) === i; }).join(' ');
     try { var meta = document.querySelector('meta[name=theme-color]'); if (meta) meta.content = (CUR.id === 'base' && !c.hd2) ? '#0a1a44' : (hd2 || T.bg || '#0a1a44'); } catch (e) {}
     deco();
