@@ -151,6 +151,8 @@
   document.addEventListener('keydown', function (e) { if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '')) return; var i = document.getElementById(wide() && pcOpt().bar ? 'dsq' : 'sq'); if (i) { e.preventDefault(); i.focus(); } });
   /* ===== إعلانات الكمبيوتر: جنب البانر (2) وعريض بين الأقسام. auto = أحسن عرض (أكبر خصم)، وبعده الجديد، وبعده أي منتج بصورة ===== */
   // البوستر جنب الإعلانين: بيصغر كله بنسبة عرض البانر لـ 1112 (العرض اللي اتصمّم عليه في صفحة البانر)
+  // معاينة "شكل المتجر" في الكاشير (?pv=1، الكمبيوتر بس): بنقول للكاشير الإعلان الجانبي/العريض فيه أنهي منتج، علشان زرار "🎨 صمّم الإعلان ده" يفتحه (2026-11-27). id المنتج بس، ومعلومة عامة
+  function pcAdReport(r) { try { if (/[?&]pv=1/.test(location.search) && window.parent !== window && wide()) window.parent.postMessage({ rdPcAds: r }, '*'); } catch (e) {} }
   function pcZoom() { var st = app.querySelector('.pc-hero .deal-stage'); if (!st) return; var cs = getComputedStyle(st), w = st.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0); st.style.setProperty('--pcz', String(wide() ? Math.min(1, Math.max(0.5, w / 1112)) : 1)); }   // العرض من جوه (من غير مكان الأسهم)
   window.addEventListener('resize', function () { clearTimeout(pcZoom.t); pcZoom.t = setTimeout(pcZoom, 120); });
   // الإعلان البانر بيتصغّر/بيتكبّر على قد مكانه: عرض اللوحة 360 (جانبي) أو 1112 (عريض)، والطول على قد المكان (store.css)
@@ -420,7 +422,8 @@
       + '<button class="chip" data-go="#/svc"><span style="--c1:#e48b07;--c2:#ffc35c">🛠</span>الخدمات</button></div>';
     var pco = pcOpt(), adUsed = [];
     if (dealSlides[0] && !dealSlides[0]._ps) adUsed.push(dealSlides[0].id);   // الإعلانات ماتكررش أول عرض في البانر ولا بعض
-    var sideAds = pco.hero === 'side' && dealSlides.length ? pco.sd.map(function (a) { return pcAdPick(a, adUsed); }).filter(Boolean) : [];
+    var sdPick = pco.hero === 'side' && dealSlides.length ? pco.sd.map(function (a) { return pcAdPick(a, adUsed); }) : [], sideAds = sdPick.filter(Boolean);
+    var adRep = { sd: sdPick.map(function (x) { return x && x.p ? x.p.id : ''; }), sn: sdPick.map(function (x) { return x && x.p ? x.p.n : ''; }), wd: '', wn: '' };   // معاينة الكاشير بتعرف الإعلان فيه أنهي منتج (pcAdReport)
     if (dealSlides.length) {
       if (sideAds.length) html += '<div class="pc-hero n' + sideAds.length + '" data-s="deal"><div class="pc-hm">';
       html += !hasOffSlides ? '<div class="ps-gap" data-s="deal"></div>' : '<div class="sec" data-s="deal"><b>🔥 عروض لفترة محدودة</b><button data-go="#/c/_off">الكل ←</button></div>';
@@ -442,7 +445,7 @@
     var rowsOf = function (c) { return sortList(visible().filter(function (p) { return p.c === c.id; })).slice(0, 12); };
     var rowCats = wide() ? cats : cats.slice(0, 4);
     var rowSec = function (c, l) { html += mark('<div class="sec"><b>' + esc(c.ic || '') + ' ' + esc(c.n) + '</b><button data-go="#/c/' + esc(c.id) + '">الكل ←</button></div>' + '<div class="hrow">' + rowHTML(l) + '</div>', 'rows');
-      if (wdAt && c.id === wdAt) { var wx = pcAdPick(pco.wd, adUsed); if (wx) html += '<div class="pc-wd" data-s="rows">' + pcAdHTML(wx, 'wide') + '</div>'; wdAt = ''; } };
+      if (wdAt && c.id === wdAt) { var wx = pcAdPick(pco.wd, adUsed); if (wx && wx.p) { adRep.wd = wx.p.id; adRep.wn = wx.p.n; } if (wx) html += '<div class="pc-wd" data-s="rows">' + pcAdHTML(wx, 'wide') + '</div>'; wdAt = ''; } };
     rowCats.forEach(function (c) { rowSec(c, rowsOf(c)); });
     html += mark(shopRevHome(), 'rev');
     html += mark(svcCards(s), 'svc');
@@ -452,6 +455,7 @@
     if (window.RdTheme) RdTheme.startTick();
     var dealBanner = app.querySelector('[data-deal-banner]');
     pcZoom(); pvFit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(pvFit);
+    pcAdReport(adRep);
     var refit = function () { tickTimers(); fitDeal(dealBanner && dealBanner.querySelector('b')); };   // التايمر بيتملي الأول (كان فاضي وقت القياس، وبعد ثانية بيطوّل الكلام ويزق الزرار برّه)
     refit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
     var dealDots = [].slice.call(app.querySelectorAll('[data-deal-index]'));
@@ -599,7 +603,8 @@
     ['جراب', 'جرابات', 'كفر', 'كفرات', 'case', 'cover', 'بيت'], ['اسكرينه', 'سكرينه', 'اسكرين', 'سكرين', 'protector', 'لزقه'], ['شاحن', 'شواحن', 'charger', 'adapter', 'راس'],
     ['كابل', 'كابلات', 'وصله', 'وصلات', 'cable', 'سلك'], ['سماعه', 'سماعات', 'هيدفون', 'headphone', 'headphones', 'earbuds', 'earphone', 'ايربودز', 'airpods', 'هاندفري'],
     ['باور', 'باوربانك', 'powerbank', 'power'], ['ميموري', 'memory', 'microsd', 'sd'], ['فلاشه', 'flash'], ['ساعه', 'ساعات', 'watch', 'smartwatch'], ['موبايل', 'موبايلات', 'تليفون', 'phone', 'mobile', 'هاتف'],
-    ['شاشه', 'lcd', 'display', 'screen'], ['بطاريه', 'battery'], ['لاب', 'لابتوب', 'laptop'], ['ماوس', 'mouse'], ['كيبورد', 'keyboard'], ['برو', 'pro'], ['ماكس', 'max'], ['بلس', 'plus'], ['الترا', 'ultra']];
+    ['شاشه', 'lcd', 'display', 'screen'], ['بطاريه', 'battery'], ['لاب', 'لابتوب', 'laptop'], ['ماوس', 'mouse'], ['كيبورد', 'keyboard'], ['برو', 'pro'], ['ماكس', 'max'], ['بلس', 'plus'], ['الترا', 'ultra'],
+    ['نوت', 'note'], ['ميني', 'mini'], ['اير', 'air'], ['لايت', 'lite'], ['فولد', 'fold'], ['فليب', 'flip'], ['سبارك', 'spark'], ['هوت', 'hot'], ['كامون', 'camon'], ['رينو', 'reno']];
   var SYNMAP = (function () { var m = {}; SYN.forEach(function (g) { g.forEach(function (w) { m[norm(w)] = g.map(norm); }); }); return m; })();
   function lev(a, b, cap) {   // مسافة التعديل (بتقف بدري لو عدّت cap)
     if (Math.abs(a.length - b.length) > cap) return cap + 1;
@@ -612,28 +617,44 @@
   function wordHit(w, toks) {
     var best = 0, fix = '', syn = SYNMAP[w] || null, num = /^\d+$/.test(w), cap = num ? 0 : w.length >= 7 ? 2 : w.length >= 3 ? 1 : 0;
     for (var i = 0; i < toks.length; i++) { var t = toks[i], sc = 0, f = '';
-      if (t === w) sc = 10; else if (syn && syn.indexOf(t) >= 0) sc = 9; else if (w.length >= 2 && t.indexOf(w) === 0) sc = 7; else if (w.length >= 3 && t.indexOf(w) > 0) sc = 5;
+      if (t === w) sc = 10; else if (syn && syn.indexOf(t) >= 0) sc = 9; else if (num) sc = 0; else if (w.length >= 2 && t.indexOf(w) === 0) sc = 7; else if (w.length >= 3 && t.indexOf(w) > 0) sc = 5;
       else if (cap && t.length >= 3 && (w.length > 3 || t.length > 3)) { var d = lev(w, t, cap); if (d <= cap) { sc = 4 - d; f = t; } }   // كلمة من 3 حروف: غلطة مع كلمة أطول بس (opo ← oppo)
       if (sc > best) { best = sc; fix = f; } }
     // غلطة في كلمة ليها مرادف (ايفوم ← ايفون = iphone)
     if (!best && cap) { for (var key in SYNMAP) { if (Math.abs(key.length - w.length) > cap || (w.length <= 3 && key.length <= 3) || lev(w, key, cap) > cap) continue; var g = SYNMAP[key]; for (var j = 0; j < toks.length; j++) if (g.indexOf(toks[j]) >= 0) return { sc: 6, fix: key }; } }
     return { sc: best, fix: fix };
   }
+  /* البحث بالموديل (خالد 2026-11-27: "لو كتبت ايفون 13 يجبلي كل حاجة تخصه، وطبّق ده على كله"):
+     - الكلمة اللازقة في رقم بتتفصل (ايفون13 / iphone13 / 13برو) والرقم لازم يطابق بالظبط (13 مش بتلاقي 130 ولا 1300)، ومن الاسم والموديلات بس مش من الوصف
+     - الموبايل نفسه + الجرابات والاسكرينات اللي موديلها (p.m، بيطلع لوحده من الاسم وصاحب المحل بيعدّله) أو اسمها فيه نفس الموديل
+     - الموديل بالظبط الأول (آيفون 13 قبل آيفون 13 برو ماكس) */
+  function sq(s) { return norm(s).replace(/([؀-ۿ]{2,})(\d)/g, '$1 $2').replace(/([a-z]{4,})(\d)/g, '$1 $2').replace(/(\d)([؀-ۿ]{2,}|[a-z]{2,})/g, '$1 $2'); }
+  function canon(w) { var g = SYNMAP[w]; return g ? g[0] : w; }
+  var MSFX = ['برو', 'ماكس', 'بلس', 'الترا', 'ميني', 'لايت', 'اير', 'فولد', 'فليب'].map(norm);
+  // الموديل بالظبط: كلمات الكلام اللي اتكتب (بمرادفاتها) جت ورا بعض في الاسم أو موديل من p.m، ومن غير برو/ماكس… بعدها
+  function exactModel(qc, lists) {
+    for (var i = 0; i < lists.length; i++) { var t = lists[i];
+      for (var j = 0; j + qc.length <= t.length; j++) { var k = 0; while (k < qc.length && t[j + k] === qc[k]) k++;
+        if (k === qc.length && MSFX.indexOf(t[j + k]) < 0) return true; } }
+    return false;
+  }
   var srchCache = { sig: '', idx: [] };
   function srchIdx() {
     var l = visible(), sig = l.length + '|' + (C.sig || '') + '|' + (l[0] && l[0].id);
     if (srchCache.sig === sig) return srchCache.idx;
-    srchCache = { sig: sig, idx: l.map(function (p) { var name = norm([p.n, p.b].join(' ')), more = norm([p.s, (p.m || []).join(' '), (catOf(p.c) || {}).n, p.d].join(' '));
-      return { p: p, n: name.split(' ').filter(Boolean), m: more.split(' ').filter(Boolean) }; }) };
+    var tk = function (s) { return sq(s).split(' ').filter(Boolean); };
+    srchCache = { sig: sig, idx: l.map(function (p) { var m = tk([p.s, (p.m || []).join(' '), (catOf(p.c) || {}).n].join(' ')), d = tk(p.d);
+      return { p: p, n: tk([p.n, p.b].join(' ')), m: m, md: m.concat(d), ml: [tk(p.n).map(canon)].concat((p.m || []).map(function (x) { return tk(x).map(canon); })) }; }) };
     return srchCache.idx;
   }
   function smartSearch(q) {
-    var ws = uniq(norm(q).split(' ').filter(Boolean)).slice(0, 8); if (!ws.length) return { list: [], fix: '', more: false };
+    var ws = uniq(sq(q).split(' ').filter(Boolean)).slice(0, 8); if (!ws.length) return { list: [], fix: '', more: false };
+    var qc = /\d/.test(ws.join(' ')) && ws.length > 1 ? sq(q).split(' ').filter(Boolean).map(canon) : null;   // كلام فيه موديل (ماركة/اسم + رقم)
     var fixes = {}, sure = {}, scored = srchIdx().map(function (x) {
       var tot = 0, all = true, any = 0;
-      ws.forEach(function (w) { var a = wordHit(w, x.n), b = wordHit(w, x.m), h = a.sc && a.sc >= b.sc ? { sc: a.sc + 2, fix: a.fix } : b; if (!h.sc) { all = false; return; } any++; tot += h.sc;
+      ws.forEach(function (w) { var num = /^\d+$/.test(w), a = wordHit(w, x.n), b = wordHit(w, num ? x.m : x.md), h = a.sc && a.sc >= b.sc ? { sc: a.sc + 2, fix: a.fix } : b; if (!h.sc) { all = false; return; } any++; tot += h.sc;
         if (h.fix && h.fix !== w) fixes[w] = fixes[w] || h.fix; else sure[w] = 1; });   // "قصدك …؟" بس للكلمة اللي مالقتش حاجة من غير تصليح
-      if (tot) tot += (avail(x.p) > 0 ? 3 : 0) + (eff(x.p).pct ? 1 : 0);
+      if (tot) tot += (avail(x.p) > 0 ? 3 : 0) + (eff(x.p).pct ? 1 : 0) + (all && qc && exactModel(qc, x.ml) ? 8 : 0);
       return { p: x.p, sc: tot, all: all, any: any };
     }).filter(function (x) { return x.sc > 0; });
     var exact = scored.filter(function (x) { return x.all; }), more = !exact.length;

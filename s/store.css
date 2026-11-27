@@ -823,3 +823,8 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
 }
 /* علامة جديد/مستعمل على الكروت الصغيرة (صفوف الرئيسية و"ممكن يعجبك"، 2026-11-27): شمال الصورة قصاد الخصم */
 .sc .tag.sc-tag { top: 13px; left: 13px; right: auto; font-size: 10px; padding: 3px 8px; border-radius: 99px; line-height: 1.3; }
+/* (2026-11-27، خالد) الكلام والكروت والصور مابيتعلّموش بالماوس ولا بالضغطة الطويلة (السحب على صف المنتجات كان بيلوّنه أزرق)، والصور مابتتسحبش.
+   خانات الكتابة والحاجات اللي ليها زرار "انسخ" بتتعلّم عادي */
+body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input, textarea, select, [contenteditable], .copy span, .selok { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+img { -webkit-user-drag: none; user-drag: none; }
