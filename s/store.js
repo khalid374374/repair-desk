@@ -19,7 +19,9 @@
   var pic = function (p, big) { var u = p && p.img && p.img[0] ? img(p.img[0]) : ''; return u ? '<img src="' + esc(u) + '" alt="" loading="' + (big ? 'eager' : 'lazy') + '" decoding="async">' : esc((p && p.ic) || iconOf(p)); };
   function iconOf(p) { var c = p && catOf(p.c); return (c && c.ic) || '📦'; }
   function catOf(id) { return ((C && C.cats) || []).filter(function (c) { return c.id === id; })[0] || null; }
-  function toast(t, k) { var el = document.getElementById('toast'); el.textContent = t; el.className = 'on ' + (k || ''); clearTimeout(toast.t); toast.t = setTimeout(function () { el.className = k || ''; }, 2600); if (navigator.vibrate && k === 'ok') try { navigator.vibrate(12); } catch (e) {} }
+  // الاهتزاز بس بعد ما العميل لمس الصفحة (Chrome بيمنعه قبلها وبيكتب غلطة في الـ console، 2026-11-27)
+  function canBuzz() { return !!navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive); }
+  function toast(t, k) { var el = document.getElementById('toast'); el.textContent = t; el.className = 'on ' + (k || ''); clearTimeout(toast.t); toast.t = setTimeout(function () { el.className = k || ''; }, 2600); if (canBuzz() && k === 'ok') try { navigator.vibrate(12); } catch (e) {} }
   function gw(body) {
     return fetch(GW, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: KEY }, body: JSON.stringify(body) })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j.status = r.status; return j; }); })
@@ -151,6 +153,16 @@
   // البوستر جنب الإعلانين: بيصغر كله بنسبة عرض البانر لـ 1112 (العرض اللي اتصمّم عليه في صفحة البانر)
   function pcZoom() { var st = app.querySelector('.pc-hero .deal-stage'); if (!st) return; var cs = getComputedStyle(st), w = st.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0); st.style.setProperty('--pcz', String(wide() ? Math.min(1, Math.max(0.5, w / 1112)) : 1)); }   // العرض من جوه (من غير مكان الأسهم)
   window.addEventListener('resize', function () { clearTimeout(pcZoom.t); pcZoom.t = setTimeout(pcZoom, 120); });
+  // الإعلان البانر بيتصغّر/بيتكبّر على قد مكانه: عرض اللوحة 360 (جانبي) أو 1112 (عريض)، والطول على قد المكان (store.css)
+  function pvFit() {
+    [].forEach.call(app.querySelectorAll('.pcad-pst'), function (b) {
+      var z = b.querySelector('.pvz'), ps = z && z.firstElementChild; if (!ps || !b.clientWidth) return;
+      var A = window.RdPoster.AD[ps.classList.contains('pv-w') ? 'w' : 's'], k = b.clientWidth / A[0];
+      z.style.zoom = k; ps.style.height = (b.clientHeight / k) + 'px';
+      if (window.RdPoster.fit) window.RdPoster.fit(ps);
+    });
+  }
+  window.addEventListener('resize', function () { clearTimeout(pvFit.t); pvFit.t = setTimeout(pvFit, 120); });
   function pcAdPick(a, used) {
     if (!a || a.k === 'off') return null;
     if (a.k === 'img') return { img: a.im, go: a.go && window.RdPoster ? RdPoster.goOf({ go: a.go }) : '#/c/_off' };
@@ -159,9 +171,19 @@
     var pick = pool.filter(function (p) { return eff(p).pct; }).sort(function (a, b) { return eff(b).pct - eff(a).pct; })[0] || pool.filter(isFresh)[0] || pool.filter(function (p) { return p.img && p.img.length; })[0] || pool[0];
     if (!pick) return null; used.push(pick.id); return { p: pick };
   }
+  /* إعلان بمنتج = بانر صغير بنظام البانر نفسه (خالد 2026-11-27: "عايز أخصص فيه كل حاجة"): الشكل والألوان والإطار والستيكر والزرار من صفحة البانر
+     (شكل كل العروض، أو شكل المنتج ده لوحده bn.ov)، والأماكن والمقاسات من bn.lay.s (جانبي) / bn.lay.w (عريض). لو البانر "الكارت القديم": شرايط بلون المحل */
   function pcAdHTML(x, cls) {
     if (!x) return '';
     if (x.img) return '<button type="button" class="pcad pcad-img ' + (cls || '') + '" data-go="' + esc(x.go) + '"><img src="' + esc(img(x.img)) + '" alt="" loading="lazy"></button>';
+    if (window.RdPoster) {
+      var p0 = x.p, e0 = eff(p0), mode = cls === 'wide' ? 'w' : 's', b0 = window.RdPoster.forP(C.bn || {}, p0.id);
+      if (b0.st === 'card') { var bx = {}; for (var k0 in b0) bx[k0] = b0[k0]; bx.st = 'p1'; bx.col = bx.col || 'shop'; b0 = bx; }
+      var pa = window.RdPoster.attrs(b0, (C.shop || {}).ac, ST + slug + '/i/');
+      return '<button type="button" class="pcad pcad-pst ' + (cls || '') + '" data-go="#/p/' + esc(encodeURIComponent(p0.id)) + '" aria-label="' + esc(p0.n) + '"><span class="pvz"><span class="' + esc(pa.cls.trim()) + ' pv-' + mode + '" style="' + esc(pa.style) + '">'
+        + window.RdPoster.html(b0, { name: p0.n, pic: pic(p0), img: !!(p0.img && p0.img[0]), price: money(e0.pr), was: e0.was ? '<span class="num">' + fm(e0.was) + '</span>' : '', pct: e0.pct || 0, save: e0.was && e0.was > e0.pr ? money(e0.was - e0.pr) : '', timer: e0.end ? cdHTML(e0.end) : '', sub: e0.pct ? (C.dealT || '') : ((catOf(p0.c) || {}).n || 'من المحل') })
+        + '</span></span></button>';
+    }
     var p = x.p, e = eff(p), c = catOf(p.c) || {}, c1 = c.c1 || '#2f7cf6', c2 = c.c2 || '#5aa0ff';
     return '<button type="button" class="pcad ' + (cls || '') + '" data-go="#/p/' + esc(encodeURIComponent(p.id)) + '" style="--c1:' + esc(c1) + ';--c2:' + esc(c2) + '"><span class="pa-t"><small>' + (e.pct ? '🔥 خصم ' + e.pct + '%' : isFresh(p) ? '✨ لسه واصل' : esc((c.ic || '') + ' ' + (c.n || ''))) + '</small><b>' + esc(p.n) + '</b>'
       + '<span class="pa-pr"><b class="num">' + fm(e.pr) + '</b> ' + esc(cur()) + (e.was ? ' <s class="num">' + fm(e.was) + '</s>' : '') + '<i class="pa-go">تسوّق ←</i></span><em>تسوّق ←</em></span><span class="pa-im">' + pic(p) + '</span></button>';
@@ -191,7 +213,11 @@
       sc.addEventListener('scroll', upd, { passive: true }); upd(); setTimeout(upd, 400);
       rowWheel(row, sc);
     });
+    // "ممكن يعجبك كمان" (صفحة المنتج والسلة، 2026-11-27: آخر كارت كان بيتقص على الكمبيوتر): نفس صف الرئيسية، وعدد الكروت على قد العرض
+    [].forEach.call(root.querySelectorAll('.simw'), function (row) { var sc = row.querySelector('.sim'); if (!sc) return; simCols(sc); rowWheel(row, sc); });
   }
+  // عدد الكروت في الصف على قد العرض. بيتغيّر بس لو الرقم اتغيّر، وفي الفريم اللي بعده (Chrome 156 بيكتب "ResizeObserver loop" غلطة لو اتغيّر جوه نفس الملاحظة)
+  function simCols(sc) { var fit = function () { var w = sc.clientWidth; if (!w) return; var n = String(Math.max(2, Math.min(6, Math.floor((w + 14) / (185 + 14))))); if (sc.style.getPropertyValue('--rc') !== n) sc.style.setProperty('--rc', n); }; fit(); if (window.ResizeObserver && !sc._ro) { sc._ro = new ResizeObserver(function () { cancelAnimationFrame(sc._rf); sc._rf = requestAnimationFrame(fit); }); sc._ro.observe(sc); } }
   /* صف المنتجات بالبكرة على الكمبيوتر (خالد 2026-11-26: "من غير زراير، أقف على الصف وألف البكرة… من غير ما يأثر على سكرول الصفحة ولا يروح لمكان فاضي"):
      - البكرة فوق الصف بتحركه كارت كارت (السناب بيوقّفه على كارت كامل) لحد آخر منتج، وبعدها البكرة ترجع تنزّل الصفحة
      - لو انت بتنزّل الصفحة والصف عدّى تحت الماوس (لسه داخل عليه وكنت بتلف البكرة) مابيمسكهاش
@@ -203,7 +229,7 @@
     var entered = 0, cardW = function () { var c = sc.firstElementChild; if (!c) return 200; var cs = getComputedStyle(sc), g = parseFloat(cs.columnGap) || parseFloat(cs.gap) || 0; return c.getBoundingClientRect().width + g; };
     var pos = function () { return Math.abs(sc.scrollLeft); }, max = function () { return Math.max(0, sc.scrollWidth - sc.clientWidth); }, rtl = function () { return getComputedStyle(sc).direction === 'rtl'; };
     var prog = document.createElement('div'); prog.className = 'rw-prog'; prog.innerHTML = '<i></i>'; row.appendChild(prog);
-    var sec = row.previousElementSibling, cnt = null; if (sec && sec.classList.contains('sec')) { cnt = document.createElement('span'); cnt.className = 'rw-cnt'; cnt.dir = 'rtl'; var hb = sec.querySelector('b'); if (hb) hb.insertAdjacentElement('afterend', cnt); }
+    var sec = row.previousElementSibling, cnt = null; if (!sec || !sec.classList.contains('sec')) sec = row.querySelector(':scope > .sec'); if (sec && sec.classList.contains('sec')) { cnt = document.createElement('span'); cnt.className = 'rw-cnt'; cnt.dir = 'rtl'; var hb = sec.querySelector('b'); if (hb) hb.insertAdjacentElement('afterend', cnt); }
     var paint = function () { var m = max(), n = sc.children.length, w = cardW(), vis = Math.max(1, Math.round(sc.clientWidth / w)), on = m > 4;
       row.classList.toggle('rw-more', on); prog.hidden = !on;
       if (on) { var i = prog.firstChild; i.style.width = Math.max(8, Math.min(100, (sc.clientWidth / sc.scrollWidth) * 100)) + '%'; i.style.insetInlineStart = (pos() / sc.scrollWidth * 100) + '%'; }
@@ -425,7 +451,7 @@
     shell(html, '#/');
     if (window.RdTheme) RdTheme.startTick();
     var dealBanner = app.querySelector('[data-deal-banner]');
-    pcZoom();
+    pcZoom(); pvFit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(pvFit);
     var refit = function () { tickTimers(); fitDeal(dealBanner && dealBanner.querySelector('b')); };   // التايمر بيتملي الأول (كان فاضي وقت القياس، وبعد ثانية بيطوّل الكلام ويزق الزرار برّه)
     refit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
     var dealDots = [].slice.call(app.querySelectorAll('[data-deal-index]'));
@@ -643,6 +669,7 @@
     return '<div class="sim">' + list.map(function (x) {
       var e = eff(x), so = avail(x) <= 0;
       return '<div class="sc' + (so ? ' soldout' : '') + '" data-p="' + esc(x.id) + '"><div class="img">' + pic(x) + '</div>' + (e.pct && !so ? '<span class="sc-off">−' + e.pct + '%</span>' : '')
+        + (x.st === 'used' ? '<span class="tag used sc-tag">مستعمل</span>' : x.st === 'new' ? '<span class="tag new sc-tag">جديد</span>' : '')   // الموبايل المستعمل يبان في صفوف الرئيسية و"ممكن يعجبك" كمان (خالد 2026-11-27)
         + '<div class="nm">' + esc(x.n) + '</div>' + (revOf(x.id) ? '<div class="cr">★ <b class="num">' + revOf(x.id).a + '</b> <span class="num">(' + revOf(x.id).n + ')</span></div>' : '') + dropTag(x) + '<div class="pr">' + (x.ask ? '<span class="ask">💬 اسأل</span>' : so ? '<span class="out">هيتوفر قريب</span>' : '<strong class="num">' + fm(e.pr) + '</strong>' + (e.was ? '<s class="num">' + fm(e.was) + '</s>' : '')) + '</div>'
         + (!x.ask && !so && !(x.add && x.add.length) ? '<button class="sc-add" data-add="' + esc(x.id) + '" aria-label="ضيف للسلة">+</button>' : '') + '</div>';
     }).join('') + '</div>';
@@ -984,7 +1011,7 @@
         return null;
       }
       var list = ls('orders') || []; list.unshift({ trk: r.trk, no: r.no, at: Date.now(), kind: body.kind, total: r.totals && r.totals.total }); ls('orders', list.slice(0, 40));
-      if (navigator.vibrate) try { navigator.vibrate([20, 40, 20]); } catch (e) {}
+      if (canBuzz()) try { navigator.vibrate([20, 40, 20]); } catch (e) {}
       if (body.pay === 'card') { return gw({ action: 'store-pay', trk: r.trk, back: location.href.split('#')[0] + '#/o/' + r.trk }).then(function (pr) { if (pr.url) location.href = pr.url; else { toast(pr.error || 'الدفع مش متاح دلوقتي', 'bad'); go('#/o/' + r.trk + '?new=1'); } return r; }); }
       go('#/o/' + r.trk + '?new=1'); return r;
     });
@@ -1127,9 +1154,10 @@
       submitOrder({ kind: 'wish', wish: { text: t, cat: trade ? 'trade' : p ? 'notify' : k, budget: +((document.getElementById('wb') || {}).value || 0), pid: p ? p.id : '' }, cust: { name: cu.name, phone: cu.phone, pickup: true } }, this);
     };
   }
+  // صفحة الخدمات: من غير عنوان "خدمات المحل" تاني تحت عنوان "الخدمات" (المراجعة 2026-11-27)
   function svcPage() {
     var s = C.svc || {};
-    shell(barHTML('🛠 الخدمات') + svcCards(s) + '<div class="svc"><button data-go="#/wish"><span class="si" style="--c:#f59e0b">🤔</span><span><b>مش لاقي حاجة؟</b><small>قولّنا وهنجيبهالك</small></span></button>'
+    shell(barHTML('🛠 الخدمات') + svcCards(s).replace(/^<div class="sec"><b>🛠 خدمات المحل<\/b><\/div>/, '') + '<div class="svc"><button data-go="#/wish"><span class="si" style="--c:#f59e0b">🤔</span><span><b>مش لاقي حاجة؟</b><small>قولّنا وهنجيبهالك</small></span></button>'
       + (waLink() ? '<button data-wa><span class="si" style="--c:#25d366">💬</span><span><b>كلّم المحل</b><small>على واتساب</small></span></button>' : '') + (C.shop.phone ? '<button data-tel><span class="si" style="--c:#1f5fae">📞</span><span><b>اتصل بينا</b><small class="num">' + esc(C.shop.phone) + '</small></span></button>' : '')
       + (C.shop.map || (C.del && C.del.center) ? '<button data-map><span class="si" style="--c:#0ea5a4">🗺</span><span><b>مكان المحل</b><small>افتح الخريطة</small></span></button>' : '') + '<button data-go="#/info"><span class="si" style="--c:#5b6b8c">📜</span><span><b>الشروط</b><small>الاسترجاع والضمان</small></span></button></div>' + footHTML(), '#/svc');
     var w = app.querySelector('[data-wa]'); if (w) w.onclick = function () { open(waLink('السلام عليكم'), '_blank'); };
@@ -1647,7 +1675,9 @@
     if (!quiet && name) toast('اتنقلت لفرع ' + name);
   }
   document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-br]'); if (b) { e.preventDefault(); brSheet(); } });
-  function fail(t) { app.className = ''; app.innerHTML = '<div class="closed"><div class="e">🛍</div><b>' + esc(t) + '</b><p>اتأكد من اللينك أو جرّب تاني بعد شوية.</p><button class="btn b1" style="margin-top:14px" onclick="location.reload()">جرّب تاني</button></div>'; }
+  // "جرّب تاني" في صفحة الغلط: من غير onclick جوه الـ HTML (حماية الصفحة CSP بتمنع الكود اللي جوه الـ HTML)
+  document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-reload]')) location.reload(); });
+  function fail(t) { app.className = ''; app.innerHTML = '<div class="closed"><div class="e">🛍</div><b>' + esc(t) + '</b><p>اتأكد من اللينك أو جرّب تاني بعد شوية.</p><button class="btn b1" style="margin-top:14px" data-reload>جرّب تاني</button></div>'; }
   function boot() {
     var qs = new URLSearchParams(location.search), host = location.hostname;
     slug = (qs.get('s') || '').toLowerCase().replace(/[^a-z0-9-]/g, '');

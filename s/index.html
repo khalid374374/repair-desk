@@ -2,6 +2,9 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
+<!-- حماية الصفحة (CSP، خالد 2026-11-27 من فيديو الأمان): مفيش كود بيشتغل غير ملفاتنا والخريطة، والصفحة بتكلّم Supabase بس.
+     لو غيّرت السكريبت الصغير اللي تحت (الغامق) لازم البصمة sha256 هنا تتغيّر (tests/store-csp.test.mjs بيقولك الجديدة) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-a86ZrRPeOClAyDSQj1trMzL2kvKTaTZx1gEKssOd0lA=' https://unpkg.com/leaflet@1.9.4/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com/leaflet@1.9.4/; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://sgqscttmkhmiqyjsuvio.supabase.co https://*.tile.openstreetmap.org https://unpkg.com/leaflet@1.9.4/; connect-src 'self' https://sgqscttmkhmiqyjsuvio.supabase.co; manifest-src 'self' https://sgqscttmkhmiqyjsuvio.supabase.co; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a1a44">
 <meta name="apple-mobile-web-app-capable" content="yes">

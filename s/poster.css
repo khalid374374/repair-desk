@@ -172,3 +172,29 @@
 .pst .pst-stk { --tk: var(--mk-stt, 1); }
 .pst .pst-stt { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: calc(1em * var(--tk)); line-height: inherit; }
 @container pst (min-width: 700px) { .pst .pst-stk { --tk: var(--dk-stt, 1); } }
+
+/* ===== 2026-11-27: إعلانات الكمبيوتر بنظام البانر (خالد: "عايز أخصص فيه كل حاجة"): pv-s إعلان جانبي = تصميم الموبايل على لوحة 360 × 180،
+   pv-w إعلان عريض = تصميم الكمبيوتر على لوحة 1112 × 200، وكل واحد بأماكنه ومقاساته لوحده (--s* / --w* من bn.lay.s / .w، صفحة البانر) ===== */
+.pst.pv-s, .pst.pv-w { aspect-ratio: auto; max-height: none; min-height: 0; }
+.pst.pv-s { width: 360px; height: 180px; } .pst.pv-w { width: 1112px; height: 200px; }
+.pst.pv-s .pst-sub { --lx: var(--sx-sub, 0); --ly: var(--sy-sub, 0); --lk: var(--sk-sub, 1); } .pst.pv-w .pst-sub { --lx: var(--wx-sub, 0); --ly: var(--wy-sub, 0); --lk: var(--wk-sub, 1); }
+.pst.pv-s .pst-h { --lx: var(--sx-h, 0); --ly: var(--sy-h, 0); --lk: var(--sk-h, 1); } .pst.pv-w .pst-h { --lx: var(--wx-h, 0); --ly: var(--wy-h, 0); --lk: var(--wk-h, 1); }
+.pst.pv-s .pst-pr { --lx: var(--sx-pr, 0); --ly: var(--sy-pr, 0); --lk: var(--sk-pr, 1); } .pst.pv-w .pst-pr { --lx: var(--wx-pr, 0); --ly: var(--wy-pr, 0); --lk: var(--wk-pr, 1); }
+.pst.pv-s .pst-tm { --lx: var(--sx-tm, 0); --ly: var(--sy-tm, 0); --lk: var(--sk-tm, 1); } .pst.pv-w .pst-tm { --lx: var(--wx-tm, 0); --ly: var(--wy-tm, 0); --lk: var(--wk-tm, 1); }
+.pst.pv-s .pst-cta { --lx: var(--sx-cta, 0); --ly: var(--sy-cta, 0); --lk: var(--sk-cta, 1); } .pst.pv-w .pst-cta { --lx: var(--wx-cta, 0); --ly: var(--wy-cta, 0); --lk: var(--wk-cta, 1); }
+.pst.pv-s .pst-prod { --lx: var(--sx-prod, 0); --ly: var(--sy-prod, 0); --lk: var(--sk-prod, 1); } .pst.pv-w .pst-prod { --lx: var(--wx-prod, 0); --ly: var(--wy-prod, 0); --lk: var(--wk-prod, 1); }
+.pst.pv-s .pst-stk { --lx: var(--sx-stk, 0); --ly: var(--sy-stk, 0); --lk: var(--sk-stk, 1); --tk: var(--sk-stt, 1); } .pst.pv-w .pst-stk { --lx: var(--wx-stk, 0); --ly: var(--wy-stk, 0); --lk: var(--wk-stk, 1); --tk: var(--wk-stt, 1); }
+.pst.pv-s .pst-copy { gap: calc(var(--sg, 3) * 1px); max-width: calc(var(--sw, 58) * 1%); } .pst.pv-s.pp-n .pst-copy { max-width: calc(var(--sw, 100) * 1%); }
+.pst.pv-w .pst-copy { gap: calc(var(--wg, 2) * 1px); max-width: calc(var(--ww, 55) * 1%); } .pst.pv-w.pp-n .pst-copy { max-width: calc(var(--ww, 100) * 1%); }
+.pst.pv-s .pst-h, .deal.pst.pv-s .pst-h { -webkit-line-clamp: 2; }
+/* الستيكر "شفاف" (sks glass، خالد 2026-11-27: الكبسولة اللي كانت في الإعلان الجانبي القديم "🔥 خصم 7%"): كبسولة غامقة شفافة بإطار رفيع، والكلمة والرقم في سطر */
+.pst .pst-stk.gls, .deal.pst .pst-stk.gls { width: auto; height: auto; aspect-ratio: auto; border-radius: 999px; padding: .4em .95em; background: rgba(0, 0, 0, .32); color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transform: none; animation: none; font-size: 13px; font-size: clamp(6px, 3.6cqw, 16px); }
+.pst .pst-stk.gls .pst-stt { flex-direction: row; gap: .35em; } .pst .pst-stk.gls .pst-stt::before { content: '🔥'; }
+.pst .pst-stk.gls small, .deal.pst .pst-stk.gls small { font-size: 1em; opacity: 1; } .pst .pst-stk.gls b, .deal.pst .pst-stk.gls b { font-size: 1.1em; }
+.pst .pst-stk.gls.sc-y { background: rgba(255, 210, 63, .9); color: #5c2a00; } .pst .pst-stk.gls.sc-r { background: rgba(229, 57, 80, .88); } .pst .pst-stk.gls.sc-w { background: rgba(255, 255, 255, .9); color: #c92a43; } .pst .pst-stk.gls.sc-g { background: rgba(23, 144, 79, .88); }
+@container pst (min-width: 700px) { .pst .pst-stk.gls { font-size: 16px; } }
+/* الإعلان العريض (pv-w، 2026-11-27): الكلام في عمود كان بيتصغّر لحد ما يبقى صغير أوي في الطول القليل: العنوان سطر، وتحته السعر والتايمر والزرار جنب بعض */
+.pst.pv-w .pst-copy { display: grid; grid-template-columns: max-content max-content 1fr; align-content: center; justify-items: start; align-items: center; column-gap: 22px; row-gap: calc(var(--wg, 6) * 1px); }
+.pst.pv-w .pst-sub, .pst.pv-w .pst-h { grid-column: 1 / -1; }
+.pst.pv-w .pst-pr, .pst.pv-w .pst-tm, .pst.pv-w .pst-cta { margin: 0; }
+.pst.pv-w.pst-p2 .pst-burst { width: 17%; top: 5%; } .pst.pv-w.pst-p3 .pst-beam { width: 18%; }
