@@ -107,7 +107,10 @@
     var cp = el && el.querySelector && el.querySelector('.pst-copy'); if (!cp || !cp.lastElementChild) return 1;
     el.style.setProperty('--fitk', '1'); var k = 1, last = cp.lastElementChild;
     for (var i = 0; i < 14; i++) {
-      var need = last.offsetTop + last.offsetHeight, have = cp.clientHeight; if (!have || need <= have + 1) break;
+      // بالمقاس اللي على الشاشة (getBoundingClientRect) للاتنين: offsetTop و clientHeight كانوا بيتأثروا بالـ zoom بشكل مختلف،
+      // فالإعلان الجانبي في المتجر (جوه zoom) كان بيتصغّر أكتر من معاينة الكاشير (2026-11-27)
+      var zr = cp.getBoundingClientRect(), lr = last.getBoundingClientRect(), need = lr.bottom - zr.top, have = zr.height, px = cp.offsetHeight ? have / cp.offsetHeight : 1;
+      if (!have || need <= have + px) break;
       k = Math.max(0.55, k * Math.max(0.9, have / need) - 0.005); el.style.setProperty('--fitk', k.toFixed(3)); if (k <= 0.55) break;
     }
     return k;

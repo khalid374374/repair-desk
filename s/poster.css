@@ -25,9 +25,9 @@
 .pst .pst-stk.lg b, .deal.pst .pst-stk.lg b { font-size: 1.2em; }   /* مبلغ طويل (1,500 ج) */
 /* التايمر جوه عمود الكلام، تحت السعر وفوق الزرار */
 .pst .pst-tm { display: block; font-size: 13px; font-size: clamp(6px, 3.8cqw, 16px); margin-top: 3px; }   /* أكبر (خالد 2026-11-21: "نكبر التايمر") */
-.pst .pst-tm .cd, .deal.pst .pst-tm .cd { margin: 0; gap: 5px; gap: 1.5cqw; }
-.pst .pst-tm .cd span, .deal.pst .pst-tm .cd span { min-width: 3.3em; padding: .35em .3em .3em; font-size: 1.15em; line-height: 1.25; border: 0; border-radius: .45em; box-shadow: none; text-align: center; }   /* مربعات مش كبسولات */
-.pst .pst-tm .cd em, .deal.pst .pst-tm .cd em { font-size: .68em; white-space: nowrap; }
+.pst .pst-tm .cd, .deal.pst .pst-tm .cd { display: flex; margin: 0; gap: 5px; gap: 1.5cqw; }
+.pst .pst-tm .cd span, .deal.pst .pst-tm .cd span { min-width: 3.3em; padding: .35em .3em .3em; font-size: 1.15em; line-height: 1.25; border: 0; border-radius: .45em; box-shadow: none; text-align: center; font-weight: 900; }   /* مربعات مش كبسولات */
+.pst .pst-tm .cd em, .deal.pst .pst-tm .cd em { font-size: .68em; white-space: nowrap; display: block; font-style: normal; margin-top: -3px; opacity: 1; }   /* (opacity كاملة علشان الكلمة تبان على لون المحل الفاتح) زي المتجر (store.css .cd em) بالظبط: البانر بيبان نفس الشكل في الكاشير (2026-11-27) */
 /* فكرة 1: شرايط مايلة بتتحرك + المنتج بيطفو + الستيكر بينطّ */
 .pst-p1 .pst-bg { inset: -40%; background: repeating-linear-gradient(115deg, #ffffff16 0 22px, transparent 22px 60px); animation: pstSlide 9s linear infinite; }
 .pst-p1 .pst-prod { animation: pstFloat 3.4s ease-in-out infinite; }
