@@ -9,6 +9,8 @@
      الحركة: anim (الكل) + mbg الخلفية + mpr المنتج بيطفو + mst الستيكر بينطّ + msh لمعة العنوان (افتراضي في الكشّاف بس)
      rot: يقلب كل 0|3|5|8 ثواني — ps: صور الإعلانات [{ im, go }] و pm: mix | only
      ov: { <id المنتج>: شكل العرض ده لوحده } (2026-11-22: "أعدّل البانر لكل إعلان لوحده")
+     ad: { s: الإعلانين اللي جنب البانر, w: الإعلان العريض } كل واحد ليه شكله لوحده (نفس المفاتيح + ov بتاعه)، خالد 2026-11-28: "مقدرش أفصل بين البانر والجانبي".
+       null = زي البانر بالظبط (المحلات اللي لسه ماعدّلتش، والنسخ القديمة)
      lay: مقاسات وأماكن لكل جهاز لوحده (خالد 2026-11-22: "بانر الكمبيوتر يبقى ليه تعديلات لوحده"، وبيتسحب بالماوس في صفحة البانر)
        { m: موبايل, d: كمبيوتر, s: إعلان جانبي, w: إعلان عريض (2026-11-27، إعلانات الكمبيوتر بنظام البانر) } وكل واحد { <عنصر>: [x, y, حجم%], g: المسافة بين السطور, w: عرض الكلام% }
        العناصر ELS. x/y بالبكسل على مقاس مرجعي (عرض البانر من جوه = 360 على الموبايل و1112 على الكمبيوتر، والطول على الكمبيوتر بكسل عادي) فبيتكبّروا مع البانر */
@@ -55,18 +57,32 @@
       hs: num(bn.hs, 80, 140, 100), was: bn.was !== false, cta: String(bn.cta || '').slice(0, 24), cs: one(bn.cs, ['s', 'm', 'l'], 'm'), cc: one(bn.cc, ['w', 'o', 'y', 'n'], ''),
       tm: bn.tm !== false, ts: one(bn.ts, ['box', 'line'], 'box'), anim: bn.anim !== false, mbg: bn.mbg !== false, mpr: bn.mpr !== false, mst: bn.mst !== false, msh: bn.msh == null ? st === 'p3' : !!bn.msh, lay: lay(bn.lay) };
   }
+  /* tt: عنوان الإعلان بسطوره لكل منتج (خالد 2026-11-27: "عايز أكسر الكلام"). { <id>: 'سطر\nسطر' } لحد 3 سطور، وفاضي = اسم المنتج.
+     ده كلام مش شكل، فبيظهر زي ما هو في البانر والإعلانات */
+  function ttClean(v) { var o = {}, n = 0; if (!v || typeof v !== 'object') return o; for (var k in v) { if (n >= 60 || !PID.test(k)) continue; var t = String(v[k] == null ? '' : v[k]).replace(/\r/g, '').split('\n').map(function (x) { return x.trim().slice(0, 40); }).filter(Boolean).slice(0, 3).join('\n'); if (t) { o[k] = t; n++; } } return o; }
+  // شكل كل منتج لوحده: المفاتيح اللي اتكتبت فيه، والباقي من الشكل العام (base)
+  function ovOf(src, base) {
+    var ov = {}, n = 0; src = src && typeof src === 'object' ? src : {};
+    for (var k in src) { if (n >= 30 || !PID.test(k) || !src[k] || typeof src[k] !== 'object') continue; var mix = {}, i; for (i = 0; i < KEYS.length; i++) mix[KEYS[i]] = KEYS[i] in src[k] ? src[k][KEYS[i]] : base[KEYS[i]]; ov[k] = style(mix); n++; }
+    return ov;
+  }
+  // تصميم مكان إعلان (جانبي / عريض): شكل + ov بتاعه، أو null = زي البانر
+  function adOne(x) { if (!x || typeof x !== 'object') return null; var o = style(x); o.ov = ovOf(x.ov, o); return o; }
   function clean(bn) {
     bn = bn && typeof bn === 'object' ? bn : {};
     var ps = (Object.prototype.toString.call(bn.ps) === '[object Array]' ? bn.ps : []).filter(function (x) { return x && IMG.test(x.im); }).slice(0, 5)
       .map(function (x) { var o = { im: x.im, imd: IMG.test(x.imd || '') ? x.imd : '', go: /^(p|c|g):[^\s<>"'&]{1,40}$/.test(x.go || '') ? x.go : '' }; if (IMG.test(x.ib || '')) o.ib = x.ib; if (IMG.test(x.ibd || '')) o.ibd = x.ibd; return o; });   // imd: صورة عريضة للكمبيوتر (اختياري). ib / ibd: أول فريم صغير ثابت (للموبايل / للكمبيوتر) للخلفية المتغبّشة لو الإعلان متحرك (2026-11-22)
     // pm: الصور مع عروض البانر (mix) أو لوحدها مكانها (only). st 'img' من النسخة الأولى (2.58.3) = لوحدها
-    var out = style(bn), ov = {}, n = 0, src = bn.ov && typeof bn.ov === 'object' ? bn.ov : {};
-    for (var k in src) { if (n >= 30 || !PID.test(k) || !src[k] || typeof src[k] !== 'object') continue; var mix = {}, i; for (i = 0; i < KEYS.length; i++) mix[KEYS[i]] = KEYS[i] in src[k] ? src[k][KEYS[i]] : out[KEYS[i]]; ov[k] = style(mix); n++; }
-    out.pm = bn.st === 'img' || bn.pm === 'only' ? 'only' : 'mix'; out.ps = ps; out.rot = [0, 3, 5, 8].indexOf(+bn.rot) >= 0 ? +bn.rot : 5; out.ov = ov;
+    var out = style(bn), ov = ovOf(bn.ov, out);
+    out.tt = ttClean(bn.tt); out.pm = bn.st === 'img' || bn.pm === 'only' ? 'only' : 'mix'; out.ps = ps; out.rot = [0, 3, 5, 8].indexOf(+bn.rot) >= 0 ? +bn.rot : 5; out.ov = ov;
+    var ad = bn.ad && typeof bn.ad === 'object' ? bn.ad : {}; out.ad = { s: adOne(ad.s), w: adOne(ad.w) };
     return out;
   }
   // شكل عرض معيّن: لو ليه شكل لوحده (ov) بيتطبق، وإلا شكل كل العروض
   function forP(bn, id) { var b = clean(bn), o = id && b.ov[id]; if (!o) return b; var r = {}, k; for (k in b) r[k] = b[k]; for (k in o) r[k] = o[k]; return r; }
+  // الشكل اللي الإعلان (mode: s جانبي / w عريض) بيترسم بيه: تصميمه لو ليه، وإلا البانر. العنوان بسطوره (tt) واحد لكل الأماكن
+  function adBn(bn, mode) { var b = clean(bn), a = b.ad && b.ad[mode]; if (!a) return b; var r = {}, k; for (k in a) r[k] = a[k]; r.tt = b.tt; r.ps = []; r.ad = { s: null, w: null }; return r; }
+  function forAd(bn, mode, id) { return forP(adBn(bn, mode), id); }
   function on(bn) { return clean(bn).st !== 'card'; }
   // البوسترات الصور: [{ im: اسم الصورة، go: 'p:<منتج>' | 'c:<قسم>' | 'g:<صفحة>' | '' (العروض) }]
   function imgs(bn) { return clean(bn).ps; }
@@ -84,6 +100,7 @@
   /* d = { name, pic (HTML جاهز: <img> أو إيموجي)، img (فيه صورة؟)، price (HTML)، was (HTML أو '')، pct، save (HTML: الفرق)، timer (HTML)، sub } */
   function html(bn, d) {
     var b = style(bn && bn.ov ? bn : clean(bn)), stk = '', sc = b.skc ? ' sc-' + b.skc : '';
+    var tt = d.id && bn && bn.tt && Object.prototype.hasOwnProperty.call(bn.tt, d.id) ? ttClean({ x: bn.tt[d.id] }).x || '' : '';   // عنوان بسطوره (tt)
     // الستيكر: الكلمة صغيرة فوق والرقم كبير تحت. الشكل تلقائي (الخصم دايرة، وفّر مستطيل بكيرف، الكلمة بس شريطة) أو اللي المحل اختاره
     var shape = function (auto) { var s = b.sks || auto; return s === 'rect' ? ' amt' : s === 'tag' ? ' tag' : s === 'glass' ? ' gls' : ''; };   // glass: كبسولة شفافة (خالد 2026-11-27 من الإعلان الجانبي القديم)
     if (b.stk === 'pct' && d.pct > 0) stk = '<span class="pst-stk' + shape('circle') + sc + '"><span class="pst-stt"><small>' + esc(b.skw || 'خصم') + '</small><b dir="ltr">' + Math.round(d.pct) + '%</b></span></span>';
@@ -95,7 +112,7 @@
       : b.st === 'p5' ? '<span class="pst-bub" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>'
       : b.st === 'p6' ? '<span class="pst-ring" aria-hidden="true"></span><span class="pst-core" aria-hidden="true"></span>' : '';
     return '<span class="pst-bg" aria-hidden="true"></span>' + extra
-      + '<span class="pst-copy"><small class="pst-sub">⚡ ' + esc(d.sub || 'عرض لفترة محدودة') + '</small><b class="pst-h">' + esc(d.name) + '</b>'
+      + '<span class="pst-copy"><small class="pst-sub">⚡ ' + esc(d.sub || 'عرض لفترة محدودة') + '</small>' + (tt ? '<b class="pst-h mt" style="--ln:' + tt.split('\n').length + '">' + tt.split('\n').map(esc).join('<br>') + '</b>' : '<b class="pst-h">' + esc(d.name) + '</b>')
       + '<span class="pst-pr"><strong>' + d.price + '</strong>' + (d.was && b.was ? '<s>' + d.was + '</s>' : '') + '</span>'
       + (d.timer && b.tm ? '<span class="pst-tm">' + d.timer + '</span>' : '')
       + '<span class="pst-cta">' + esc(b.cta || 'اطلب دلوقتي') + ' ←</span></span>'
@@ -115,5 +132,17 @@
     }
     return k;
   }
-  W.RdPoster = { DEVS: DEVS, AD: AD, clean: clean, fit: fit, style: style, forP: forP, KEYS: KEYS, on: on, imgs: imgs, goOf: goOf, PAGES: PAGES, attrs: attrs, html: html, PAL: PAL, DEF: DEF, STYLES: STYLES, ELS: ELS, lay: lay };
+  /* سعر المنتج والخصم والبيانات اللي البوستر بيترسم بيها، من منتج الكتالوج (p من catalog.json). نفس الدوال في المتجر ومعاينة الكاشير
+     (خالد 2026-11-27: الإعلان في الكاشير كان بيبيّن 400 و"من المحل" وصورة سماعة، والمتجر 399 و"قطع غيار" و🛠، علشان الكاشير كان بيحسبها لوحده).
+     off = { pr, from?, to? } شغال لو السعر موجب والوقت جوه المدة. was = السعر قبل الخصم من غير مدة */
+  function offOn(p, now) { var o = p && p.off; if (!o || !(+o.pr > 0)) return false; now = now || Date.now(); return (!o.from || Date.parse(o.from) <= now) && (!o.to || Date.parse(o.to) >= now); }
+  function eff(p) { var on = offOn(p), pr = on ? +p.off.pr : +p.pr || 0, was = on ? (+p.was || +p.pr) : +p.was || 0; return { pr: pr, was: was > pr ? was : 0, end: on && p.off.to ? p.off.to : '', pct: was > pr ? Math.round((1 - pr / was) * 100) : 0 }; }
+  /* h = { money(n): HTML السعر بالعملة، fm(n): الرقم، pic(p): HTML الصورة أو الإيموجي، cd(end): HTML العداد، cat(id): القسم، dealT، ad: إعلان جانبي/عريض }
+     الإعلان (ad): تحت الاسم القسم لو مفيش خصم، والبانر: الكلمة الصغيرة بتاعة العروض */
+  function pdata(p, h) {
+    var e = eff(p), c = (h.cat && h.cat(p.c)) || {};
+    return { id: p.id, name: p.n, pic: h.pic(p), img: !!(p.img && p.img[0]), price: h.money(e.pr), was: e.was ? '<span class="num">' + h.fm(e.was) + '</span>' : '', pct: e.pct || 0,
+      save: e.was && e.was > e.pr ? h.money(e.was - e.pr) : '', timer: e.end ? h.cd(e.end) : '', sub: h.ad ? (e.pct ? (h.dealT || '') : (c.n || 'من المحل')) : (h.dealT || '') };
+  }
+  W.RdPoster = { adBn: adBn, forAd: forAd, ttClean: ttClean, offOn: offOn, eff: eff, pdata: pdata, DEVS: DEVS, AD: AD, clean: clean, fit: fit, style: style, forP: forP, KEYS: KEYS, on: on, imgs: imgs, goOf: goOf, PAGES: PAGES, attrs: attrs, html: html, PAL: PAL, DEF: DEF, STYLES: STYLES, ELS: ELS, lay: lay };
 })(window);

@@ -31,8 +31,9 @@
   var WA_SVG = '<svg viewBox="0 0 32 32" fill="currentColor"><path d="M16 3C9 3 3.3 8.6 3.3 15.6c0 2.4.7 4.7 1.9 6.7L3.2 29l6.9-1.8c1.9 1 4 1.6 6 1.6 7 0 12.7-5.7 12.7-12.6S23 3 16 3zm0 23.1c-1.9 0-3.8-.5-5.4-1.5l-.4-.2-4.1 1.1 1.1-4-.3-.4c-1.1-1.7-1.6-3.6-1.6-5.5C5.3 9.8 10.1 5.1 16 5.1s10.7 4.7 10.7 10.5S21.9 26.1 16 26.1zm5.9-7.8c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1c-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-1.9-1.8-2.2s0-.5.1-.6l.5-.6c.2-.2.2-.3.3-.6.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4s-1.2 1.1-1.2 2.8 1.2 3.2 1.4 3.5c.2.2 2.4 3.6 5.8 5.1.8.3 1.4.5 1.9.7.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.5.3-.8.3-1.4.2-1.5-.1-.2-.3-.3-.6-.4z"/></svg>';
 
   /* ---------- الأسعار والعروض ---------- */
-  function offOn(p) { var o = p && p.off; if (!o || !(+o.pr > 0)) return false; var now = Date.now(); return (!o.from || Date.parse(o.from) <= now) && (!o.to || Date.parse(o.to) >= now); }
-  function eff(p) { var on = offOn(p), pr = on ? +p.off.pr : +p.pr || 0, was = on ? (+p.was || +p.pr) : +p.was || 0; return { pr: pr, was: was > pr ? was : 0, end: on && p.off.to ? p.off.to : '', pct: was > pr ? Math.round((1 - pr / was) * 100) : 0 }; }
+  // السعر والخصم من poster.js (نفس الحسابات في معاينة الكاشير، 2026-11-27)
+  function offOn(p) { return window.RdPoster.offOn(p); }
+  function eff(p) { return window.RdPoster.eff(p); }
   function limMsg(p) { var raw = p && Number.isFinite(+p.q) && +p.q >= 0 ? +p.q : 99; return raw > 20 ? 'أقصى حاجة 20 قطعة من الصنف في الطلب' : p.hq ? 'مش متاح أكتر من كده' : 'المتاح ' + avail(p) + ' بس'; }
   function avail(p) { return Math.min(20, p && Number.isFinite(+p.q) && +p.q >= 0 ? +p.q : 99); }   // 20 = أقصى كمية للصنف في الطلب الواحد على السيرفر
   function cdHTML(end, small) { return '<span class="cd" data-end="' + esc(end) + '">' + (small ? '' : '') + '</span>'; }
@@ -175,15 +176,17 @@
   }
   /* إعلان بمنتج = بانر صغير بنظام البانر نفسه (خالد 2026-11-27: "عايز أخصص فيه كل حاجة"): الشكل والألوان والإطار والستيكر والزرار من صفحة البانر
      (شكل كل العروض، أو شكل المنتج ده لوحده bn.ov)، والأماكن والمقاسات من bn.lay.s (جانبي) / bn.lay.w (عريض). لو البانر "الكارت القديم": شرايط بلون المحل */
+  // الحاجات اللي poster.js محتاجها علشان يكتب السعر والصورة والعداد زي باقي المتجر
+  function pdH(ad, big) { return { money: money, fm: fm, pic: function (p) { return pic(p, big); }, cd: function (end) { return cdHTML(end); }, cat: catOf, dealT: C.dealT || '', ad: ad }; }
   function pcAdHTML(x, cls) {
     if (!x) return '';
     if (x.img) return '<button type="button" class="pcad pcad-img ' + (cls || '') + '" data-go="' + esc(x.go) + '"><img src="' + esc(img(x.img)) + '" alt="" loading="lazy"></button>';
     if (window.RdPoster) {
-      var p0 = x.p, e0 = eff(p0), mode = cls === 'wide' ? 'w' : 's', b0 = window.RdPoster.forP(C.bn || {}, p0.id);
+      var p0 = x.p, e0 = eff(p0), mode = cls === 'wide' ? 'w' : 's', b0 = window.RdPoster.forAd(C.bn || {}, mode, p0.id);   // الإعلان بتصميمه هو (bn.ad)، أو البانر لو مالوش
       if (b0.st === 'card') { var bx = {}; for (var k0 in b0) bx[k0] = b0[k0]; bx.st = 'p1'; bx.col = bx.col || 'shop'; b0 = bx; }
       var pa = window.RdPoster.attrs(b0, (C.shop || {}).ac, ST + slug + '/i/');
       return '<button type="button" class="pcad pcad-pst ' + (cls || '') + '" data-go="#/p/' + esc(encodeURIComponent(p0.id)) + '" aria-label="' + esc(p0.n) + '"><span class="pvz"><span class="' + esc(pa.cls.trim()) + ' pv-' + mode + '" style="' + esc(pa.style) + '">'
-        + window.RdPoster.html(b0, { name: p0.n, pic: pic(p0), img: !!(p0.img && p0.img[0]), price: money(e0.pr), was: e0.was ? '<span class="num">' + fm(e0.was) + '</span>' : '', pct: e0.pct || 0, save: e0.was && e0.was > e0.pr ? money(e0.was - e0.pr) : '', timer: e0.end ? cdHTML(e0.end) : '', sub: e0.pct ? (C.dealT || '') : ((catOf(p0.c) || {}).n || 'من المحل') })
+        + window.RdPoster.html(b0, window.RdPoster.pdata(p0, pdH(true)))
         + '</span></span></button>';
     }
     var p = x.p, e = eff(p), c = catOf(p.c) || {}, c1 = c.c1 || '#2f7cf6', c2 = c.c2 || '#5aa0ff';
@@ -346,7 +349,7 @@
     // ib: لو الإعلان متحرك، الخلفية المتغبّشة من أول فريم صغير ثابت (التغبيش على صورة متحركة بيتعمل من جديد كل فريم وبيتقّل الموبايل)
     if (p._ps) { var u = ST + slug + '/i/' + encodeURIComponent(p._ps.im), ud = p._ps.imd ? ST + slug + '/i/' + encodeURIComponent(p._ps.imd) : '', ub = p._ps.ib ? ST + slug + '/i/' + encodeURIComponent(p._ps.ib) : u, ubd = p._ps.ibd ? ST + slug + '/i/' + encodeURIComponent(p._ps.ibd) : ud; return '<span class="psb-bg" style="background-image:url(&quot;' + esc(ub) + '&quot;)"></span>' + (ud ? '<span class="psb-bgd" style="background-image:url(&quot;' + esc(ubd) + '&quot;)"></span>' : '') + (ud ? '<picture><source media="(min-width: 700px)" srcset="' + esc(ud) + '"><img src="' + esc(u) + '" alt="" decoding="async"></picture>' : '<img src="' + esc(u) + '" alt="" decoding="async">'); }
     var e = eff(p);
-    if (isPst(p)) return window.RdPoster.html(bnFor(p), { name: p.n, pic: pic(p, true), img: !!(p.img && p.img[0]), price: money(e.pr), was: e.was ? '<span class="num">' + fm(e.was) + '</span>' : '', pct: e.pct || 0, save: e.was && e.was > e.pr ? money(e.was - e.pr) : '', timer: e.end ? cdHTML(e.end) : '', sub: C.dealT || '' });
+    if (isPst(p)) return window.RdPoster.html(bnFor(p), window.RdPoster.pdata(p, pdH(false, true)));
     return '<div class="di">' + pic(p, true) + '</div><div class="deal-copy"><small>⚡ ' + (C.dealT ? esc(C.dealT) : 'عرض لفترة محدودة') + '</small><b>' + esc(p.n) + '</b>'
       + '<div class="deal-money"><span class="pr">' + money(e.pr) + '</span>' + (e.was ? '<s class="num">' + fm(e.was) + '</s>' : '') + '</div>'
       + '<div class="deal-timer">' + (e.end ? cdHTML(e.end) : '') + '</div></div>';

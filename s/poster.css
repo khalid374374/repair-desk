@@ -198,3 +198,8 @@
 .pst.pv-w .pst-sub, .pst.pv-w .pst-h { grid-column: 1 / -1; }
 .pst.pv-w .pst-pr, .pst.pv-w .pst-tm, .pst.pv-w .pst-cta { margin: 0; }
 .pst.pv-w.pst-p2 .pst-burst { width: 17%; top: 5%; } .pst.pv-w.pst-p3 .pst-beam { width: 18%; }
+/* عنوان بسطوره (bn.tt، 2026-11-27): السطور زي ما المحل كتبها من غير قص (لو أطول من البانر الكلام كله بيصغر سوا: RdPoster.fit) */
+.pst .pst-h.mt, .deal.pst .pst-h.mt, .pst.pv-s .pst-h.mt, .pst.pv-w .pst-h.mt { display: block; -webkit-line-clamp: unset; overflow: visible; }
+@container pst (min-width: 700px) { .pst .pst-h.mt, .deal.pst .pst-h.mt { display: block; -webkit-line-clamp: unset; } }
+/* العنوان بيكبر بـ scale من النص (مابيحرّكش الباقي)، فلو سطرين أو تلاتة الزيادة كانت بتركب على السعر: بنسيب مكانها بالظبط (نص الزيادة فوق ونصها تحت) */
+.pst .pst-h.mt { margin-block: calc((var(--lk, 1) - 1) * var(--ln, 1) * 0.675em); }
