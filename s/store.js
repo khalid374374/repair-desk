@@ -424,8 +424,13 @@
       + (offs.length ? '<button class="chip" data-go="#/c/_off"><span style="--c1:#d6455f;--c2:#f0753b">🔥</span>العروض</button>' : '')
       + '<button class="chip" data-go="#/svc"><span style="--c1:#e48b07;--c2:#ffc35c">🛠</span>الخدمات</button></div>';
     var pco = pcOpt(), adUsed = [];
-    if (dealSlides[0] && !dealSlides[0]._ps) adUsed.push(dealSlides[0].id);   // الإعلانات ماتكررش أول عرض في البانر ولا بعض
-    var sdPick = pco.hero === 'side' && dealSlides.length ? pco.sd.map(function (a) { return pcAdPick(a, adUsed); }) : [], sideAds = sdPick.filter(Boolean);
+    /* المنتج اللي المحل اختاره بإيده بياخد مكانه الأول، وبعدين الاختيار التلقائي بيملى الباقي من غير تكرار (خالد 2026-11-28: "منتج أختاره مش شغال":
+       اختار oppo في الإعلانين فالتاني اتملى تلقائي بكارت الميموري، والعريض اللي اختارله كارت الميموري راح لسماعة). نفس المنتج مختار مرتين: الأولاني بس */
+    var sdOn = pco.hero === 'side' && dealSlides.length, slots = (sdOn ? pco.sd : []).concat([pco.wd]), plan = [];
+    slots.forEach(function (a, i) { if (a && a.k === 'p' && P[a.id] && !P[a.id].hide && adUsed.indexOf(a.id) < 0) { adUsed.push(a.id); plan[i] = { p: P[a.id] }; } });
+    if (dealSlides[0] && !dealSlides[0]._ps && adUsed.indexOf(dealSlides[0].id) < 0) adUsed.push(dealSlides[0].id);   // التلقائي مابيكررش أول عرض في البانر
+    slots.forEach(function (a, i) { if (!plan[i]) plan[i] = pcAdPick(a && a.k === 'p' ? { k: 'auto' } : a, adUsed); });
+    var sdPick = sdOn ? plan.slice(0, pco.sd.length) : [], sideAds = sdPick.filter(Boolean), wdPlan = plan[slots.length - 1];
     var adRep = { sd: sdPick.map(function (x) { return x && x.p ? x.p.id : ''; }), sn: sdPick.map(function (x) { return x && x.p ? x.p.n : ''; }), wd: '', wn: '' };   // معاينة الكاشير بتعرف الإعلان فيه أنهي منتج (pcAdReport)
     if (dealSlides.length) {
       if (sideAds.length) html += '<div class="pc-hero n' + sideAds.length + '" data-s="deal"><div class="pc-hm">';
@@ -448,7 +453,7 @@
     var rowsOf = function (c) { return sortList(visible().filter(function (p) { return p.c === c.id; })).slice(0, 12); };
     var rowCats = wide() ? cats : cats.slice(0, 4);
     var rowSec = function (c, l) { html += mark('<div class="sec"><b>' + esc(c.ic || '') + ' ' + esc(c.n) + '</b><button data-go="#/c/' + esc(c.id) + '">الكل ←</button></div>' + '<div class="hrow">' + rowHTML(l) + '</div>', 'rows');
-      if (wdAt && c.id === wdAt) { var wx = pcAdPick(pco.wd, adUsed); if (wx && wx.p) { adRep.wd = wx.p.id; adRep.wn = wx.p.n; } if (wx) html += '<div class="pc-wd" data-s="rows">' + pcAdHTML(wx, 'wide') + '</div>'; wdAt = ''; } };
+      if (wdAt && c.id === wdAt) { var wx = wdPlan; if (wx && wx.p) { adRep.wd = wx.p.id; adRep.wn = wx.p.n; } if (wx) html += '<div class="pc-wd" data-s="rows">' + pcAdHTML(wx, 'wide') + '</div>'; wdAt = ''; } };
     rowCats.forEach(function (c) { rowSec(c, rowsOf(c)); });
     html += mark(shopRevHome(), 'rev');
     html += mark(svcCards(s), 'svc');

@@ -60,10 +60,16 @@
   /* tt: عنوان الإعلان بسطوره لكل منتج (خالد 2026-11-27: "عايز أكسر الكلام"). { <id>: 'سطر\nسطر' } لحد 3 سطور، وفاضي = اسم المنتج.
      ده كلام مش شكل، فبيظهر زي ما هو في البانر والإعلانات */
   function ttClean(v) { var o = {}, n = 0; if (!v || typeof v !== 'object') return o; for (var k in v) { if (n >= 60 || !PID.test(k)) continue; var t = String(v[k] == null ? '' : v[k]).replace(/\r/g, '').split('\n').map(function (x) { return x.trim().slice(0, 40); }).filter(Boolean).slice(0, 3).join('\n'); if (t) { o[k] = t; n++; } } return o; }
-  // شكل كل منتج لوحده: المفاتيح اللي اتكتبت فيه، والباقي من الشكل العام (base)
+  /* شكل كل منتج لوحده = اللي اتغيّر عن الشكل العام بس (خالد 2026-11-28: "صورة المنتج بتفضل تتحرك، عايز أثبّتها"):
+     كان بيتحفظ نسخة كاملة من كل المفاتيح، فأي تعديل على "الكل" (زي الصورة ثابتة) مابيوصلش لأي منتج ليه شكل لوحده.
+     دلوقتي بنحفظ الفرق بس، والنسخ الكاملة القديمة بتتحوّل لفرق لوحدها (نفس الشكل بالظبط). منتج مفيش فرق = مالوش شكل لوحده */
   function ovOf(src, base) {
     var ov = {}, n = 0; src = src && typeof src === 'object' ? src : {};
-    for (var k in src) { if (n >= 30 || !PID.test(k) || !src[k] || typeof src[k] !== 'object') continue; var mix = {}, i; for (i = 0; i < KEYS.length; i++) mix[KEYS[i]] = KEYS[i] in src[k] ? src[k][KEYS[i]] : base[KEYS[i]]; ov[k] = style(mix); n++; }
+    for (var k in src) { if (n >= 30 || !PID.test(k) || !src[k] || typeof src[k] !== 'object') continue; var mix = {}, i, d = {}, any = false;
+      for (i = 0; i < KEYS.length; i++) mix[KEYS[i]] = KEYS[i] in src[k] ? src[k][KEYS[i]] : base[KEYS[i]];
+      var full = style(mix); for (i = 0; i < KEYS.length; i++) { var key = KEYS[i]; if (JSON.stringify(full[key]) !== JSON.stringify(base[key])) { d[key] = full[key]; any = true; } }
+      if (d.col === 'custom' || (full.col === 'custom' && ('c1' in d || 'c2' in d))) { d.col = 'custom'; d.c1 = full.c1; d.c2 = full.c2; }   // اللون من عندك محتاج الاتنين
+      if (any) { ov[k] = d; n++; } }
     return ov;
   }
   // تصميم مكان إعلان (جانبي / عريض): شكل + ov بتاعه، أو null = زي البانر
@@ -79,7 +85,7 @@
     return out;
   }
   // شكل عرض معيّن: لو ليه شكل لوحده (ov) بيتطبق، وإلا شكل كل العروض
-  function forP(bn, id) { var b = clean(bn), o = id && b.ov[id]; if (!o) return b; var r = {}, k; for (k in b) r[k] = b[k]; for (k in o) r[k] = o[k]; return r; }
+  function forP(bn, id) { var b = clean(bn), o = id && b.ov[id]; if (!o) return b; var r = {}, k; for (k in b) r[k] = b[k]; for (k in o) r[k] = o[k]; var st = style(r); for (k in st) r[k] = st[k]; return r; }
   // الشكل اللي الإعلان (mode: s جانبي / w عريض) بيترسم بيه: تصميمه لو ليه، وإلا البانر. العنوان بسطوره (tt) واحد لكل الأماكن
   function adBn(bn, mode) { var b = clean(bn), a = b.ad && b.ad[mode]; if (!a) return b; var r = {}, k; for (k in a) r[k] = a[k]; r.tt = b.tt; r.ps = []; r.ad = { s: null, w: null }; return r; }
   function forAd(bn, mode, id) { return forP(adBn(bn, mode), id); }
