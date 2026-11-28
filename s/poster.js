@@ -23,6 +23,10 @@
   /* المقاسات: m موبايل (360 عرض)، d كمبيوتر (1112)، s إعلان جانبي (تصميم الموبايل على لوحة 360 × 180)، w إعلان عريض (تصميم الكمبيوتر على لوحة 1112 × 200).
      الإعلانين بيتصغّروا/بيتكبّروا على قد مكانهم (store.js pvFit) فبيطلعوا زي المعاينة بالظبط */
   var DEVS = ['m', 'd', 's', 'w'], AD = { s: [360, 180], w: [1112, 200] };
+  /* البانر الكبير على الكمبيوتر بمقاس تصميم ثابت (خالد 2026-11-28: "تعبت من الجزء ده": المعاينة كانت 1112 × 262 والمتجر 878 × 320 فالأماكن والأحجام مختلفة).
+     المتجر بيرسمه بالمقاس ده وبيكبّره/يصغّره كله على عرض مكانه (zoom)، ومعاينة الكاشير بنفس المقاس، فبيطلعوا زي بعض على أي شاشة.
+     side: جنبه الإعلانين (= اللي كان بيبان على شاشة 1536)، full: بعرض الصفحة */
+  var DESK = { side: [1112, 405], full: [1112, 262] };
   var ELS = ['sub', 'h', 'pr', 'tm', 'cta', 'prod', 'stk', 'stt'];   // stt: كلام الستيكر (حجم بس)   // اللي يتعدّل لكل عرض لوحده
   var IMG = /^poster-[0-9a-f]{8}\.(webp|jpg|png)$/, HEX = /^#[0-9a-f]{6}$/i, PID = /^[\w-]{1,40}$/;
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -150,5 +154,5 @@
     return { id: p.id, name: p.n, pic: h.pic(p), img: !!(p.img && p.img[0]), price: h.money(e.pr), was: e.was ? '<span class="num">' + h.fm(e.was) + '</span>' : '', pct: e.pct || 0,
       save: e.was && e.was > e.pr ? h.money(e.was - e.pr) : '', timer: e.end ? h.cd(e.end) : '', sub: h.ad ? (e.pct ? (h.dealT || '') : (c.n || 'من المحل')) : (h.dealT || '') };
   }
-  W.RdPoster = { adBn: adBn, forAd: forAd, ttClean: ttClean, offOn: offOn, eff: eff, pdata: pdata, DEVS: DEVS, AD: AD, clean: clean, fit: fit, style: style, forP: forP, KEYS: KEYS, on: on, imgs: imgs, goOf: goOf, PAGES: PAGES, attrs: attrs, html: html, PAL: PAL, DEF: DEF, STYLES: STYLES, ELS: ELS, lay: lay };
+  W.RdPoster = { DESK: DESK, adBn: adBn, forAd: forAd, ttClean: ttClean, offOn: offOn, eff: eff, pdata: pdata, DEVS: DEVS, AD: AD, clean: clean, fit: fit, style: style, forP: forP, KEYS: KEYS, on: on, imgs: imgs, goOf: goOf, PAGES: PAGES, attrs: attrs, html: html, PAL: PAL, DEF: DEF, STYLES: STYLES, ELS: ELS, lay: lay };
 })(window);

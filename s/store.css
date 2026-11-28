@@ -604,7 +604,8 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
 .deal.psb img { position: relative; display: block; width: 100%; height: 100%; object-fit: cover; }
 @supports not (aspect-ratio: 1) { .deal.psb { height: 240px; } }
 @media (min-width: 700px) { .deal.psb { aspect-ratio: auto; height: 250px; } .deal.psb img { object-fit: contain; } }
-@media (min-width: 1100px) { .deal.psb { height: 290px; } }   /* كانت 340/420: كبيرة أوي على الكمبيوتر (خالد 2026-11-21) */
+@media (min-width: 1100px) { .deal.psb { height: 290px; } }
+@media (min-width: 1100px) { .deal-stage .deal.psb { zoom: var(--pcz, 1); width: 1112px !important; max-width: none !important; } }   /* 2026-11-28: مقاس ثابت 1112 × 290 متكبّر على العرض، زي معاينة الكاشير */   /* كانت 340/420: كبيرة أوي على الكمبيوتر (خالد 2026-11-21) */
 .deal.psb.fit img { object-fit: contain; } .deal.psb.fit::before { content: none; }   /* صورة مش بالمقاس المقترح: كاملة، وورها نفسها متغبّشة (psb-bg) */
 /* صور الكروت (خالد 2026-11-21، بعد تجربة الأبيض: "الصورة تبقى كاملة، مش محتاجة خلفية بيضا"): الصورة بتملى مكانها كله،
    واللي شكلها بعيد عن المربع (كيبورد عريض) بتبان كاملة وورها نفسها متغبّشة (.fit من store.js) — من غير أبيض في الغامق */
@@ -736,6 +737,9 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
   .dbar .db-cart:hover { transform: translateY(-1px); } .dbar .db-cart .bdg { position: absolute; top: -6px; left: -4px; }
   /* الأقسام كلها في صف بعرض الصفحة (كانت بتتقص لما تكتر) */
   .chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); justify-content: stretch; overflow: visible; }
+  /* لحد 12 قسم: صف واحد بنفس العرض (على 1280 كان "الخدمات" بينزل لوحده سطر تاني، 2026-11-28). أكتر من كده: سطور متساوية */
+  .chips:not(:has(> .chip:nth-child(13))) { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+  .chips .chip { min-width: 0; } .chips .chip > :not(span) { overflow: hidden; text-overflow: ellipsis; }
   .chips .chip { width: auto; }
   /* ===== البانر وجنبه إعلانين ===== */
   .pc-hero { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 18px; align-items: stretch; margin-top: 18px; }
@@ -783,6 +787,8 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
 @media (min-width: 1100px) {
   /* البانر جنب الإعلانين (2026-11-26): الصورة العريضة كانت بتتقص من الجنبين لما البانر بقى أضيق → كاملة وورها نفسها متغبّشة، والإعلانين على طول البانر */
   .pc-sd { contain: size; } .pc-hero .deal.psb { height: 300px; }
+  /* 2026-11-28: صورة الإعلان جنب الإعلانين بنفس مقاس التصميم الثابت (1112 × 380 = اللي كان على شاشة 1536) ومتكبّرة على العرض، زي معاينة الكاشير */
+  .pc-hero .deal-stage .deal.psb { zoom: var(--pcz, 1); width: 1112px !important; max-width: none !important; height: 380px !important; }
   .pc-hero .deal.psb.psb-dk img { object-fit: contain !important; padding: 0; } .pc-hero .deal.psb.psb-dk .psb-bgd { display: block; }
   .pcad .pa-im { position: relative; } .pcad .pa-im img { position: absolute; inset: 0; }
   .sec .rw-cnt { margin-inline-end: auto; }
@@ -800,7 +806,9 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
 }
 @media (min-width: 1100px) {   /* اسم المنتج في بانر البرنامج كان بيعدّي على صورته (أعرض من مكانه): جوه مكانه، وسطرين لو طويل */
   /* البوستر متصمّم على عرض 1112 في الكمبيوتر (poster.css --ux): جنب الإعلانين البانر أضيق، فبيصغر كله بنفس النسبة (--pcz من store.js؛ --pz اسمه محجوز لحجم صورة المنتج في البوستر) زي ما اتصمّم بالظبط */
-  .pc-hero .deal-stage .deal.pst { zoom: var(--pcz, 1); width: 100%; height: calc(320px / var(--pcz, 1)) !important;   /* zoom بيصغّر الأطوال الثابتة بس (الكلام والطول)، والعرض % زي ما هو */ }
+  /* 2026-11-28: مقاس تصميم ثابت (RdPoster.DESK) متكبّر/متصغّر كله على عرض مكانه (--pcz = العرض ÷ 1112 من store.js) — زي معاينة الكاشير بالظبط على أي شاشة */
+  .deal-stage .deal.pst { zoom: var(--pcz, 1); width: 1112px !important; max-width: none !important; height: 262px !important; min-height: 0 !important; max-height: none !important; aspect-ratio: auto !important; }
+  .pc-hero .deal-stage .deal.pst { height: 405px !important; }
   /* 2026-11-27: البانر الضيق (1200 مثلًا) بيبقى أطول من اللي اتصمّم عليه (320) فصورة المنتج كانت بتكبر وتركب على العنوان: حدها 360 وفي النص بالطول */
   .pc-hero .deal-stage .deal.pst .pst-prod.im { max-height: 360px; top: calc(50% - min(40%, 180px)); }
 }
@@ -828,3 +836,5 @@ html.lbx-on, html.lbx-on body { overflow: hidden; }
 body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 input, textarea, select, [contenteditable], .copy span, .selok { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
 img { -webkit-user-drag: none; user-drag: none; }
+/* الإعلان العريض بنسبة تصميمه 1112 × 200 على أي عرض، زي معاينة الكاشير (كان طوله 150 ثابت فالكلام بيتزنق على الشاشات العريضة، 2026-11-28) */
+@media (min-width: 1100px) { .pc-wd .pcad.wide.pcad-pst { height: auto; aspect-ratio: 1112 / 200; } }

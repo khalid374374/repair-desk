@@ -154,7 +154,31 @@
   // البوستر جنب الإعلانين: بيصغر كله بنسبة عرض البانر لـ 1112 (العرض اللي اتصمّم عليه في صفحة البانر)
   // معاينة "شكل المتجر" في الكاشير (?pv=1، الكمبيوتر بس): بنقول للكاشير الإعلان الجانبي/العريض فيه أنهي منتج، علشان زرار "🎨 صمّم الإعلان ده" يفتحه (2026-11-27). id المنتج بس، ومعلومة عامة
   function pcAdReport(r) { try { if (/[?&]pv=1/.test(location.search) && window.parent !== window && wide()) window.parent.postMessage({ rdPcAds: r }, '*'); } catch (e) {} }
-  function pcZoom() { var st = app.querySelector('.pc-hero .deal-stage'); if (!st) return; var cs = getComputedStyle(st), w = st.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0); st.style.setProperty('--pcz', String(wide() ? Math.min(1, Math.max(0.5, w / 1112)) : 1)); }   // العرض من جوه (من غير مكان الأسهم)
+  /* البانر والإعلانين على الكمبيوتر بمقاسات التصميم بالظبط على أي شاشة (2026-11-28، زي معاينة الكاشير):
+     البانر 1112 × 405 متكبّر على عرضه (--pcz)، وعرض عمود الإعلانين بيتحسب علشان كل إعلان يفضل بنسبة 360 × 180
+     (كان 400 ثابت، فعلى شاشة 1280 / 1366 الإعلان بيتضغط بالطول والعنوان يركب على السعر) */
+  function pcZoom() {
+    var st = app.querySelector('.deal-stage'); if (!st) return;
+    var cs = getComputedStyle(st), ph = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0), hero = st.closest('.pc-hero'), sd = hero && hero.querySelector('.pc-sd');
+    if (hero) { hero.style.gridTemplateColumns = ''; if (sd) { sd.style.gridTemplateRows = ''; sd.style.alignContent = ''; } }
+    if (!wide()) { st.style.setProperty('--pcz', '1'); return; }
+    if (hero && sd && window.RdPoster && RdPoster.DESK) {
+      var hc = getComputedStyle(hero), g = parseFloat(hc.columnGap) || 18, rg = parseFloat(getComputedStyle(sd).rowGap) || 16, hm = st.closest('.pc-hm'), n = sd.children.length || 1;
+      var pv = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0), extra = hm && hm.lastElementChild ? Math.max(0, hm.lastElementChild.getBoundingClientRect().bottom - hm.getBoundingClientRect().top - st.offsetHeight) : 0,   /* اللي فوق وتحت البانر (العنوان والنقط) بطوله الحقيقي، مش طول العمود المتمدد */ Wc = hero.clientWidth, D = 1112, H = RdPoster.DESK.side[1], R = RdPoster.AD.s[1] / RdPoster.AD.s[0];
+      // ارتفاع الصف = extra + pv + H·z ، z = (Wc − a − g − ph) / D ، وإعلانين: 2·a·R + rg = ارتفاع الصف
+      var e0 = sd.firstElementChild, es = e0 ? getComputedStyle(e0) : null, px = function (k) { return es ? parseFloat(es[k]) || 0 : 0; }, hp = px('paddingLeft') + px('paddingRight') + px('borderLeftWidth') + px('borderRightWidth'), vp = px('paddingTop') + px('paddingBottom') + px('borderTopWidth') + px('borderBottomWidth');
+      // الإعلان من جوه (من غير الحشو والإطار) بالظبط 360 × 180: 2·R·(a − hp) + 2·vp + rg = extra + pv + H·(Wc − a − g − ph)/D
+      var mx = (parseFloat(cs.marginLeft) || 0) + (parseFloat(cs.marginRight) || 0);   // إطار البانر بهامش سالب (−14 من كل ناحية) فهو أعرض من عموده
+      var a = n >= 2 ? (extra + pv - rg - 2 * vp + 2 * R * hp + H * (Wc - g - mx - ph) / D) / (2 * R + H / D) : 400;
+      a = Math.round(Math.max(260, Math.min(560, a))); hero.style.gridTemplateColumns = 'minmax(0, 1fr) ' + a + 'px';
+      if (n < 2) { sd.style.gridTemplateRows = Math.round((a - hp) * R + vp) + 'px'; sd.style.alignContent = 'center'; }   // إعلان واحد: بنسبته وفي النص
+    }
+    var w = st.clientWidth - ph; st.style.setProperty('--pcz', String(Math.min(2, Math.max(0.4, w / 1112))));
+    if (hero) pvFit();   // الإعلانين اتغيّر مقاسهم
+    // أي تغيير في طول اللي جنب البانر أو الإعلانين (الخطوط والصور بتخلص تحميل متأخر) = نحسب تاني، مرة في الفريم
+    if (window.ResizeObserver && hero && !hero.__pcro) { hero.__pcro = new ResizeObserver(function () { if (pcZoom.f) return; pcZoom.f = requestAnimationFrame(function () { pcZoom.f = 0; if (hero.isConnected) pcZoom(); }); });
+      [st.closest('.pc-hm'), sd].forEach(function (e) { if (e) hero.__pcro.observe(e); }); }
+  }
   window.addEventListener('resize', function () { clearTimeout(pcZoom.t); pcZoom.t = setTimeout(pcZoom, 120); });
   // الإعلان البانر بيتصغّر/بيتكبّر على قد مكانه: عرض اللوحة 360 (جانبي) أو 1112 (عريض)، والطول على قد المكان (store.css)
   function pvFit() {
@@ -462,7 +486,7 @@
     shell(html, '#/');
     if (window.RdTheme) RdTheme.startTick();
     var dealBanner = app.querySelector('[data-deal-banner]');
-    pcZoom(); pvFit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(pvFit);
+    pcZoom(); pvFit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { pcZoom(); pvFit(); });   // بعد الخطوط: الكلام فوق وتحت البانر بيتغيّر طوله، فالإعلانين بيتحسبوا تاني
     pcAdReport(adRep);
     var refit = function () { tickTimers(); fitDeal(dealBanner && dealBanner.querySelector('b')); };   // التايمر بيتملي الأول (كان فاضي وقت القياس، وبعد ثانية بيطوّل الكلام ويزق الزرار برّه)
     refit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
@@ -592,7 +616,7 @@
     if (brands.length > 1) html += '<div class="brands">' + ['<button data-b="" class="' + (!st.b ? 'on' : '') + '">الكل</button>'].concat(brands.map(function (b) { return '<button data-b="' + esc(b) + '" class="' + (st.b === b ? 'on' : '') + '">' + esc(b) + '</button>'; })).join('') + '</div>';
     if (models.length) html += '<div class="models">' + ['<button data-m="" class="' + (!st.m ? 'on' : '') + '">كل الموديلات</button>'].concat(models.map(function (m) { return '<button data-m="' + esc(m) + '" class="' + (st.m === m ? 'on' : '') + '">' + esc(m) + '</button>'; })).join('') + '</div>';
     html += '<div class="sec"><b>' + (st.m ? esc(st.s || c.n) + ' ' + esc(st.m) : st.b ? esc(st.b) : st.s ? esc(st.s) : 'كل المنتجات') + '</b><button data-sort>' + ({ low: 'الأرخص ↓', high: 'الأغلى ↑' }[st.sort] || 'الترتيب ⇅') + '</button></div>' + gridHTML(list);
-    shell(html, id === '_off' ? '#/c/_off' : '#/cats');
+    shell(html, id === '_off' ? '#/c/_off' : id === '_q' ? '' : '#/cats');   // نتايج البحث مش قسم: مفيش تبويب منوّر (2026-11-28)
     app.querySelectorAll('[data-s]').forEach(function (b) { b.onclick = function () { st.s = b.dataset.s; st.b = ''; st.m = ''; catPage(id, q); }; });
     app.querySelectorAll('[data-b]').forEach(function (b) { b.onclick = function () { st.b = b.dataset.b; st.m = ''; catPage(id, q); }; });
     app.querySelectorAll('[data-m]').forEach(function (b) { b.onclick = function () { st.m = b.dataset.m; catPage(id, q); }; });

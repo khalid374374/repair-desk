@@ -203,3 +203,5 @@
 @container pst (min-width: 700px) { .pst .pst-h.mt, .deal.pst .pst-h.mt { display: block; -webkit-line-clamp: unset; } }
 /* العنوان بيكبر بـ scale من النص (مابيحرّكش الباقي)، فلو سطرين أو تلاتة الزيادة كانت بتركب على السعر: بنسيب مكانها بالظبط (نص الزيادة فوق ونصها تحت) */
 .pst .pst-h.mt { margin-block: calc((var(--lk, 1) - 1) * var(--ln, 1) * 0.675em); }
+/* كلمة الستيكر في بانر المتجر واخدة سطر 1.35 من store.css (.deal b): نفس القيمة هنا علشان معاينة الكاشير (.deal.pst) تطلع زيه بالظبط (2026-11-28) */
+.deal.pst .pst-stk b { line-height: 1.35; }
